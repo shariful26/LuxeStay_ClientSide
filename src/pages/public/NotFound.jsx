@@ -52,7 +52,7 @@ export const NotFound = () => {
             {/* Inner Frame */}
             <div className="overflow-hidden rounded-[32px] border border-[var(--border-light)]">
               <img 
-                src="/images/not_found_swing.jpg" 
+                src="/images/not_found_swing.webp" 
                 alt="404 page not found illustration" 
                 className="w-full h-auto object-cover brightness-[0.98] contrast-[1.02]"
               />
