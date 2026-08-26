@@ -1,0 +1,557 @@
+/* Import Tailwind Base & Utilities */
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+
+/* ==========================================================================
+   LuxeStay Pro - ThemeForest World-Class Luxury Hotel Design System
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Light Mode */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.7);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(226, 232, 240, 0.8);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-white: #ffffff;
+
+  --accent-gold: #d97706;
+  --accent-gold-hover: #b45309;
+  --accent-gold-light: #fef3c7;
+  --accent-amber: #f59e0b;
+
+  --brand-navy: #0f172a;
+  --brand-emerald: #059669;
+  --brand-emerald-light: #d1fae5;
+  --brand-indigo: #4f46e5;
+
+  --border-light: #e2e8f0;
+  --border-dark: #334155;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 2px 8px -1px rgb(0 0 0 / 0.06), 0 1px 3px -1px rgb(0 0 0 / 0.03);
+  --shadow-lg: 0 6px 16px -3px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 10px 24px -5px rgb(0 0 0 / 0.10), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+  --shadow-gold: 0 4px 14px -3px rgba(217, 119, 6, 0.25);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Theme */
+.dark {
+  --bg-primary: #090d16;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --bg-card: #0f172a;
+  --bg-overlay: rgba(0, 0, 0, 0.85);
+  --glass-bg: rgba(15, 23, 42, 0.9);
+  --glass-border: rgba(51, 65, 85, 0.8);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border-light: #1e293b;
+  --border-dark: #334155;
+
+  --shadow-md: 0 2px 8px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 6px 16px 0 rgb(0 0 0 / 0.45);
+  --shadow-xl: 0 10px 24px 0 rgb(0 0 0 / 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  overflow-x: hidden;
+}
+
+/* Luxury Headings & Gradient Texts */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-gradient-gold {
+  color: #d97706;
+  font-weight: 800;
+}
+
+.text-gradient-emerald {
+  color: #059669;
+  font-weight: 800;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Ensure all native select dropdown options have clear contrast and background in light/dark modes */
+select option,
+option {
+  background-color: #ffffff;
+  color: #0f172a;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.dark select option,
+.dark option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+select option:checked,
+.dark select option:checked {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.glass-card-hover {
+  transition: all var(--transition-normal);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Luxury Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge-gold {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+.dark .badge-gold {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-emerald {
+  background-color: var(--brand-emerald-light);
+  color: var(--brand-emerald);
+}
+
+.dark .badge-emerald {
+  background-color: rgba(5, 150, 105, 0.2);
+  color: #34d399;
+}
+
+.badge-navy {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+/* ==========================================================================
+   GLOBAL LEFT-TO-RIGHT LIVE HOVER FILL ANIMATION FOR CTA BUTTONS ONLY
+   ========================================================================== */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+a.btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.btn::before,
+.btn-primary::before,
+.btn-secondary::before,
+.btn-outline::before,
+a.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #b45309;
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: inherit;
+}
+
+.btn:hover::before,
+.btn-primary:hover::before,
+.btn-secondary:hover::before,
+.btn-outline:hover::before,
+a.btn:hover::before {
+  transform: scaleX(1);
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-outline:hover,
+a.btn:hover {
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.25);
+}
+
+/* Executive Navbar Text Dropdown Triggers (Yellow / Gold on Hover in Light & Dark Modes) */
+.nav-dropdown-btn,
+.nav-dropdown-btn *,
+.nav-dropdown-btn span,
+.nav-dropdown-btn svg {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.nav-dropdown-btn:hover,
+.nav-dropdown-btn:hover *,
+.nav-dropdown-btn:hover span,
+.nav-dropdown-btn:hover svg,
+.nav-dropdown-btn.active-dropdown,
+.nav-dropdown-btn.active-dropdown *,
+.nav-dropdown-btn.active-dropdown span,
+.nav-dropdown-btn.active-dropdown svg {
+  color: #d97706 !important; /* Rich Amber Gold / Yellow in Light Mode */
+  border-bottom-color: #d97706 !important;
+}
+.dark .nav-dropdown-btn:hover,
+.dark .nav-dropdown-btn:hover *,
+.dark .nav-dropdown-btn:hover span,
+.dark .nav-dropdown-btn:hover svg,
+.dark .nav-dropdown-btn.active-dropdown,
+.dark .nav-dropdown-btn.active-dropdown *,
+.dark .nav-dropdown-btn.active-dropdown span,
+.dark .nav-dropdown-btn.active-dropdown svg {
+  color: #f59e0b !important; /* Bright Amber Gold in Dark Mode */
+  border-bottom-color: #f59e0b !important;
+}
+
+/* Global Subtle Rounded Corners & Light Shadows Overrides */
+button,
+input,
+select,
+textarea,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+a.btn {
+  border-radius: 10px !important;
+}
+
+.rounded-full {
+  border-radius: 10px !important; /* Converts large pill buttons to subtle 10px rounded corners */
+}
+
+/* Keep circular avatars and icon dots properly round */
+img.rounded-full,
+span.rounded-full,
+div.rounded-full.w-6,
+div.rounded-full.w-7,
+div.rounded-full.w-8,
+div.rounded-full.w-9,
+div.rounded-full.w-10,
+div.rounded-full.w-12,
+div.rounded-full.w-14,
+div.rounded-full.w-16 {
+  border-radius: 9999px !important;
+}
+
+.rounded-3xl {
+  border-radius: 14px !important;
+}
+
+.rounded-2xl {
+  border-radius: 10px !important;
+}
+
+.rounded-xl {
+  border-radius: 8px !important;
+}
+
+.shadow-2xl,
+.shadow-xl {
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 2px 10px -1px rgba(15, 23, 42, 0.06), 0 1px 3px -1px rgba(15, 23, 42, 0.03) !important;
+}
+
+.dark .shadow-2xl,
+.dark .shadow-xl {
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.45) !important;
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 2px 10px -1px rgba(0, 0, 0, 0.35) !important;
+}
+
+.btn:hover *,
+.btn-primary:hover *,
+.btn-secondary:hover *,
+.btn-outline:hover *,
+a.btn:hover * {
+  color: #ffffff !important;
+  transition: color 0.3s ease;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.6rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background: #d97706;
+  color: #ffffff;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.btn-outline {
+  border: 1.5px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 4px;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Continuous Live Marquee Banner Ticker */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Custom Data Tables & Mobile Responsive Tables */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive .custom-table {
+  min-width: 650px;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.custom-table th {
+  padding: 1.1rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.custom-table td {
+  padding: 1.1rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Print Isolation & Styling for Official Payment Voucher & Stay Receipt
+   ========================================================================== */
+@media print {
+
+  /* Hide all top-level application elements (Navbar, Footer, Main Content) */
+  header,
+  footer,
+  nav,
+  aside,
+  main,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Hide non-voucher siblings inside the app root container */
+  body>#root>div>*:not(.voucher-modal-overlay) {
+    display: none !important;
+  }
+
+  /* Reset document background and sizing */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Reset the modal overlay from fixed popup to standard printable document block */
+  .voucher-modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+  }
+
+  /* Style the voucher document card for single-page print output */
+  .voucher-modal-card {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 24px 28px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Preserve badge colors and vector contrast */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+}
