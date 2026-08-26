@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Search, Trash2, ShieldCheck, User, Briefcase, Shield, X, Sparkles, Phone, Mail, Globe } from 'lucide-react';
+import { UserPlus, Search, Trash2, ShieldCheck, User, Briefcase, Shield, X, Sparkles, Phone, Mail, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 
 export const UsersManagement = () => {
@@ -8,6 +8,12 @@ export const UsersManagement = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -105,6 +111,11 @@ export const UsersManagement = () => {
 
     return matchesSearch && matchesRole;
   });
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
 
   const totalUsers = users.length;
   const customersCount = users.filter(u => u.role === 'customer').length;
@@ -209,78 +220,118 @@ export const UsersManagement = () => {
       </div>
 
       {/* Users Data Table */}
-      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg">
-        <div className="table-responsive">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>User Name</th>
-                <th>Email Address</th>
-                <th>Phone Number</th>
-                <th>Current Role</th>
-                <th>Status</th>
-                <th>Change Role</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(u => (
-                <tr key={u.id}>
-                  <td className="font-bold text-[var(--text-primary)]">
-                    <div className="flex items-center gap-2.5">
-                      <img 
-                        src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} 
-                        alt="" 
-                        className="w-8 h-8 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
-                      />
-                      <div>
-                        <span>{u.name}</span>
-                        {u.country && (
-                          <span className="text-[10px] text-[var(--text-muted)] block font-normal">{u.country}</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-xs font-semibold text-[var(--text-secondary)]">{u.email}</td>
-                  <td className="text-xs font-semibold text-[var(--text-secondary)]">{u.phone || 'N/A'}</td>
-                  <td>
-                    <span className={`badge ${
-                      u.role === 'admin' ? 'badge-navy bg-indigo-500/15 text-indigo-400 border border-indigo-500/30' :
-                      u.role === 'partner' ? 'badge-emerald' : 'badge-gold'
-                    }`}>
-                      {u.role === 'admin' ? 'Super Admin' : u.role === 'partner' ? 'Hotel Partner' : 'Customer'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="badge badge-emerald flex items-center gap-1 w-max">
-                      <ShieldCheck className="w-3 h-3" /> Active
-                    </span>
-                  </td>
-                  <td>
-                    <select 
-                      value={u.role} 
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      className="p-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs font-bold text-[var(--text-primary)] outline-none cursor-pointer hover:border-amber-500 transition-colors shadow-xs"
-                    >
-                      <option value="customer" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Customer</option>
-                      <option value="partner" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Partner</option>
-                      <option value="admin" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Super Admin</option>
-                    </select>
-                  </td>
-                  <td>
-                    <button 
-                      onClick={() => handleDeleteUser(u.id)}
-                      className="p-2 rounded-xl text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
-                      title="Delete User Account"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+      <div className="space-y-6">
+        <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg p-2 sm:p-4">
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th className="pl-6">Member Profile</th>
+                  <th>Contact Info</th>
+                  <th>System Role & Authority</th>
+                  <th className="pr-6 text-right">Change Role & Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-light)]">
+                {currentUsers.map(u => (
+                  <tr key={u.id} className="transition-all hover:bg-[var(--bg-tertiary)]/30">
+                    <td className="pl-6 font-bold text-[var(--text-primary)]">
+                      <div className="flex items-center gap-2.5">
+                        <img 
+                          src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} 
+                          alt="" 
+                          className="w-8 h-8 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
+                        />
+                        <div>
+                          <span className="block text-sm font-extrabold text-[var(--text-primary)]">{u.name}</span>
+                          {u.country && (
+                            <span className="text-[10px] text-[var(--text-muted)] block font-bold">{u.country}</span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-semibold text-[var(--text-secondary)] block">{u.email}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-bold block">{u.phone || 'No phone'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className={`badge ${
+                          u.role === 'admin' ? 'badge-navy bg-indigo-500/15 text-indigo-400 border border-indigo-500/30' :
+                          u.role === 'partner' ? 'badge-emerald' : 'badge-gold'
+                        }`}>
+                          {u.role === 'admin' ? 'Super Admin' : u.role === 'partner' ? 'Hotel Partner' : 'Customer'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider">
+                          <ShieldCheck className="w-3 h-3" /> Active
+                        </span>
+                      </div>
+                    </td>
+                    <td className="pr-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <select 
+                          value={u.role} 
+                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          className="p-2.5 py-1.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs font-bold text-[var(--text-primary)] outline-none cursor-pointer hover:border-amber-500 transition-colors shadow-xs"
+                        >
+                          <option value="customer" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Customer</option>
+                          <option value="partner" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Partner</option>
+                          <option value="admin" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Super Admin</option>
+                        </select>
+                        <button 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="p-1.5 rounded-xl text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
+                          title="Delete User Account"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--border-light)]">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="btn btn-outline text-xs px-4 py-2 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" /> Prev
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    currentPage === page 
+                      ? 'bg-amber-500 text-white shadow-md' 
+                      : 'bg-transparent text-[var(--text-secondary)] border border-[var(--border-light)] hover:border-amber-500/40'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="btn btn-outline text-xs px-4 py-2 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ADD MEMBER MODAL */}

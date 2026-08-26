@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Building2, ShieldCheck, CheckCircle2, DollarSign } from 'lucide-react';
+import { Plus, X, Building2, ShieldCheck, CheckCircle2, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 
@@ -8,6 +8,8 @@ export const BookingsManagement = () => {
   const [hotels, setHotels] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const { formatPrice } = useCurrency();
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -127,6 +129,10 @@ export const BookingsManagement = () => {
         return <span className="badge badge-gold">{status || 'Confirmed'}</span>;
     }
   };
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <PortalLayout role="admin" title="Master Booking Ledger">
@@ -147,48 +153,108 @@ export const BookingsManagement = () => {
       </div>
 
       {/* Master Booking Table */}
-      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg">
-        <div className="table-responsive">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Ref ID</th>
-                <th>Guest Name</th>
-                <th>Property</th>
-                <th>Total Paid</th>
-                <th>Admin Commission (15%)</th>
-                <th>Payment Method</th>
-                <th>Status</th>
-                <th>Quick Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map(bk => (
-                <tr key={bk.id}>
-                  <td className="font-mono font-bold text-amber-500">{bk.id}</td>
-                  <td className="font-bold text-[var(--text-primary)]">{bk.guestName}</td>
-                  <td className="text-xs">{bk.hotelName}</td>
-                  <td className="font-extrabold">{formatPrice(bk.total)}</td>
-                  <td className="font-extrabold text-emerald-500">{formatPrice(Math.round(bk.total * 0.15))}</td>
-                  <td className="text-xs">{bk.paymentMethod}</td>
-                  <td>{renderStatusBadge(bk.status)}</td>
-                  <td>
-                    <select 
-                      value={bk.status || 'Confirmed'} 
-                      onChange={(e) => handleStatusChange(bk.id, e.target.value)}
-                      className="px-2 py-1 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[11px] font-bold text-[var(--text-primary)] outline-none cursor-pointer"
-                    >
-                      <option value="Confirmed" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Confirmed</option>
-                      <option value="Checked-In" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Checked-In</option>
-                      <option value="Checked-Out" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Checked-Out</option>
-                      <option value="Cancelled" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Cancelled</option>
-                    </select>
-                  </td>
+      <div className="space-y-6">
+        <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg p-2 sm:p-4">
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th className="pl-6">Booking Ref & Guest Details</th>
+                  <th>Property & Suite Details</th>
+                  <th>Financial Settlement</th>
+                  <th className="pr-6 text-right">Status & Override Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-light)]">
+                {currentBookings.map(bk => (
+                  <tr key={bk.id} className="transition-all hover:bg-[var(--bg-tertiary)]/30">
+                    <td className="pl-6">
+                      <div className="space-y-1 py-1">
+                        <span className="inline-flex px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 font-mono font-bold text-[10px]">
+                          {bk.id}
+                        </span>
+                        <span className="block text-sm font-extrabold text-[var(--text-primary)]">{bk.guestName}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-bold block">{bk.guestEmail}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="space-y-1 font-bold text-[var(--text-secondary)]">
+                        <span className="text-sm text-[var(--text-primary)] block">{bk.hotelName}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] block">• {bk.roomName}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="space-y-1 font-bold">
+                        <span className="text-sm font-black text-amber-500 block">{formatPrice(bk.total)}</span>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold">
+                          <span>Comm: {formatPrice(Math.round(bk.total * 0.15))}</span>
+                          <span className="text-[9px] text-[var(--text-muted)] font-normal">(15%)</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="pr-6">
+                      <div className="flex flex-col items-end gap-1.5 py-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mr-1">
+                            💳 {bk.paymentMethod?.split(' ')[0] || 'Invoice'}
+                          </span>
+                          {renderStatusBadge(bk.status)}
+                        </div>
+                        <select 
+                          value={bk.status || 'Confirmed'} 
+                          onChange={(e) => handleStatusChange(bk.id, e.target.value)}
+                          className="px-2.5 py-1.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[11px] font-bold text-[var(--text-primary)] outline-none cursor-pointer hover:border-amber-500 transition-colors shadow-xs"
+                        >
+                          <option value="Confirmed" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Confirmed</option>
+                          <option value="Checked-In" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Checked-In</option>
+                          <option value="Checked-Out" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Checked-Out</option>
+                          <option value="Cancelled" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Cancelled</option>
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--border-light)]">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="btn btn-outline text-xs px-4 py-2 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" /> Prev
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    currentPage === page 
+                      ? 'bg-amber-500 text-white shadow-md' 
+                      : 'bg-transparent text-[var(--text-secondary)] border border-[var(--border-light)] hover:border-amber-500/40'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="btn btn-outline text-xs px-4 py-2 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ADMIN SUPPORT RESERVATION MODAL */}

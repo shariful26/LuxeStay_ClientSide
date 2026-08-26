@@ -27,6 +27,8 @@ export const HotelsCatalog = () => {
   const [viewMode, setViewMode] = useState('list'); // Default Booking.com list view
   const [sortBy, setSortBy] = useState('rating');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const destQuery = searchParams.get('destination') || '';
   const categoryQuery = searchParams.get('category') || '';
@@ -109,7 +111,19 @@ export const HotelsCatalog = () => {
     setFilters({ maxPrice: 2500, rating: 0, category: '', amenities: [] });
     setSearchQuery('');
   };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [hotels]);
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentHotels = hotels.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(hotels.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   return (
     <div className="container pt-8 sm:pt-10 pb-8 space-y-8 animate-fade-in">
 
@@ -304,10 +318,47 @@ export const HotelsCatalog = () => {
               </button>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
-              {hotels.map(hotel => (
-                <HotelCard key={hotel.id} hotel={hotel} viewMode={viewMode} />
-              ))}
+            <div className="space-y-8">
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
+                {currentHotels.map(hotel => (
+                  <HotelCard key={hotel.id} hotel={hotel} viewMode={viewMode} />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-6 border-t border-[var(--border-light)] text-xs font-bold mt-8">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:border-amber-500 hover:text-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>&larr; Prev</span>
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-10 h-10 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+                        currentPage === pageNum
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+                          : 'border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-500'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:border-amber-500 hover:text-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Next &rarr;</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

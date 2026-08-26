@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Calendar, Clock, AlertCircle, Loader2, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import { QrCode, Calendar, Clock, AlertCircle, Loader2, X, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useBooking } from '../../context/BookingContext';
@@ -7,6 +7,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 
 export const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
+  const [hotels, setHotels] = useState([]);
   const [selectedExtendBooking, setSelectedExtendBooking] = useState(null);
   const [extraNights, setExtraNights] = useState(1);
   const [extending, setExtending] = useState(false);
@@ -18,6 +19,11 @@ export const MyBookings = () => {
   const { formatPrice } = useCurrency();
 
   useEffect(() => {
+    fetch('/api/hotels')
+      .then(res => res.json())
+      .then(data => setHotels(data))
+      .catch(() => {});
+
     fetch('/api/bookings')
       .then(res => res.json())
       .then(data => {
@@ -111,66 +117,126 @@ export const MyBookings = () => {
         <span className="badge badge-gold self-start sm:self-auto">{bookings.length} Total Bookings</span>
       </div>
 
-      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-lg overflow-hidden">
-        <div className="table-responsive">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Booking Ref</th>
-                <th>Property</th>
-                <th>Suite & Dining Plan</th>
-                <th>Stay Dates</th>
-                <th>Total Paid</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map(bk => (
-                <tr key={bk.id}>
-                  <td className="font-mono font-bold text-amber-500">{bk.id}</td>
-                  <td className="font-bold text-[var(--text-primary)]">{bk.hotelName}</td>
-                  <td className="text-xs">
-                    <div className="font-bold text-[var(--text-primary)]">{bk.roomName}</div>
-                    <div className="text-[11px] text-amber-500 font-semibold">{bk.mealPlan || 'Room Only'}</div>
-                  </td>
-                  <td className="text-xs">
-                    <div className="font-bold">{bk.checkIn} to {bk.checkOut}</div>
-                    <div className="text-[10px] text-[var(--text-muted)] font-normal">{bk.nights || 1} Nights Stay</div>
-                  </td>
-                  <td className="font-extrabold">{formatPrice(bk.total)}</td>
-                  <td>{renderStatusBadge(bk.status)}</td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => {
-                          setActiveVoucher(bk);
-                          setIsVoucherModalOpen(true);
-                        }}
-                        className="btn btn-outline text-xs py-1.5 px-3 flex items-center gap-1 cursor-pointer"
-                      >
-                        <QrCode className="w-3.5 h-3.5 text-amber-500" /> Voucher
-                      </button>
+      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-lg overflow-hidden p-6 sm:p-8 space-y-6">
+        <div className="hidden lg:grid grid-cols-12 gap-4 pb-4 border-b border-[var(--border-light)] text-xs font-extrabold uppercase tracking-widest text-[var(--text-muted)]">
+          <div className="col-span-5">Property & Suite Details</div>
+          <div className="col-span-3">Dates & Nights</div>
+          <div className="col-span-2">Total Amount</div>
+          <div className="col-span-2 text-right">Actions</div>
+        </div>
 
-                      {bk.status !== 'Cancelled' && bk.status !== 'Checked-Out' && (
-                        <button
-                          onClick={() => {
-                            setSelectedExtendBooking(bk);
-                            setExtraNights(1);
-                            setExtendErrorMsg('');
-                            setExtendSuccessMsg('');
-                          }}
-                          className="btn btn-primary text-xs py-1.5 px-3 flex items-center gap-1 cursor-pointer shadow-xs"
-                        >
-                          <Clock className="w-3.5 h-3.5" /> Extend Stay
-                        </button>
-                      )}
+        <div className="divide-y divide-[var(--border-light)]">
+          {bookings.length === 0 ? (
+            <div className="py-12 text-center space-y-4">
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">No Reservations Found</h3>
+              <p className="text-xs text-[var(--text-secondary)]">You don't have any confirmed bookings under your account yet.</p>
+            </div>
+          ) : (
+            bookings.map(bk => {
+              const hotel = hotels.find(h => h.id === bk.hotelId);
+              const imageUrl = hotel?.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
+              
+              // Status dot configuration
+              let statusDotColor = 'bg-amber-500';
+              if (bk.status === 'Checked-In') statusDotColor = 'bg-emerald-500 animate-pulse';
+              else if (bk.status === 'Checked-Out') statusDotColor = 'bg-slate-400';
+              else if (bk.status === 'Cancelled') statusDotColor = 'bg-rose-500';
+
+              return (
+                <div 
+                  key={bk.id}
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-4 py-6 first:pt-0 last:pb-0 items-center transition-all hover:bg-[var(--bg-tertiary)]/30 rounded-2xl px-3 -mx-3"
+                >
+                  {/* Column 1: Property & Suite Details */}
+                  <div className="col-span-1 lg:col-span-5 flex items-center gap-4">
+                    {/* Thumbnail Image */}
+                    <div className="w-24 h-16 rounded-2xl overflow-hidden relative flex-shrink-0 border border-[var(--border-light)] shadow-xs">
+                      <img 
+                        src={imageUrl} 
+                        alt={bk.hotelName} 
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {/* Hotel & Room text */}
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">
+                          Ref: {bk.id}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${statusDotColor}`} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                            {bk.status || 'Confirmed'}
+                          </span>
+                        </div>
+                      </div>
+                      <h3 className="text-sm font-extrabold text-[var(--text-primary)] truncate">
+                        {bk.hotelName}
+                      </h3>
+                      <p className="text-xs text-[var(--text-secondary)] font-semibold truncate">
+                        {bk.roomName} • <span className="text-amber-500 text-[10px]">{bk.mealPlan || 'Room Only'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Dates & Nights */}
+                  <div className="col-span-1 lg:col-span-3 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                      <Calendar className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                      <span>{bk.checkIn} to {bk.checkOut}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text-muted)] font-bold flex items-center gap-1">
+                      <span>• {bk.nights || 1} Nights Stay</span>
+                      {hotel && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded ml-1">✓ Verified</span>}
+                    </p>
+                  </div>
+
+                  {/* Column 3: Total Amount */}
+                  <div className="col-span-1 lg:col-span-2 space-y-1">
+                    <div className="text-base font-black text-amber-500">
+                      {formatPrice(bk.total)}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wide">
+                      💳 {bk.paymentMethod?.split(' ')[0] || 'Credit Card'}
+                    </div>
+                  </div>
+
+                  {/* Column 4: Actions */}
+                  <div className="col-span-1 lg:col-span-2 flex lg:justify-end items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        setActiveVoucher(bk);
+                        setIsVoucherModalOpen(true);
+                      }}
+                      className="btn btn-outline text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer h-9 shadow-xs"
+                      title="View Stay Voucher"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Voucher</span>
+                    </button>
+
+                    {bk.status !== 'Cancelled' && bk.status !== 'Checked-Out' && (
+                      <button
+                        onClick={() => {
+                          setSelectedExtendBooking(bk);
+                          setExtraNights(1);
+                          setExtendErrorMsg('');
+                          setExtendSuccessMsg('');
+                        }}
+                        className="btn btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer h-9 shadow-sm"
+                        title="Extend Stay Duration"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Extend</span>
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

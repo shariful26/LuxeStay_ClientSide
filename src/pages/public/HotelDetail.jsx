@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Star, MapPin, Check, ShieldCheck, Heart, Sparkles, Phone, Mail, Building2 } from 'lucide-react';
 import { RoomCard } from '../../components/RoomCard';
 import { BookingModal } from '../../components/BookingModal';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const HotelDetail = () => {
   const { id } = useParams();
@@ -12,6 +13,9 @@ export const HotelDetail = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { formatPrice } = useCurrency();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetch(`/api/hotels/${id}`)
@@ -106,6 +110,10 @@ export const HotelDetail = () => {
                   key={room.id} 
                   room={room} 
                   onBookClick={(r) => {
+                    if (!user) {
+                      navigate('/login', { state: { from: location.pathname + location.search } });
+                      return;
+                    }
                     setSelectedRoom(r);
                     setIsBookingOpen(true);
                   }}
@@ -128,6 +136,10 @@ export const HotelDetail = () => {
 
             <button 
               onClick={() => {
+                if (!user) {
+                  navigate('/login', { state: { from: location.pathname + location.search } });
+                  return;
+                }
                 const targetRoom = (hotel.rooms && hotel.rooms.length > 0) ? hotel.rooms[0] : {
                   id: `r_def_${hotel.id}`,
                   hotelId: hotel.id,

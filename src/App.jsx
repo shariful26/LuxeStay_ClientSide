@@ -27,6 +27,7 @@ import { BlogDetail } from './pages/public/BlogDetail';
 import { FAQ } from './pages/public/FAQ';
 import { TermsConditions } from './pages/public/TermsConditions';
 import { PrivacyPolicy } from './pages/public/PrivacyPolicy';
+import { NotFound } from './pages/public/NotFound';
 
 // Customer Pages (15-22)
 import { Login } from './pages/customer/Login';
@@ -130,6 +131,7 @@ export function App() {
                         <Route path="/admin/payment-settings" element={<AdminPaymentSettings />} />
                         <Route path="/admin/settings" element={<CustomerProfile role="admin" mode="profile" />} />
                         <Route path="/admin/password" element={<CustomerProfile role="admin" mode="password" />} />
+                        <Route path="*" element={<NotFound />} />
                       </Routes>
                     </main>
                     <Footer />

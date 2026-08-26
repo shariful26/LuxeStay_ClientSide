@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Bed, Users, Maximize, Check, Calendar, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { BookingModal } from '../../components/BookingModal';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const RoomDetail = () => {
   const { id } = useParams();
@@ -10,6 +11,9 @@ export const RoomDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { formatPrice } = useCurrency();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetch(`/api/rooms/${id}`)
@@ -70,7 +74,13 @@ export const RoomDetail = () => {
             </div>
 
             <button 
-              onClick={() => setIsBookingOpen(true)}
+              onClick={() => {
+                if (!user) {
+                  navigate('/login', { state: { from: location.pathname + location.search } });
+                  return;
+                }
+                setIsBookingOpen(true);
+              }}
               className="w-full btn btn-primary py-3 text-xs"
             >
               Book Room Now

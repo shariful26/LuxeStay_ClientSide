@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Lock, ArrowRight, Building2, Briefcase, Shield, CheckCircle2, Eye, EyeOff, Camera, Upload, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -16,6 +16,8 @@ export const Register = () => {
   const fileInputRef = useRef(null);
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
 
   const handleAvatarUpload = (e) => {
     const file = e.target.files?.[0];
@@ -46,7 +48,8 @@ export const Register = () => {
       setSuccessMsg('Account created & saved successfully!');
       const targetRole = result?.user?.role || role;
       setTimeout(() => {
-        if (targetRole === 'admin') navigate('/admin/dashboard');
+        if (from) navigate(from);
+        else if (targetRole === 'admin') navigate('/admin/dashboard');
         else if (targetRole === 'partner') navigate('/partner/dashboard');
         else navigate('/customer/dashboard');
       }, 1000);
@@ -66,7 +69,8 @@ export const Register = () => {
       setSuccessMsg('Google Account authenticated & registered!');
       const targetRole = result?.user?.role || role;
       setTimeout(() => {
-        if (targetRole === 'admin') navigate('/admin/dashboard');
+        if (from) navigate(from);
+        else if (targetRole === 'admin') navigate('/admin/dashboard');
         else if (targetRole === 'partner') navigate('/partner/dashboard');
         else navigate('/customer/dashboard');
       }, 1000);
@@ -284,7 +288,7 @@ export const Register = () => {
         {/* Footer Link to Login */}
         <div className="text-center pt-2 border-t border-slate-700/80 text-xs text-slate-300">
           Already have an account in LuxeStay?{' '}
-          <Link to="/login" className="font-extrabold text-amber-400 hover:underline ml-1 uppercase">
+          <Link to="/login" state={{ from }} className="font-extrabold text-amber-400 hover:underline ml-1 uppercase">
             SIGN IN NOW
           </Link>
         </div>

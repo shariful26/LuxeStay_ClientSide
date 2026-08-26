@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Building2, User, Briefcase, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -12,6 +12,8 @@ export const Login = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +28,8 @@ export const Login = () => {
     }
 
     const userRole = result?.user?.role || role;
-    if (userRole === 'admin') navigate('/admin/dashboard');
+    if (from) navigate(from);
+    else if (userRole === 'admin') navigate('/admin/dashboard');
     else if (userRole === 'partner') navigate('/partner/dashboard');
     else navigate('/customer/dashboard');
   };
@@ -43,7 +46,8 @@ export const Login = () => {
     }
 
     const userRole = result?.user?.role || role;
-    if (userRole === 'admin') navigate('/admin/dashboard');
+    if (from) navigate(from);
+    else if (userRole === 'admin') navigate('/admin/dashboard');
     else if (userRole === 'partner') navigate('/partner/dashboard');
     else navigate('/customer/dashboard');
   };
@@ -206,7 +210,7 @@ export const Login = () => {
         {/* Footer Link to Register */}
         <div className="text-center pt-2 border-t border-slate-700/80 text-xs text-slate-300">
           Don't have an account in LuxeStay?{' '}
-          <Link to="/register" className="font-extrabold text-amber-400 hover:underline ml-1 uppercase">
+          <Link to="/register" state={{ from }} className="font-extrabold text-amber-400 hover:underline ml-1 uppercase">
             REGISTER NOW
           </Link>
         </div>

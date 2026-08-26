@@ -461,21 +461,27 @@ a.btn:hover * {
 }
 
 .custom-table th {
-  padding: 1.1rem;
+  padding: 1.25rem 1.1rem;
   background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 800;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   white-space: nowrap;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.custom-table tr {
+  transition: background-color 0.15s ease;
 }
 
 .custom-table td {
-  padding: 1.1rem;
+  padding: 1.25rem 1.1rem;
   border-bottom: 1px solid var(--border-light);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 /* ==========================================================================

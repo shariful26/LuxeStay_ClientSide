@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Users, CheckCircle, CreditCard, ShieldCheck, Tag, Sparkles, ArrowRight, DollarSign, Globe, Smartphone, Building2, Check, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useBooking } from '../context/BookingContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -15,6 +16,8 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
   const { user } = useAuth();
   const { bookingDraft, updateBooking, toggleAddOn, applyCoupon, setActiveVoucher, setIsVoucherModalOpen } = useBooking();
   const { formatPrice } = useCurrency();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const modalCheckInRef = React.useRef(null);
   const modalCheckOutRef = React.useRef(null);
@@ -198,7 +201,7 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
       setBookingErrorMsg('🔒 Customer Account Required: Please log in or register to complete your suite reservation.');
       setTimeout(() => {
         onClose();
-        navigate('/login');
+        navigate('/login', { state: { from: location.pathname + location.search } });
       }, 1500);
       return;
     }

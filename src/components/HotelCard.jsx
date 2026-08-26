@@ -31,7 +31,7 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
                 <Sparkles className="w-3 h-3 text-amber-500" /> Featured
               </span>
             )}
-            <span className="badge badge-navy glass-card border border-white/20 text-white font-bold text-[10px] truncate max-w-[130px]">
+            <span className="badge badge-navy glass-card border border-[var(--border-light)] text-[var(--text-primary)] font-bold text-[10px] truncate max-w-[130px]">
               {hotel.category}
             </span>
           </div>
@@ -146,7 +146,7 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
               <Sparkles className="w-3 h-3 text-amber-500" /> Featured
             </span>
           )}
-          <span className="badge badge-navy glass-card border border-white/20 text-white font-bold text-[10px] truncate max-w-[130px]">
+          <span className="badge badge-navy glass-card border border-[var(--border-light)] text-[var(--text-primary)] font-bold text-[10px] truncate max-w-[130px]">
             {hotel.category}
           </span>
         </div>
