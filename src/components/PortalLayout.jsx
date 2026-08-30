@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { CustomerSidebar } from './CustomerSidebar';
 import { AdminSidebar } from './AdminSidebar';
-import { PartnerSidebar } from './PartnerSidebar';
+import { ManagerSidebar } from './ManagerSidebar';
+import { PortalFooter } from './PortalFooter';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 
@@ -22,10 +23,10 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
       else navigate('/login', { replace: true });
     } else if (role === 'admin' && user.role !== 'admin') {
       navigate('/admin/login', { replace: true });
-    } else if (role === 'partner' && user.role !== 'partner' && user.role !== 'admin') {
+    } else if (role === 'manager' && user.role !== 'manager' && user.role !== 'admin') {
       navigate('/login', { replace: true });
-    } else if (user?.role === 'partner' && role === 'customer') {
-      navigate('/partner/dashboard', { replace: true });
+    } else if (user?.role === 'manager' && role === 'customer') {
+      navigate('/manager/dashboard', { replace: true });
     } else if (user?.role === 'admin' && role === 'customer') {
       navigate('/admin/dashboard', { replace: true });
     }
@@ -52,7 +53,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
         desc: 'Overwater Sunset Plunge Pool Villa (BK-88492) reserved',
         time: '10 mins ago',
         read: isAllRead || readIds.includes('n1'),
-        link: role === 'admin' ? '/admin/bookings' : role === 'partner' ? '/partner/reservations' : '/customer/bookings'
+        link: role === 'admin' ? '/admin/bookings' : role === 'manager' ? '/manager/bookings' : '/customer/bookings'
       },
       {
         id: 'n2',
@@ -60,7 +61,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
         desc: '$500 transferred to SWIFT Bank Wire (PO-85552)',
         time: '1 hour ago',
         read: isAllRead || readIds.includes('n2'),
-        link: role === 'admin' ? '/admin/payouts' : role === 'partner' ? '/partner/wallet' : '/customer/bookings'
+        link: role === 'admin' ? '/admin/payouts' : role === 'manager' ? '/manager/wallet' : '/customer/bookings'
       },
       {
         id: 'n3',
@@ -179,8 +180,8 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
           isCollapsed={sidebarCollapsed} 
         />
       )}
-      {role === 'partner' && (
-        <PartnerSidebar 
+      {role === 'manager' && (
+        <ManagerSidebar 
           isOpen={sidebarOpen} 
           onClose={() => setSidebarOpen(false)} 
           isCollapsed={sidebarCollapsed} 
@@ -213,7 +214,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
             </Link>
 
             <h1 className="text-base sm:text-xl font-extrabold text-[var(--text-primary)] truncate max-w-[140px] xs:max-w-[220px] sm:max-w-none">
-              {title === 'Partner Portal' ? 'Hotel Owner / Manager Portal' : title}
+              {title === 'Partner Portal' || title === 'Manager Portal' ? 'Hotel Manager Hub' : title}
             </h1>
           </div>
 
@@ -336,7 +337,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
 
                     <div className="pt-2 border-t border-[var(--border-light)] text-center">
                       <Link 
-                        to={role === 'admin' ? '/admin/bookings' : role === 'partner' ? '/partner/bookings' : '/customer/bookings'}
+                        to={role === 'admin' ? '/admin/bookings' : role === 'manager' ? '/manager/bookings' : '/customer/bookings'}
                         onClick={() => setIsNotificationsOpen(false)}
                         className="text-[11px] font-bold text-amber-500 hover:underline"
                       >
@@ -372,7 +373,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
                     {user?.name || 'Portal User'}
                   </h4>
                   <span className="text-[9px] text-emerald-500 font-extrabold block capitalize tracking-wide mt-0.5">
-                    {user?.role === 'partner' || role === 'partner' ? 'Hotel Manager / Owner' : `${user?.role || role} Member`}
+                    {user?.role === 'manager' || role === 'manager' ? 'Hotel Manager / Owner' : `${user?.role || role} Member`}
                   </span>
                 </div>
               </div>
@@ -395,6 +396,9 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-7xl mx-auto flex-1">
           {children}
         </div>
+
+        {/* MINIMAL PREMIUM DASHBOARD FOOTER */}
+        <PortalFooter role={role} />
 
       </div>
 

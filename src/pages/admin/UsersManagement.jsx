@@ -119,7 +119,7 @@ export const UsersManagement = () => {
 
   const totalUsers = users.length;
   const customersCount = users.filter(u => u.role === 'customer').length;
-  const partnersCount = users.filter(u => u.role === 'partner').length;
+  const managersCount = users.filter(u => u.role === 'manager').length;
   const adminsCount = users.filter(u => u.role === 'admin').length;
 
   return (
@@ -128,7 +128,7 @@ export const UsersManagement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">User & Role Management</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Manage registered customers, hotel partners, and admin privileges dynamically</p>
+          <p className="text-xs text-[var(--text-secondary)]">Manage registered customers, hotel managers, and admin privileges dynamically</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
@@ -171,18 +171,18 @@ export const UsersManagement = () => {
         </div>
 
         <div 
-          onClick={() => setRoleFilter('partner')} 
+          onClick={() => setRoleFilter('manager')} 
           className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-            roleFilter === 'partner' 
+            roleFilter === 'manager'
               ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500 shadow-sm' 
               : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-emerald-500/40'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span>Hotel Partners</span>
+            <span>Hotel Managers</span>
             <Briefcase className="w-4 h-4 text-emerald-500" />
           </div>
-          <span className="text-xl font-extrabold text-[var(--text-primary)] block mt-1">{partnersCount}</span>
+          <span className="text-xl font-extrabold text-[var(--text-primary)] block mt-1">{managersCount}</span>
         </div>
 
         <div 
@@ -260,9 +260,9 @@ export const UsersManagement = () => {
                       <div className="flex items-center gap-2">
                         <span className={`badge ${
                           u.role === 'admin' ? 'badge-navy bg-indigo-500/15 text-indigo-400 border border-indigo-500/30' :
-                          u.role === 'partner' ? 'badge-emerald' : 'badge-gold'
+                          u.role === 'manager' ? 'badge-emerald' : 'badge-gold'
                         }`}>
-                          {u.role === 'admin' ? 'Super Admin' : u.role === 'partner' ? 'Hotel Partner' : 'Customer'}
+                          {u.role === 'admin' ? 'Super Admin' : u.role === 'manager' ? 'Hotel Manager' : 'Customer'}
                         </span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider">
                           <ShieldCheck className="w-3 h-3" /> Active
@@ -277,7 +277,7 @@ export const UsersManagement = () => {
                           className="p-2.5 py-1.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs font-bold text-[var(--text-primary)] outline-none cursor-pointer hover:border-amber-500 transition-colors shadow-xs"
                         >
                           <option value="customer" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Customer</option>
-                          <option value="partner" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Partner</option>
+                          <option value="manager" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Manager</option>
                           <option value="admin" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Super Admin</option>
                         </select>
                         <button 
@@ -412,7 +412,7 @@ export const UsersManagement = () => {
                     className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold cursor-pointer"
                   >
                     <option value="customer" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Customer</option>
-                    <option value="partner" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Partner</option>
+                    <option value="manager" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Hotel Manager</option>
                     <option value="admin" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Super Admin</option>
                   </select>
                 </div>

@@ -3,7 +3,7 @@ import { ShieldAlert, CheckCircle, Clock, Hammer, HelpCircle, Save, Filter, Sear
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
-export const PartnerHousekeeping = () => {
+export const ManagerHousekeeping = () => {
   const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -137,7 +137,7 @@ export const PartnerHousekeeping = () => {
   });
 
   return (
-    <PortalLayout role="partner" title="Housekeeping Tracker">
+    <PortalLayout role="manager" title="Housekeeping Tracker">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* HEADER CONTROLS */}
@@ -348,3 +348,6 @@ export const PartnerHousekeeping = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerHousekeeping = ManagerHousekeeping;
+export default ManagerHousekeeping;

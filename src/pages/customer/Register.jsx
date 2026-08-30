@@ -50,7 +50,7 @@ export const Register = () => {
       setTimeout(() => {
         if (from) navigate(from);
         else if (targetRole === 'admin') navigate('/admin/dashboard');
-        else if (targetRole === 'partner') navigate('/partner/dashboard');
+        else if (targetRole === 'manager') navigate('/manager/dashboard');
         else navigate('/customer/dashboard');
       }, 1000);
     }
@@ -71,7 +71,7 @@ export const Register = () => {
       setTimeout(() => {
         if (from) navigate(from);
         else if (targetRole === 'admin') navigate('/admin/dashboard');
-        else if (targetRole === 'partner') navigate('/partner/dashboard');
+        else if (targetRole === 'manager') navigate('/manager/dashboard');
         else navigate('/customer/dashboard');
       }, 1000);
     }
@@ -110,9 +110,11 @@ export const Register = () => {
         
         {/* Header Title & Subtitle */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/50 text-amber-400 flex items-center justify-center font-bold shadow-lg">
-            <Building2 className="w-6 h-6" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="LuxeStay" 
+            className="w-14 h-14 mx-auto rounded-full object-cover shadow-xl shadow-amber-500/25 ring-2 ring-amber-500/40" 
+          />
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-wide uppercase">
             REGISTER FORM
           </h1>
@@ -134,9 +136,9 @@ export const Register = () => {
           </button>
           <button 
             type="button" 
-            onClick={() => setRole('partner')}
+            onClick={() => setRole('manager')}
             className={`py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              role === 'partner' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
+              role === 'manager' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
             }`}
           >
             <Briefcase className="w-4 h-4" /> Hotel Manager / Owner
@@ -256,7 +258,7 @@ export const Register = () => {
               </>
             ) : (
               <>
-                <span>REGISTER AS {role === 'partner' ? 'HOTEL MANAGER' : role.toUpperCase()}</span>
+                <span>REGISTER AS {role === 'manager' ? 'HOTEL MANAGER' : role.toUpperCase()}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

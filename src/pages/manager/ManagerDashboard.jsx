@@ -7,7 +7,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-export const PartnerDashboard = () => {
+export const ManagerDashboard = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const [hotels, setHotels] = useState([]);
@@ -101,7 +101,7 @@ export const PartnerDashboard = () => {
   const expediaPercent = 100 - directBookingPercent - bookingComPercent - airbnbPercent;
 
   return (
-    <PortalLayout role="partner" title="LuxStay Dashboard">
+    <PortalLayout role="manager" title="LuxStay Dashboard">
       <div className="space-y-6 pb-12 font-sans text-slate-800 animate-fade-in">
         
 
@@ -490,3 +490,6 @@ export const PartnerDashboard = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerDashboard = ManagerDashboard;
+export default ManagerDashboard;

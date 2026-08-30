@@ -3,7 +3,7 @@ import { Star, MessageSquare, Globe, ChevronDown, Check, Reply, Filter, Smile, F
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
-export const PartnerReviews = () => {
+export const ManagerReviews = () => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [replyInputs, setReplyInputs] = useState({});
@@ -164,7 +164,7 @@ export const PartnerReviews = () => {
   const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview);
 
   return (
-    <PortalLayout role="partner" title="Guest Reviews & Ratings">
+    <PortalLayout role="manager" title="Guest Reviews & Ratings">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* TITLE PAGE HEADER */}
@@ -513,4 +513,5 @@ export const PartnerReviews = () => {
   );
 };
 
-export default PartnerReviews;
+export const PartnerReviews = ManagerReviews;
+export default ManagerReviews;

@@ -63,7 +63,7 @@ export const AuthModal = () => {
     setIsAuthModalOpen(false);
     const userRole = result?.user?.role || role;
     if (userRole === 'admin') navigate('/admin/dashboard');
-    else if (userRole === 'partner') navigate('/partner/dashboard');
+    else if (userRole === 'manager') navigate('/manager/dashboard');
     else navigate('/customer/dashboard');
   };
 
@@ -81,7 +81,7 @@ export const AuthModal = () => {
     setIsAuthModalOpen(false);
     const userRole = result?.user?.role || role;
     if (userRole === 'admin') navigate('/admin/dashboard');
-    else if (userRole === 'partner') navigate('/partner/dashboard');
+    else if (userRole === 'manager') navigate('/manager/dashboard');
     else navigate('/customer/dashboard');
   };
 
@@ -125,9 +125,11 @@ export const AuthModal = () => {
 
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/50 text-amber-400 flex items-center justify-center font-bold">
-            <Lock className="w-6 h-6" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="LuxeStay" 
+            className="w-14 h-14 mx-auto rounded-full object-cover shadow-xl ring-2 ring-amber-500/40" 
+          />
           <h3 className="text-2xl font-extrabold text-white">
             {isRegister ? t('createAccount') : t('welcomeBack')}
           </h3>
@@ -146,12 +148,12 @@ export const AuthModal = () => {
           </button>
           <button 
             type="button" 
-            onClick={() => setRole('partner')}
+            onClick={() => setRole('manager')}
             className={`py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              role === 'partner' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
+              role === 'manager' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" /> {t('partnerPortal')}
+            <Briefcase className="w-3.5 h-3.5" /> Hotel Manager / Owner
           </button>
         </div>
 

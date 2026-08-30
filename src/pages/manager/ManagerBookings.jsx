@@ -4,7 +4,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-export const PartnerBookings = () => {
+export const ManagerBookings = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   
@@ -201,7 +201,7 @@ export const PartnerBookings = () => {
   ) : [];
 
   return (
-    <PortalLayout role="partner" title="LuxStay Reservations">
+    <PortalLayout role="manager" title="LuxStay Reservations">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* VIEW 1: Reservation List View */}
@@ -915,3 +915,6 @@ export const PartnerBookings = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerBookings = ManagerBookings;
+export default ManagerBookings;

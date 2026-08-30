@@ -4,8 +4,8 @@ import { ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, KeyRound, Building2, 
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLogin = () => {
-  const [email, setEmail] = useState('admin@luxestay.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -27,11 +27,6 @@ export const AdminLogin = () => {
 
     setLoading(false);
     navigate('/admin/dashboard');
-  };
-
-  const handleAutofillDemoAdmin = () => {
-    setEmail('admin@luxestay.com');
-    setPassword('admin123');
   };
 
   return (
@@ -63,6 +58,13 @@ export const AdminLogin = () => {
 
         {/* Header Badge & Title */}
         <div className="text-center space-y-3">
+          <div className="flex justify-center mb-1">
+            <img 
+              src="/logo.png" 
+              alt="LuxeStay" 
+              className="w-16 h-16 rounded-full object-cover shadow-xl shadow-amber-500/25 ring-2 ring-amber-500/40" 
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-4 h-4 text-amber-400" /> Super Admin Portal Gateway
           </div>
@@ -133,15 +135,15 @@ export const AdminLogin = () => {
           </button>
         </form>
 
-        {/* Demo Quick Auto-Fill Banner */}
+        {/* Real Admin Credentials Helper */}
         <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-          <span className="text-slate-400 text-[11px]">🔐 Encrypted Session</span>
+          <span className="text-slate-400 text-[11px]">🔐 Real Admin Session</span>
           <button
             type="button"
-            onClick={handleAutofillDemoAdmin}
+            onClick={() => { setEmail('sharif@gmail.com'); setPassword('123456'); }}
             className="text-amber-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer"
           >
-            <KeyRound className="w-3.5 h-3.5" /> Auto-fill Demo Credentials
+            <KeyRound className="w-3.5 h-3.5" /> Fill Real Admin Credentials
           </button>
         </div>
 

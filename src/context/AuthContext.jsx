@@ -148,11 +148,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('luxestay_user');
       return;
     }
+    const effectiveRole = role === 'manager' ? 'manager' : role;
     const switchedUser = {
-      id: `u_${role}_demo`,
-      name: role === 'admin' ? 'Platform Administrator' : role === 'partner' ? 'Partner Manager' : 'Luxe Guest',
-      email: `${role}@luxestay.com`,
-      role: role,
+      id: `u_${effectiveRole}_demo`,
+      name: role === 'admin' ? 'Platform Administrator' : role === 'manager' ? 'Hotel Manager' : 'Luxe Guest',
+      email: `${effectiveRole}@luxestay.com`,
+      role: effectiveRole,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       phone: '+1 (555) 000-9988',
       country: 'United States'

@@ -74,7 +74,7 @@ export const AddEditHotel = () => {
       partnerId: user?.id || `p_${Date.now()}`,
       partnerEmail: user?.email || '',
       partnerName: user?.name || user?.companyName || 'Aura Hospitality',
-      status: 'Pending Approval'
+      status: 'Pending'
     };
 
     try {
@@ -90,18 +90,18 @@ export const AddEditHotel = () => {
     setLoading(false);
     setSubmitted(true);
     setTimeout(() => {
-      navigate('/partner/hotels');
+      navigate('/manager/hotels');
     }, 600);
   };
 
   return (
-    <PortalLayout role="partner" title="Hotel Property Editor">
+    <PortalLayout role="manager" title="Hotel Property Editor">
       <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
         
         {/* Header Navigation & Title */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-[var(--border-light)] pb-4">
           <div>
-            <Link to="/partner/hotels" className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline mb-1">
+            <Link to="/manager/hotels" className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline mb-1">
               <ArrowLeft className="w-4 h-4" /> Back to Property Manager
             </Link>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] flex items-center gap-2">

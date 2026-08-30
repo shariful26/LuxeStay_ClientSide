@@ -95,7 +95,7 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
   };
 
   return (
-    <PortalLayout role={activeRole === 'partner' ? 'partner' : activeRole === 'admin' ? 'admin' : 'customer'} title={mode === 'password' ? 'Security & Password Reset' : activeRole === 'partner' ? 'Partner Account Settings' : 'Profile Settings'}>
+    <PortalLayout role={activeRole === 'manager' ? 'manager' : activeRole === 'admin' ? 'admin' : 'customer'} title={mode === 'password' ? 'Security & Password Reset' : activeRole === 'manager' ? 'Manager Account Settings' : 'Profile Settings'}>
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">
           {mode === 'password' ? 'Security & Password Reset' : 'Profile Settings'}

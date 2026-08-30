@@ -36,13 +36,14 @@ export const MyHotels = () => {
   }, [user]);
 
   return (
-    <PortalLayout role="partner" title="My Hotel Listings">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">My Hotel Listings</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Manage your listed hotels, suites, and property settings</p>
-        </div>
-        <Link to="/partner/hotels/new" className="btn btn-primary text-xs py-2.5 px-4 flex items-center gap-2 self-start sm:self-auto">
+    <PortalLayout role="manager" title="My Hotel Listings">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">My Hotel Listings</h1>
+            <p className="text-xs text-[var(--text-secondary)]">Manage your registered hotel properties and status</p>
+          </div>
+          <Link to="/manager/hotels/new" className="btn btn-primary text-xs py-2.5 px-4 flex items-center gap-2 self-start sm:self-auto">
           <Plus className="w-4 h-4" /> Add Hotel
         </Link>
       </div>
@@ -68,6 +69,7 @@ export const MyHotels = () => {
                   <td className="text-xs">{h.destination}</td>
                   <td><span className="badge badge-navy">{h.category}</span></td>
                   <td className="font-extrabold text-amber-500">{formatPrice(h.pricePerNight)}</td>
+                  <td className="font-bold text-amber-500">★ {h.rating || 5.0}</td>
                   <td>
                     {h.status === 'Approved' ? (
                       <span className="badge badge-emerald flex items-center gap-1 w-max">Approved & Active</span>
@@ -82,7 +84,7 @@ export const MyHotels = () => {
                       <Link to={`/hotels/${h.id}`} className="p-1.5 rounded-lg border border-[var(--border-light)] hover:bg-[var(--bg-tertiary)]" title="Preview">
                         <Eye className="w-4 h-4 text-slate-400" />
                       </Link>
-                      <Link to={`/partner/hotels/${h.id}/edit`} className="p-1.5 rounded-lg border border-[var(--border-light)] hover:bg-[var(--bg-tertiary)]" title="Edit">
+                      <Link to={`/manager/hotels/${h.id}/edit`} className="p-1.5 rounded-lg border border-[var(--border-light)] hover:bg-[var(--bg-tertiary)]" title="Edit">
                         <Edit className="w-4 h-4 text-amber-500" />
                       </Link>
                     </div>
@@ -93,6 +95,7 @@ export const MyHotels = () => {
           </table>
         </div>
       </div>
-    </PortalLayout>
+    </div>
+  </PortalLayout>
   );
 };

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useMessages } from '../context/MessageContext';
 
 export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
@@ -12,10 +13,12 @@ export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
   const { theme, toggleTheme } = useTheme();
   const [customerOpen, setCustomerOpen] = useState(true);
   const [isSidebarSettingsOpen, setIsSidebarSettingsOpen] = useState(false);
+  const { unreadCount } = useMessages();
 
   const navItems = [
     { label: 'My Overview', path: '/customer/dashboard' },
     { label: 'My Bookings', path: '/customer/bookings' },
+    { label: 'My Messages', path: '/customer/messages' },
     { label: 'Saved Wishlist', path: '/customer/wishlist' },
   ];
 
@@ -40,14 +43,21 @@ export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
           
           {/* Brand Logo & Mobile Close */}
           <div className="flex items-center justify-between pb-4 border-b border-[var(--border-light)]">
-            <Link to="/customer/dashboard" onClick={() => onClose && onClose()} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30 flex-shrink-0">
-                <Building2 className="w-5 h-5" />
-              </div>
+            <Link to="/customer/dashboard" onClick={() => onClose && onClose()} className="flex items-center gap-2.5">
+              <img 
+                src="/logo.png" 
+                alt="LuxeStay" 
+                className="h-11 w-auto object-contain drop-shadow-md flex-shrink-0" 
+              />
               {(!isCollapsed || isOpen) && (
-                <span className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
-                  LUXESTAY
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-base font-extrabold text-[var(--text-primary)] tracking-tight whitespace-nowrap leading-none">
+                    LUXESTAY
+                  </span>
+                  <span className="text-[8px] uppercase font-extrabold tracking-widest text-amber-500 mt-0.5">
+                    Guest Portal
+                  </span>
+                </div>
               )}
             </Link>
 
@@ -97,13 +107,18 @@ export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
                         key={idx}
                         to={item.path}
                         onClick={() => onClose && onClose()}
-                        className={`block py-2 px-3 rounded-lg transition-colors font-semibold ${
+                        className={`flex items-center justify-between py-2 px-3 rounded-lg transition-colors font-semibold ${
                           isActive 
                             ? 'bg-amber-500/10 text-amber-500 font-extrabold' 
                             : 'text-[var(--text-secondary)] hover:text-amber-500 hover:bg-[var(--bg-tertiary)]'
                         }`}
                       >
-                        • {item.label}
+                        <span>• {item.label}</span>
+                        {item.label === 'My Messages' && unreadCount > 0 && (
+                          <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                            {unreadCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -197,12 +212,6 @@ export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
             </button>
           </div>
         </div>
-
-        {(!isCollapsed || isOpen) && (
-          <div className="p-4 border-t border-[var(--border-light)] text-[10px] text-center text-[var(--text-muted)] font-semibold">
-            LuxeStay Guest VIP Club © 2026
-          </div>
-        )}
       </aside>
     </>
   );

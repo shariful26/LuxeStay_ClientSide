@@ -3,7 +3,7 @@ import { UserCheck, ShieldAlert, CheckCircle, Clock, Plus, X, Search, Filter, Ph
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
-export const PartnerConcierge = () => {
+export const ManagerConcierge = () => {
   const { user } = useAuth();
   
   // Navigation tabs: 'staff' (Directory/Roster) or 'requests' (Guest Requests logs)
@@ -120,7 +120,7 @@ export const PartnerConcierge = () => {
   });
 
   return (
-    <PortalLayout role="partner" title="Concierge Desk Operations">
+    <PortalLayout role="manager" title="Concierge Desk Operations">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* TITLE HEADER & TAB SWITCHER */}
@@ -499,4 +499,5 @@ export const PartnerConcierge = () => {
   );
 };
 
-export default PartnerConcierge;
+export const PartnerConcierge = ManagerConcierge;
+export default ManagerConcierge;

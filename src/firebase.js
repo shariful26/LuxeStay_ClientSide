@@ -2,12 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDHjBUAnesZz9cii6urWpt_z0pnVSV2J_k",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "luxestay-873bf.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "luxestay-873bf",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "luxestay-873bf.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "415954915259",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:415954915259:web:e7a44f627754f50d2abe9e"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
 // Initialize Firebase

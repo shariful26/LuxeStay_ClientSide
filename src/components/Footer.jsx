@@ -18,11 +18,16 @@ export const Footer = () => {
         
         {/* Brand & Intro */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
-              <Building2 className="w-5 h-5" />
+          <div className="flex items-center gap-3.5">
+            <img 
+              src="/logo.png" 
+              alt="LuxeStay" 
+              className="h-14 w-auto object-contain drop-shadow-lg" 
+            />
+            <div>
+              <span className="text-2xl font-black text-white tracking-tight block leading-none">LUXESTAY</span>
+              <span className="text-[9px] uppercase font-extrabold tracking-widest text-amber-400 block mt-1">Luxury Hospitality</span>
             </div>
-            <span className="text-xl font-extrabold text-white tracking-tight">LUXESTAY</span>
           </div>
           <p className="text-sm leading-relaxed text-slate-400 pr-4">
             The world's premier marketplace for luxury overwater bungalows, 5-star cliffside suites, traditional Japanese Ryokans, and high-altitude alpine chalets.

@@ -91,12 +91,12 @@ export const ForgotPassword = () => {
           </button>
           <button 
             type="button" 
-            onClick={() => handleRoleChange('partner')}
+            onClick={() => handleRoleChange('manager')}
             className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              role === 'partner' ? 'bg-emerald-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
+              role === 'manager' ? 'bg-emerald-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" /> Partner
+            <Briefcase className="w-3.5 h-3.5" /> Manager
           </button>
           <button 
             type="button" 

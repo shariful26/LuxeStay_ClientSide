@@ -48,9 +48,11 @@ export const VoucherModal = () => {
         {/* Voucher Header Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md flex-shrink-0">
-              <Building2 className="w-6 h-6" />
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="LuxeStay" 
+              className="w-12 h-12 rounded-full object-cover shadow-md ring-2 ring-amber-500/30 flex-shrink-0" 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-black text-slate-900 tracking-tight">LUXESTAY</h2>

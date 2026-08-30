@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Sparkles, Star, ShieldCheck, Award, MapPin, ArrowRight, Building2, 
-  CheckCircle2, Flame, HeartHandshake, Utensils, Waves, Bed, Compass, 
+import {
+  Sparkles, Star, ShieldCheck, Award, MapPin, ArrowRight, Building2,
+  CheckCircle2, Flame, HeartHandshake, Utensils, Waves, Bed, Compass,
   ChevronLeft, ChevronRight, Zap, Tag, Gift, Percent, Clock, Plus, X
 } from 'lucide-react';
 import { SearchBar } from '../../components/SearchBar';
@@ -266,11 +266,10 @@ export const Home = () => {
               <button
                 key={tab.label}
                 onClick={() => setActiveCategory(tab.category)}
-                className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all border ${
-                  activeCategory === tab.category
+                className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all border ${activeCategory === tab.category
                     ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/30'
                     : 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-md'
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -283,7 +282,7 @@ export const Home = () => {
       {/* 3. LIVE INTERACTIVE AUTO-PLAYING LUXURY CAROUSEL SHOWCASE */}
       <section className="container">
         <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl space-y-6">
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-light)]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold">
@@ -299,8 +298,8 @@ export const Home = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 mr-2">
                 {CAROUSEL_SLIDES.map((_, idx) => (
-                  <button 
-                    key={idx} 
+                  <button
+                    key={idx}
                     onClick={() => setCurrentSlideIndex(idx)}
                     className={`h-2 rounded-full transition-all ${currentSlideIndex === idx ? 'w-6 bg-amber-500' : 'w-2 bg-[var(--border-light)]'}`}
                     aria-label={`Go to slide ${idx + 1}`}
@@ -308,14 +307,14 @@ export const Home = () => {
                 ))}
               </div>
 
-              <button 
+              <button
                 onClick={prevSlide}
                 className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors"
                 title="Previous Slide"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button 
+              <button
                 onClick={nextSlide}
                 className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors"
                 title="Next Slide"
@@ -326,17 +325,17 @@ export const Home = () => {
           </div>
 
           {/* Active Carousel Card Slide */}
-          <div 
+          <div
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             className="relative rounded-3xl overflow-hidden border border-[var(--border-light)] shadow-2xl grid grid-cols-1 lg:grid-cols-12 max-h-[600px] lg:max-h-[380px] group transition-all animate-fade-in"
           >
             {/* Left Image Column */}
             <div className="lg:col-span-7 relative h-64 sm:h-80 lg:h-[380px] overflow-hidden">
-              <img 
-                src={activeSlide.image} 
+              <img
+                src={activeSlide.image}
                 alt={activeSlide.title}
-                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 brightness-95" 
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 brightness-95"
               />
               <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
                 <span className="badge badge-gold font-extrabold text-[10px] shadow-lg">{activeSlide.tag}</span>
@@ -346,7 +345,7 @@ export const Home = () => {
 
             {/* Right Details Column */}
             <div className="lg:col-span-5 p-6 sm:p-8 bg-[var(--bg-tertiary)] flex flex-col justify-between space-y-6">
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1 text-[var(--text-muted)] font-bold">
@@ -383,7 +382,7 @@ export const Home = () => {
                   <span className="text-[10px] text-[var(--text-muted)] font-semibold block">per night • taxes included</span>
                 </div>
 
-                <Link 
+                <Link
                   to={`/hotels/${activeSlide.hotelId}`}
                   className="btn btn-primary px-6 py-3 text-xs font-extrabold shadow-lg shadow-amber-500/30 flex items-center gap-2"
                 >
@@ -477,13 +476,11 @@ export const Home = () => {
       {/* 6. OUR GALLERY SHOWCASE (CONTAINED LUXURY CARD DESIGN) */}
       <section id="gallery" className="container">
         <div className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl space-y-10">
-          
-          {/* Header with Gold Flourish Line */}
+
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-5xl font-serif tracking-wide text-[var(--text-primary)]">
               {t('ourGallery')}
             </h2>
-            {/* Gold Filigree Line Ornament */}
             <div className="flex items-center justify-center gap-3">
               <div className="w-16 h-[1px] bg-gradient-to-r from-transparent to-amber-500"></div>
               <Sparkles className="w-4 h-4 text-amber-500" />
@@ -493,8 +490,6 @@ export const Home = () => {
               {t('gallerySub')}
             </p>
           </div>
-
-          {/* Category Filter Tabs */}
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             {[
               { key: 'ALL PHOTOS', label: t('allPhotos') },
@@ -506,35 +501,28 @@ export const Home = () => {
               <button
                 key={tab.key}
                 onClick={() => setGalleryCategory(tab.key)}
-                className={`px-5 py-2 rounded-xl text-xs font-extrabold tracking-wider transition-all uppercase cursor-pointer border ${
-                  galleryCategory === tab.key
+                className={`px-5 py-2 rounded-xl text-xs font-extrabold tracking-wider transition-all uppercase cursor-pointer border ${galleryCategory === tab.key
                     ? 'bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-600/30'
                     : 'bg-[var(--bg-tertiary)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/50 hover:text-[var(--text-primary)]'
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-
-          {/* 4-Column Responsive Grid matching container bounds */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredGalleryPhotos.map((photo) => (
-              <div 
+              <div
                 key={photo.id}
                 onClick={() => setSelectedLightboxImage(photo)}
                 className="group relative h-72 rounded-2xl overflow-hidden cursor-pointer shadow-md border border-[var(--border-light)] hover:border-amber-500/50 transition-all"
               >
-                <img 
-                  src={photo.image} 
+                <img
+                  src={photo.image}
                   alt={photo.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-[0.92]" 
-                />
-                
-                {/* Dark Translucent Overlay on Hover */}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-[0.92]" />
                 <div className="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center space-y-3 p-4 text-center">
-                  
-                  {/* Plus Zoom Icon */}
+
                   <div className="w-11 h-11 rounded-full bg-white text-slate-950 flex items-center justify-center font-bold shadow-2xl group-hover:scale-110 transition-transform duration-300">
                     <Plus className="w-5 h-5 stroke-[2.5]" />
                   </div>
@@ -549,9 +537,8 @@ export const Home = () => {
             ))}
           </div>
 
-          {/* VIEW MORE Outline Button */}
           <div className="text-center pt-2">
-            <button 
+            <button
               onClick={() => setSelectedLightboxImage(filteredGalleryPhotos[0])}
               className="px-8 py-3.5 rounded-xl border-2 border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white text-xs font-extrabold tracking-widest uppercase transition-all shadow-sm cursor-pointer"
             >
@@ -564,7 +551,7 @@ export const Home = () => {
         {/* Lightbox Modal */}
         {selectedLightboxImage && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in">
-            <button 
+            <button
               onClick={() => setSelectedLightboxImage(null)}
               className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-rose-600 transition-colors z-50 cursor-pointer"
             >
@@ -572,10 +559,10 @@ export const Home = () => {
             </button>
 
             <div className="max-w-4xl w-full max-h-[85vh] space-y-4 text-center animate-fade-in">
-              <img 
-                src={selectedLightboxImage.image} 
+              <img
+                src={selectedLightboxImage.image}
                 alt={selectedLightboxImage.title}
-                className="max-h-[70vh] max-w-full mx-auto object-contain rounded-2xl border border-white/20 shadow-2xl" 
+                className="max-h-[70vh] max-w-full mx-auto object-contain rounded-2xl border border-white/20 shadow-2xl"
               />
               <div className="space-y-1">
                 <span className="badge badge-gold text-[10px]">{selectedLightboxImage.category}</span>

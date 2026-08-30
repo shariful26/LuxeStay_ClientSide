@@ -4,7 +4,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-export const PartnerCalendar = () => {
+export const ManagerCalendar = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const [bookings, setBookings] = useState([]);
@@ -83,7 +83,7 @@ export const PartnerCalendar = () => {
   };
 
   return (
-    <PortalLayout role="partner" title="Visual Reservation Calendar">
+    <PortalLayout role="manager" title="Visual Reservation Calendar">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* TOP ROW CALENDAR TITLE & MONTH SELECTOR */}
@@ -216,3 +216,6 @@ export const PartnerCalendar = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerCalendar = ManagerCalendar;
+export default ManagerCalendar;

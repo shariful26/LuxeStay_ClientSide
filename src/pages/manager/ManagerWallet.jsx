@@ -4,7 +4,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-export const PartnerWallet = () => {
+export const ManagerWallet = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const [payouts, setPayouts] = useState([]);
@@ -472,7 +472,7 @@ export const PartnerWallet = () => {
   const currentTransactions = filteredTransactions.slice(indexOfFirstTx, indexOfLastTx);
 
   return (
-    <PortalLayout role="partner" title="Financials & Wallet">
+    <PortalLayout role="manager" title="Financials & Wallet">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* PAGE TITLE & VAULT CONTROLS */}
@@ -1256,3 +1256,6 @@ export const PartnerWallet = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerWallet = ManagerWallet;
+export default ManagerWallet;

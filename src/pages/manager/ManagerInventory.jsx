@@ -3,7 +3,7 @@ import { Plus, X, Search, Edit2, RotateCcw, AlertTriangle, CheckCircle, HelpCirc
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
-export const PartnerInventory = () => {
+export const ManagerInventory = () => {
   const { user } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +115,7 @@ export const PartnerInventory = () => {
   });
 
   return (
-    <PortalLayout role="partner" title="Supply Inventory Manager">
+    <PortalLayout role="manager" title="Supply Inventory Manager">
       <div className="w-full space-y-6 font-sans text-slate-800 animate-fade-in pb-12">
         
         {/* HEADER CONTROLS */}
@@ -342,3 +342,6 @@ export const PartnerInventory = () => {
     </PortalLayout>
   );
 };
+
+export const PartnerInventory = ManagerInventory;
+export default ManagerInventory;

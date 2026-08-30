@@ -126,6 +126,27 @@ select,
 textarea {
   font-family: inherit;
   font-size: 0.95rem;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Chrome autofill background & text color fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #020617 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Ensure all native select dropdown options have clear contrast and background in light/dark modes */
@@ -560,4 +581,22 @@ a.btn:hover * {
     size: A4 portrait;
     margin: 10mm 12mm;
   }
+}
+
+/* ==========================================================================
+   Side-Sliding Message Toast Animations
+   ========================================================================== */
+@keyframes slideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

@@ -45,14 +45,21 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
           
           {/* Brand Logo & Mobile Close */}
           <div className="flex items-center justify-between pb-4 border-b border-[var(--border-light)]">
-            <Link to="/admin/dashboard" onClick={() => onClose && onClose()} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30 flex-shrink-0">
-                <Building2 className="w-5 h-5" />
-              </div>
+            <Link to="/admin/dashboard" onClick={() => onClose && onClose()} className="flex items-center gap-2.5">
+              <img 
+                src="/logo.png" 
+                alt="LuxeStay" 
+                className="h-11 w-auto object-contain drop-shadow-md flex-shrink-0" 
+              />
               {(!isCollapsed || isOpen) && (
-                <span className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
-                  LUXESTAY
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-base font-extrabold text-[var(--text-primary)] tracking-tight whitespace-nowrap leading-none">
+                    LUXESTAY
+                  </span>
+                  <span className="text-[8px] uppercase font-extrabold tracking-widest text-amber-500 mt-0.5">
+                    Admin Portal
+                  </span>
+                </div>
               )}
             </Link>
 
@@ -215,12 +222,6 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
             </button>
           </div>
         </div>
-
-        {(!isCollapsed || isOpen) && (
-          <div className="p-4 border-t border-[var(--border-light)] text-[10px] text-center text-[var(--text-muted)] font-semibold">
-            LuxeStay © 2026 Admin Portal
-          </div>
-        )}
       </aside>
     </>
   );

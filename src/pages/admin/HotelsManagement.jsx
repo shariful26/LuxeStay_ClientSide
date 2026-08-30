@@ -54,7 +54,7 @@ export const HotelsManagement = () => {
     pricePerNight: 450,
     partnerName: 'Aura Hospitality',
     rating: 4.9,
-    status: 'Approved',
+    status: 'Pending',
     image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
     description: '',
     address: 'Caldera Cliffside, Santorini, Greece'
@@ -103,6 +103,14 @@ export const HotelsManagement = () => {
     }
   };
 
+  const getNormalizedStatus = (status) => {
+    if (!status) return 'Pending';
+    const s = String(status).toLowerCase();
+    if (s === 'approved' || s === 'active') return 'Approved';
+    if (s === 'rejected') return 'Rejected';
+    return 'Pending';
+  };
+
   const openAddModal = () => {
     setEditingHotel(null);
     setFormData({
@@ -112,7 +120,7 @@ export const HotelsManagement = () => {
       pricePerNight: 450,
       partnerName: 'Aura Hospitality',
       rating: 4.9,
-      status: 'Approved',
+      status: 'Pending',
       image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
       description: '',
       address: 'Caldera Cliffside, Santorini, Greece'
@@ -337,6 +345,7 @@ export const HotelsManagement = () => {
                   <th className="pl-6">Property & Brand Details</th>
                   <th>Location & Base Rate</th>
                   <th>Listing Authority</th>
+                  <th>Approval Status</th>
                   <th className="pr-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -374,35 +383,34 @@ export const HotelsManagement = () => {
                       </div>
                     </td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        {/* Featured status toggle */}
-                        <button 
-                          onClick={() => toggleFeatured(h)}
-                          className={`btn text-[10px] py-1.5 px-2.5 rounded-lg flex items-center gap-1 shadow-xs cursor-pointer transition-all ${
-                            h.featured 
-                              ? 'bg-amber-500 text-white font-extrabold border border-amber-500' 
-                              : 'border border-[var(--border-light)] text-[var(--text-secondary)] bg-transparent font-bold hover:border-amber-500/40'
-                          }`}
-                          title="Click to toggle Featured status"
-                        >
-                          <Sparkles className="w-3 h-3" /> {h.featured ? 'Featured' : 'Feature'}
-                        </button>
-
-                        {/* Interactive Status Changer Dropdown */}
-                        <select 
-                          value={h.status || 'Pending'} 
-                          onChange={(e) => updateHotelStatus(h, e.target.value)}
-                          className={`px-2 py-1 rounded-md text-[10px] font-extrabold outline-none cursor-pointer border transition-colors shadow-xs ${
-                            h.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
-                            h.status === 'Rejected' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' :
-                            'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 animate-pulse'
-                          }`}
-                        >
-                          <option value="Approved" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Approved</option>
-                          <option value="Pending" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Pending</option>
-                          <option value="Rejected" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Rejected</option>
-                        </select>
-                      </div>
+                      {/* Featured status toggle */}
+                      <button 
+                        onClick={() => toggleFeatured(h)}
+                        className={`btn text-[10px] py-1.5 px-2.5 rounded-lg flex items-center gap-1 shadow-xs cursor-pointer transition-all ${
+                          h.featured 
+                            ? 'bg-amber-500 text-white font-extrabold border border-amber-500' 
+                            : 'border border-[var(--border-light)] text-[var(--text-secondary)] bg-transparent font-bold hover:border-amber-500/40'
+                        }`}
+                        title="Click to toggle Featured status"
+                      >
+                        <Sparkles className="w-3 h-3" /> {h.featured ? 'Featured' : 'Feature'}
+                      </button>
+                    </td>
+                    <td>
+                      {/* Interactive Status Changer Dropdown */}
+                      <select 
+                        value={getNormalizedStatus(h.status)} 
+                        onChange={(e) => updateHotelStatus(h, e.target.value)}
+                        className={`px-2 py-1 rounded-md text-[10px] font-extrabold outline-none cursor-pointer border transition-colors shadow-xs ${
+                          getNormalizedStatus(h.status) === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
+                          getNormalizedStatus(h.status) === 'Rejected' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' :
+                          'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 animate-pulse'
+                        }`}
+                      >
+                        <option value="Approved" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Approved</option>
+                        <option value="Pending" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Pending</option>
+                        <option value="Rejected" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Rejected</option>
+                      </select>
                     </td>
                     <td className="pr-6">
                       <div className="flex items-center justify-end gap-1.5">

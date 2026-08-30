@@ -56,7 +56,7 @@ export const RoomManagement = () => {
             .then(res => res.json())
             .then(roomsData => {
               if (Array.isArray(roomsData)) {
-                const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId) || (!r.hotelId && user.role === 'partner'));
+                const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId) || (!r.hotelId && user.role === 'manager'));
                 setRooms(myRooms);
                 if (myRooms.length > 0 && !selectedRoom) {
                   setSelectedRoom(myRooms[0]);
@@ -194,7 +194,7 @@ export const RoomManagement = () => {
   ].filter(Boolean).slice(0, 4) : [];
 
   return (
-    <PortalLayout role="partner" title="LuxStay Room Management">
+    <PortalLayout role="manager" title="LuxStay Room Management">
       <div className="max-w-7xl mx-auto space-y-6 font-sans animate-fade-in text-slate-800 pb-12">
         
         {/* split main layout */}
