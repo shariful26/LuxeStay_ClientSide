@@ -1,9 +1,12 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const PrivacyPolicy = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="container max-w-4xl pt-16 pb-12 space-y-6 animate-fade-in text-sm text-[var(--text-secondary)]">
-      <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">Privacy Policy</h1>
+      <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">{t('privacyPolicy')}</h1>
       <p className="text-xs text-[var(--text-muted)]">Last updated: August 2026</p>
       
       <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] space-y-4">

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const ContactUs = () => {
+  const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e) => {
@@ -12,15 +14,15 @@ export const ContactUs = () => {
   return (
     <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">Get in Touch</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">24/7 Concierge Support Desk</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Have questions about your reservation or interested in joining as a hotel partner?</p>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('contact')}</span>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">24/7 {t('concierge')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('conciergeSub')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="space-y-6">
           <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] space-y-4">
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">Contact Details</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('contact')}</h3>
             <div className="space-y-3 text-xs text-[var(--text-secondary)] font-semibold">
               <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-amber-500" /> +1 (800) 555-LUXE</div>
               <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-amber-500" /> support@luxestay.com</div>
@@ -44,7 +46,7 @@ export const ContactUs = () => {
                   <input type="text" required className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs text-[var(--text-primary)] outline-none" placeholder="John Doe" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1">Email Address</label>
+                  <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1">{t('email')}</label>
                   <input type="email" required className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs text-[var(--text-primary)] outline-none" placeholder="john@example.com" />
                 </div>
               </div>
@@ -56,7 +58,7 @@ export const ContactUs = () => {
                 <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1">Message</label>
                 <textarea rows="5" required className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs text-[var(--text-primary)] outline-none" placeholder="How can we assist your stay?"></textarea>
               </div>
-              <button type="submit" className="btn btn-primary py-3 px-8 text-xs flex items-center gap-2">
+              <button type="submit" className="btn btn-primary py-3 px-8 text-xs flex items-center gap-2 cursor-pointer">
                 <Send className="w-4 h-4" /> Send Message
               </button>
             </form>

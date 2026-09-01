@@ -33,8 +33,8 @@ export const VoucherModal = () => {
   const issueDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
   return (
-    <div className="voucher-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="voucher-modal-card relative w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white text-slate-900 shadow-2xl space-y-6">
+    <div className="voucher-modal-overlay fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md animate-fade-in p-4 sm:p-6 md:p-8 flex justify-center items-start">
+      <div className="voucher-modal-card relative w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white text-slate-900 shadow-2xl space-y-6 my-6 sm:my-10">
         
         {/* Modal Close Button (Screen Only) */}
         <button 
@@ -56,10 +56,18 @@ export const VoucherModal = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-black text-slate-900 tracking-tight">LUXESTAY</h2>
-                <span className="badge badge-emerald text-[9px] px-2 py-0.5">VERIFIED & PAID</span>
+                <span className={`badge text-[9px] px-2 py-0.5 ${
+                  activeVoucher.paymentStatus?.includes('Pending') || activeVoucher.paymentGateway === 'pay_at_hotel'
+                    ? 'badge-gold' 
+                    : 'badge-emerald'
+                }`}>
+                  {activeVoucher.paymentStatus?.includes('Pending') || activeVoucher.paymentGateway === 'pay_at_hotel'
+                    ? 'HOLD GUARANTEED • PAY AT CHECK-IN' 
+                    : 'VERIFIED & PAID'}
+                </span>
               </div>
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 flex items-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Official Payment Voucher & Receipt
+                <CheckCircle2 className="w-3.5 h-3.5" /> Official Stay Voucher & Reservation Receipt
               </span>
             </div>
           </div>
@@ -84,11 +92,27 @@ export const VoucherModal = () => {
               <h4 className="text-sm font-bold text-slate-900">{guestName}</h4>
               <p className="text-xs text-slate-500">{guestEmail}</p>
             </div>
-            <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-xs">
-              <span className="text-slate-500">Payment Method:</span>
-              <span className="font-semibold text-slate-800 flex items-center gap-1">
-                <CreditCard className="w-3.5 h-3.5 text-emerald-600" /> {paymentMethod}
-              </span>
+            <div className="pt-2 border-t border-slate-200/60 flex flex-col gap-1 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Payment Channel:</span>
+                <span className="font-semibold text-slate-800 flex items-center gap-1 text-[11px]">
+                  <CreditCard className="w-3.5 h-3.5 text-emerald-600" /> {paymentMethod}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400">Transaction ID:</span>
+                <span className="font-mono font-bold text-amber-600">{activeVoucher.transactionId || activeVoucher.stripeTxId || `TX-${voucherId}`}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400">Payment Status:</span>
+                <span className={`font-bold ${
+                  activeVoucher.paymentStatus?.includes('Pending') || activeVoucher.paymentGateway === 'pay_at_hotel'
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
+                }`}>
+                  {activeVoucher.paymentStatus || 'Paid in Full'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -193,8 +217,14 @@ export const VoucherModal = () => {
             {/* Total Paid Container */}
             <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 block">Total Amount Paid</span>
-                <span className="text-xs text-slate-300">Paid in full via {paymentMethod}</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 block">
+                  {activeVoucher.paymentStatus?.includes('Pending') ? 'Total Amount Payable' : 'Total Amount Paid'}
+                </span>
+                <span className="text-xs text-slate-300">
+                  {activeVoucher.paymentStatus?.includes('Pending')
+                    ? `Guaranteed Reservation • Pay upon arrival via ${paymentMethod}`
+                    : `Paid in full via ${paymentMethod}`}
+                </span>
               </div>
               <div className="text-right">
                 <span className="text-xl sm:text-2xl font-black text-amber-400">{formatPrice(total)}</span>

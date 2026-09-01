@@ -30,7 +30,7 @@ export const Footer = () => {
             </div>
           </div>
           <p className="text-sm leading-relaxed text-slate-400 pr-4">
-            The world's premier marketplace for luxury overwater bungalows, 5-star cliffside suites, traditional Japanese Ryokans, and high-altitude alpine chalets.
+            {t('footerBrandDesc')}
           </p>
           <div className="flex items-center gap-4 pt-2">
             <span className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
@@ -44,34 +44,34 @@ export const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Public Pages</h4>
+          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">{t('publicPages')}</h4>
           <ul className="space-y-2.5 text-xs font-medium">
             <li><Link to="/hotels" className="hover:text-amber-400 transition-colors">{t('hotels')}</Link></li>
             <li><Link to="/destinations" className="hover:text-amber-400 transition-colors">{t('destinations')}</Link></li>
             <li><Link to="/offers" className="hover:text-amber-400 transition-colors">{t('offers')}</Link></li>
-            <li><Link to="/about" className="hover:text-amber-400 transition-colors">About Us</Link></li>
-            <li><Link to="/blog" className="hover:text-amber-400 transition-colors">Travel Blog</Link></li>
-            <li><Link to="/faq" className="hover:text-amber-400 transition-colors">Help & FAQ</Link></li>
+            <li><Link to="/about" className="hover:text-amber-400 transition-colors">{t('about')}</Link></li>
+            <li><Link to="/blog" className="hover:text-amber-400 transition-colors">{t('blog')}</Link></li>
+            <li><Link to="/faq" className="hover:text-amber-400 transition-colors">{t('faq')}</Link></li>
             <li><Link to="/contact" className="hover:text-amber-400 transition-colors">{t('contact')}</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Customer & Portals</h4>
+          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">{t('customerPortals')}</h4>
           <ul className="space-y-2.5 text-xs font-medium">
-            <li><Link to="/login" className="hover:text-amber-400 transition-colors">Sign In / Register</Link></li>
-            <li><Link to="/customer/dashboard" className="hover:text-amber-400 transition-colors">Customer Dashboard</Link></li>
-            <li><Link to="/customer/bookings" className="hover:text-amber-400 transition-colors">My Bookings</Link></li>
-            <li><Link to="/customer/wishlist" className="hover:text-amber-400 transition-colors">Saved Wishlist</Link></li>
+            <li><Link to="/login" className="hover:text-amber-400 transition-colors">{t('signIn')} / {t('register')}</Link></li>
+            <li><Link to="/customer/dashboard" className="hover:text-amber-400 transition-colors">{t('customerDashboard')}</Link></li>
+            <li><Link to="/customer/bookings" className="hover:text-amber-400 transition-colors">{t('myBookings')}</Link></li>
+            <li><Link to="/customer/wishlist" className="hover:text-amber-400 transition-colors">{t('savedWishlist')}</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Legal & Trust</h4>
+          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">{t('legalTrust')}</h4>
           <ul className="space-y-2.5 text-xs font-medium">
-            <li><Link to="/terms" className="hover:text-amber-400 transition-colors">Terms of Service</Link></li>
-            <li><Link to="/privacy" className="hover:text-amber-400 transition-colors">Privacy Policy</Link></li>
-            <li><Link to="/partner/hotels/new" className="hover:text-amber-400 transition-colors flex items-center gap-1 text-amber-400 font-bold">List Your Property</Link></li>
+            <li><Link to="/terms" className="hover:text-amber-400 transition-colors">{t('termsOfService')}</Link></li>
+            <li><Link to="/privacy" className="hover:text-amber-400 transition-colors">{t('privacyPolicy')}</Link></li>
+            <li><Link to="/partner/hotels/new" className="hover:text-amber-400 transition-colors flex items-center gap-1 text-amber-400 font-bold">{t('listYourProperty')}</Link></li>
           </ul>
           <div className="mt-6 pt-4 border-t border-slate-800 space-y-2 text-xs">
             <div className="flex items-center gap-2 text-slate-400"><Phone className="w-3.5 h-3.5 text-amber-500" /> +1 (800) 555-LUXE</div>
@@ -82,7 +82,7 @@ export const Footer = () => {
       </div>
 
       <div className="container mt-12 pt-6 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-        <p>© 2026 LuxeStay. All rights reserved. ThemeForest Commercial License Item.</p>
+        <p>{t('allRightsReserved')}</p>
         <div className="flex items-center gap-6 mt-4 md:mt-0 font-semibold text-slate-400">
           {/* Footer Currency Selector */}
           <select 
@@ -110,8 +110,8 @@ export const Footer = () => {
             ))}
           </select>
 
-          <Link to="/terms" className="hover:underline hover:text-white">Terms</Link>
-          <Link to="/privacy" className="hover:underline hover:text-white">Privacy</Link>
+          <Link to="/terms" className="hover:underline hover:text-white">{t('terms')}</Link>
+          <Link to="/privacy" className="hover:underline hover:text-white">{t('privacyPolicy')}</Link>
         </div>
       </div>
     </footer>

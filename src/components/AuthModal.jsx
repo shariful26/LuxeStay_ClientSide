@@ -86,7 +86,7 @@ export const AuthModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md animate-fade-in p-4 sm:p-6 flex justify-center items-start">
       
       {/* Background Resort Pool Image */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-45">
@@ -98,7 +98,7 @@ export const AuthModal = () => {
         <div className="absolute inset-0 bg-slate-950/60"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md p-6 sm:p-8 rounded-3xl bg-slate-900/95 backdrop-blur-xl border border-white/20 shadow-2xl space-y-5 my-8 overflow-hidden">
+      <div className="relative z-10 w-full max-w-md p-6 sm:p-8 rounded-3xl bg-slate-900/95 backdrop-blur-xl border border-white/20 shadow-2xl space-y-5 my-6 sm:my-10 overflow-hidden">
         
         {/* PREMIUM GLASSMORPHIC SPINNER OVERLAY */}
         {loading && (

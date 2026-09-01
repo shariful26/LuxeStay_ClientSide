@@ -88,8 +88,8 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
             <div className="flex items-center md:flex-col md:items-end justify-between md:justify-start gap-2 text-right flex-shrink-0">
               <div className="flex items-center gap-2">
                 <div className="text-right hidden md:block">
-                  <span className="text-xs font-extrabold text-[var(--text-primary)] block">Superb</span>
-                  <span className="text-[10px] text-[var(--text-muted)] font-semibold">{hotel.reviewCount || 340} reviews</span>
+                  <span className="text-xs font-extrabold text-[var(--text-primary)] block">{t('superb')}</span>
+                  <span className="text-[10px] text-[var(--text-muted)] font-semibold">{hotel.reviewCount || 340} {t('reviews')}</span>
                 </div>
                 <div className="px-2.5 py-1 rounded-xl bg-amber-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/30 flex items-center gap-1">
                   <span>{hotel.rating || 4.9}</span>
@@ -101,10 +101,10 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
           </div>
 
           {/* Pricing & View Suite CTA */}
-          <div className="pt-2.5 border-t border-[var(--border-light)] flex items-center justify-between">
-            <div>
-              <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Nightly Rate (Includes Taxes)</span>
-              <div className="flex items-baseline gap-1.5">
+          <div className="pt-2.5 border-t border-[var(--border-light)] flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-muted)] block truncate">{t('nightlyRate')}</span>
+              <div className="flex items-baseline gap-1.5 flex-wrap">
                 <span className="text-xs text-[var(--text-muted)] line-through">{formatPrice(Math.round(hotel.pricePerNight * 1.2))}</span>
                 <span className="text-xl font-extrabold text-amber-500">{formatPrice(hotel.pricePerNight)}</span>
                 <span className="text-[11px] text-[var(--text-muted)] font-bold">/ {t('perNight')}</span>
@@ -113,7 +113,7 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
 
             <Link 
               to={`/hotels/${hotel.slug || hotel.id}`}
-              className="btn btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-md shadow-amber-500/25 h-9"
+              className="btn btn-primary text-xs py-2 px-3.5 sm:px-4 flex items-center gap-1.5 shadow-md shadow-amber-500/25 h-9 shrink-0 whitespace-nowrap"
             >
               <span>{t('viewSuite')}</span>
               <ChevronRight className="w-4 h-4" />
@@ -173,7 +173,7 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
 
         {/* Managed By Badge */}
         <div className="absolute bottom-4 right-4 text-[10px] font-bold text-emerald-400 bg-slate-950/80 px-2.5 py-1 rounded-full backdrop-blur-md border border-emerald-500/30 flex items-center gap-1">
-          <ShieldCheck className="w-3 h-3" /> Verified
+          <ShieldCheck className="w-3 h-3" /> {t('verifiedGuest')}
         </div>
       </div>
 
@@ -211,20 +211,20 @@ export const HotelCard = ({ hotel, viewMode = 'grid' }) => {
         </div>
 
         {/* Pricing & CTA */}
-        <div className="pt-4 border-t border-[var(--border-light)] flex items-center justify-between">
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Nightly Rate</span>
-            <div className="flex items-baseline gap-1">
+        <div className="pt-4 border-t border-[var(--border-light)] flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">{t('nightlyRate')}</span>
+            <div className="flex items-baseline gap-1 flex-wrap">
               <span className="text-2xl font-extrabold text-[var(--text-primary)]">{formatPrice(hotel.pricePerNight)}</span>
-              <span className="text-xs text-[var(--text-muted)] font-bold">/ night</span>
+              <span className="text-xs text-[var(--text-muted)] font-bold">/ {t('perNight')}</span>
             </div>
           </div>
 
           <Link 
             to={`/hotels/${hotel.slug || hotel.id}`}
-            className="btn btn-outline text-xs py-2 px-3.5 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 shadow-xs"
+            className="btn btn-outline text-xs py-2 px-3 sm:px-3.5 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 shadow-xs shrink-0 whitespace-nowrap flex items-center gap-1"
           >
-            <span>View Suite</span>
+            <span>{t('viewSuite')}</span>
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>

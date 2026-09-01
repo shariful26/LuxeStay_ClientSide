@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Sparkles, Copy, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const OffersDeals = () => {
+  const { t } = useLanguage();
   const [offers, setOffers] = useState([]);
   const [copiedCode, setCopiedCode] = useState('');
 
@@ -22,9 +24,9 @@ export const OffersDeals = () => {
   return (
     <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">Exclusive Promotions</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">Offers & Promo Deals</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Save big on luxury villas, overwater bungalows, and ski resorts with our promo voucher codes.</p>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('exclusivePromo')}</span>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">{t('offers')} & {t('spotlightTitle')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{t('spotlightSub')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -44,15 +46,15 @@ export const OffersDeals = () => {
                 <span className="text-amber-500">{offer.code}</span>
                 <button 
                   onClick={() => handleCopy(offer.code)}
-                  className="flex items-center gap-1 text-[11px] text-[var(--text-primary)] hover:text-amber-500 font-sans font-bold"
+                  className="flex items-center gap-1 text-[11px] text-[var(--text-primary)] hover:text-amber-500 font-sans font-bold cursor-pointer"
                 >
                   {copiedCode === offer.code ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedCode === offer.code ? 'Copied!' : 'Copy Code'}</span>
                 </button>
               </div>
 
-              <Link to="/hotels" className="w-full btn btn-primary py-2.5 text-xs">
-                Book with Discount
+              <Link to="/hotels" className="w-full btn btn-primary py-2.5 text-xs text-center block">
+                {t('bookNow')}
               </Link>
             </div>
           </div>

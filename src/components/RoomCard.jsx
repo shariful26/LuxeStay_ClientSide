@@ -2,9 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Bed, Users, Maximize, Check, Calendar, ChevronRight } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export const RoomCard = ({ room, onBookClick }) => {
   const { formatPrice } = useCurrency();
+  const { t } = useLanguage();
 
   return (
     <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-md hover:shadow-xl transition-all flex flex-col md:flex-row">
@@ -24,7 +26,7 @@ export const RoomCard = ({ room, onBookClick }) => {
           <h3 className="text-xl font-bold text-[var(--text-primary)]">{room.name}</h3>
           
           <div className="flex flex-wrap gap-4 text-xs font-semibold text-[var(--text-secondary)] mt-3">
-            <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-amber-500" /> Max {room.capacity} Guests</span>
+            <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-amber-500" /> {t('sleeps')} {room.capacity} {t('guests')}</span>
             <span className="flex items-center gap-1.5"><Bed className="w-4 h-4 text-amber-500" /> {room.bedType}</span>
             <span className="flex items-center gap-1.5"><Maximize className="w-4 h-4 text-amber-500" /> {room.size}</span>
           </div>
@@ -42,20 +44,20 @@ export const RoomCard = ({ room, onBookClick }) => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-[var(--border-light)] flex items-center justify-between">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block">Nightly Rate</span>
-            <div className="flex items-baseline gap-1">
+        <div className="pt-4 border-t border-[var(--border-light)] flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block">{t('nightlyRate')}</span>
+            <div className="flex items-baseline gap-1 flex-wrap">
               <span className="text-2xl font-extrabold text-[var(--text-primary)]">{formatPrice(room.price)}</span>
-              <span className="text-xs text-[var(--text-muted)] font-semibold">/ night</span>
+              <span className="text-xs text-[var(--text-muted)] font-semibold">/ {t('perNight')}</span>
             </div>
           </div>
 
           <button 
             onClick={() => onBookClick(room)}
-            className="btn btn-primary text-xs py-2.5 px-5 shadow-lg shadow-amber-500/20"
+            className="btn btn-primary text-xs py-2.5 px-4 sm:px-5 shadow-lg shadow-amber-500/20 shrink-0 whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
           >
-            <span>Book Now</span>
+            <span>{t('bookNow')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

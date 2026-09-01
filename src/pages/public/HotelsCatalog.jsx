@@ -124,6 +124,23 @@ export const HotelsCatalog = () => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const categoryPills = [
+    { label: t('allSuites'), category: '' },
+    { label: t('overwaterVillas'), category: 'Overwater Villa' },
+    { label: t('resortSpas'), category: 'Resort & Spa' },
+    { label: t('citySkyTowers'), category: 'City Luxury Hotel' },
+    { label: t('zenRyokans'), category: 'Boutique Ryokan' },
+    { label: t('skiChalets'), category: 'Ski Resort' }
+  ];
+
+  const ratingOptions = [
+    { label: t('anyRating'), value: 0 },
+    { label: t('exceptional'), value: 4.8 },
+    { label: t('superbRating'), value: 4.5 },
+    { label: t('veryGood'), value: 4.0 }
+  ];
+
   return (
     <div className="container pt-8 sm:pt-10 pb-8 space-y-8 animate-fade-in">
 
@@ -131,10 +148,10 @@ export const HotelsCatalog = () => {
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-amber-500 text-xs font-bold uppercase tracking-wider pt-4">
           <Sparkles className="w-4 h-4" />
-          <span>Booking.com & Agoda Style Luxury Selection Directory</span>
+          <span>{t('curatedPortfolio')}</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-primary)]">Explore Luxury Stays & Suites</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Showing {hotels.length} verified luxury properties matching your search criteria</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-primary)]">{t('featuredSuites')}</h1>
+        <p className="text-sm text-[var(--text-secondary)]">{hotels.length} {t('suitesFound')}</p>
       </div>
 
       {/* Top Search Bar */}
@@ -142,7 +159,7 @@ export const HotelsCatalog = () => {
 
       {/* Category Pills Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {CATEGORY_PILLS.map(pill => (
+        {categoryPills.map(pill => (
           <button
             key={pill.label}
             onClick={() => handleCategorySelect(pill.category)}
@@ -178,7 +195,7 @@ export const HotelsCatalog = () => {
             {/* Keyword Search */}
             <div className="space-y-2">
               <label className="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider block">
-                Property / Landmark
+                {t('propertyType')}
               </label>
               <div className="relative">
                 <input
@@ -196,7 +213,7 @@ export const HotelsCatalog = () => {
             <div className="space-y-3 pt-4 border-t border-[var(--border-light)]">
               <div className="flex justify-between items-center text-xs font-extrabold">
                 <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px]">{t('maxPrice')}</span>
-                <span className="text-amber-500">{filters.maxPrice >= 2500 ? 'Any Price' : `$${filters.maxPrice}`}</span>
+                <span className="text-amber-500">{filters.maxPrice >= 2500 ? t('anyPrice') : `$${filters.maxPrice}`}</span>
               </div>
               <input
                 type="range"
@@ -219,12 +236,7 @@ export const HotelsCatalog = () => {
                 {t('guestRating')}
               </label>
               <div className="space-y-2 text-xs font-bold">
-                {[
-                  { label: 'Any Rating', value: 0 },
-                  { label: '4.8★ & Above (Exceptional)', value: 4.8 },
-                  { label: '4.5★ & Above (Superb)', value: 4.5 },
-                  { label: '4.0★ & Above (Very Good)', value: 4.0 }
-                ].map(r => (
+                {ratingOptions.map(r => (
                   <label key={r.value} className="flex items-center gap-2 cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                     <input
                       type="radio"

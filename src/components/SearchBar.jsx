@@ -127,7 +127,7 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
           </div>
           <div className="flex-1 min-w-0">
             <label className="block text-[10px] font-extrabold uppercase tracking-widest text-amber-500 mb-0.5 whitespace-nowrap cursor-pointer">
-              Destination
+              {t('allDestinations')}
             </label>
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)] truncate">
@@ -154,7 +154,7 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
                     : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 }`}
               >
-                <span>{opt.label}</span>
+                <span>{opt.value === '' ? t('allDestinations') : opt.label}</span>
                 {destination === opt.value && <Check className="w-3.5 h-3.5" />}
               </div>
             ))}
@@ -167,7 +167,7 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
         
         {/* Small Corner Stay Night Badge */}
         <span className="absolute -top-2 right-3 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-md pointer-events-none border border-amber-300 z-10 flex items-center gap-0.5">
-          ✨ {nightsCount} {nightsCount === 1 ? 'Night' : 'Nights'}
+          ✨ {nightsCount} {nightsCount === 1 ? t('perNight') : `${nightsCount} ${t('perNight')}s`}
         </span>
 
         <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
@@ -184,14 +184,14 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
             className="p-1.5 px-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-amber-500 transition-all cursor-pointer relative group flex flex-col justify-center min-w-0 shadow-2xs"
           >
             <span className="block text-[8px] font-black uppercase tracking-wider text-amber-500 truncate">
-              Check-In
+              {t('checkIn')}
             </span>
             <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-amber-500 transition-colors truncate">
               {formatDisplayDate(dates.checkIn)}
             </span>
             <input 
               type="date" 
-              ref={checkInRef}
+              ref={checkInRef} 
               value={dates.checkIn} 
               onChange={handleCheckInChange}
               min={todayStr}
@@ -207,14 +207,14 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
             className="p-1.5 px-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-amber-500 transition-all cursor-pointer relative group flex flex-col justify-center min-w-0 shadow-2xs"
           >
             <span className="block text-[8px] font-black uppercase tracking-wider text-amber-500 truncate">
-              Check-Out
+              {t('checkOut')}
             </span>
             <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-amber-500 transition-colors truncate">
               {formatDisplayDate(dates.checkOut)}
             </span>
             <input 
               type="date" 
-              ref={checkOutRef}
+              ref={checkOutRef} 
               value={dates.checkOut} 
               onChange={handleCheckOutChange}
               min={minCheckOutStr}
@@ -240,11 +240,11 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
           </div>
           <div className="flex-1 min-w-0">
             <label className="block text-[10px] font-extrabold uppercase tracking-widest text-amber-500 mb-0.5 whitespace-nowrap cursor-pointer">
-              Guests
+              {t('guests')}
             </label>
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)] truncate">
-                {guests} Guests
+                {guests} {t('guests')}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0 ml-1" />
             </div>
@@ -290,11 +290,11 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
           </div>
           <div className="flex-1 min-w-0">
             <label className="block text-[10px] font-extrabold uppercase tracking-widest text-amber-500 mb-0.5 whitespace-nowrap cursor-pointer">
-              Property Type
+              {t('propertyType')}
             </label>
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)] truncate">
-                {selectedCatLabel}
+                {category === '' ? t('allTypes') : selectedCatLabel}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0 ml-1" />
             </div>

@@ -221,6 +221,15 @@ export const Home = () => {
 
   const activeSlide = CAROUSEL_SLIDES[currentSlideIndex];
 
+  const categoryTabs = [
+    { label: t('allSuites'), category: '' },
+    { label: t('overwaterVillas'), category: 'Overwater Villa' },
+    { label: t('cliffsideResorts'), category: 'Resort & Spa' },
+    { label: t('citySkyTowers'), category: 'City Luxury Hotel' },
+    { label: t('zenRyokans'), category: 'Boutique Ryokan' },
+    { label: t('skiChalets'), category: 'Ski Resort' }
+  ];
+
   return (
     <div className="space-y-20 pb-20">
 
@@ -240,7 +249,7 @@ export const Home = () => {
 
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-xl text-amber-300 text-xs font-extrabold uppercase tracking-widest shadow-lg">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>The Gold Standard of World Luxury Hospitality</span>
+            <span>{t('curatedPortfolio')}</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1]">
@@ -252,7 +261,7 @@ export const Home = () => {
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-200 font-medium leading-relaxed drop-shadow-md">
-            Reserve overwater lagoon villas, cliffside sunset suites, and mountain peak ski chalets with instant stay vouchers and guaranteed lowest rates.
+            {t('heroSub')}
           </p>
 
           {/* Floating Search Engine Bar */}
@@ -262,11 +271,11 @@ export const Home = () => {
 
           {/* Quick Category Tabs */}
           <div className="pt-6 flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
-            {CATEGORY_TABS.map(tab => (
+            {categoryTabs.map(tab => (
               <button
                 key={tab.label}
                 onClick={() => setActiveCategory(tab.category)}
-                className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all border ${activeCategory === tab.category
+                className={`px-4 py-2 rounded-full text-xs font-extrabold transition-all border cursor-pointer ${activeCategory === tab.category
                     ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/30'
                     : 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-md'
                   }`}
@@ -281,16 +290,16 @@ export const Home = () => {
 
       {/* 3. LIVE INTERACTIVE AUTO-PLAYING LUXURY CAROUSEL SHOWCASE */}
       <section className="container">
-        <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl space-y-6">
+        <div className="p-4 sm:p-8 md:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl space-y-6">
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-light)]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-500 block pt-2">Live Auto-Play Showcase</span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">Exclusive Spotlight Luxury Deals</h2>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-500 block pt-1">{t('exclusivePromo')}</span>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">{t('spotlightTitle')}</h2>
               </div>
             </div>
 
@@ -309,14 +318,14 @@ export const Home = () => {
 
               <button
                 onClick={prevSlide}
-                className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors"
+                className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors cursor-pointer"
                 title="Previous Slide"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={nextSlide}
-                className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors"
+                className="p-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors cursor-pointer"
                 title="Next Slide"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -328,10 +337,10 @@ export const Home = () => {
           <div
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="relative rounded-3xl overflow-hidden border border-[var(--border-light)] shadow-2xl grid grid-cols-1 lg:grid-cols-12 max-h-[600px] lg:max-h-[380px] group transition-all animate-fade-in"
+            className="relative rounded-3xl overflow-hidden border border-[var(--border-light)] shadow-2xl grid grid-cols-1 lg:grid-cols-12 group transition-all animate-fade-in"
           >
             {/* Left Image Column */}
-            <div className="lg:col-span-7 relative h-64 sm:h-80 lg:h-[380px] overflow-hidden">
+            <div className="lg:col-span-7 relative h-56 sm:h-72 lg:h-auto min-h-[220px] lg:min-h-[380px] overflow-hidden">
               <img
                 src={activeSlide.image}
                 alt={activeSlide.title}
@@ -344,7 +353,7 @@ export const Home = () => {
             </div>
 
             {/* Right Details Column */}
-            <div className="lg:col-span-5 p-6 sm:p-8 bg-[var(--bg-tertiary)] flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-5 p-5 sm:p-7 md:p-8 bg-[var(--bg-tertiary)] flex flex-col justify-between space-y-5 sm:space-y-6">
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
@@ -360,9 +369,9 @@ export const Home = () => {
                   {activeSlide.title}
                 </h3>
 
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-1">
                   <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider block">Inclusions Package:</span>
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs font-semibold">
                     {activeSlide.inclusions.map((inc, i) => (
                       <span key={i} className="px-2.5 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-secondary)] flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-500" /> {inc}
@@ -373,20 +382,20 @@ export const Home = () => {
               </div>
 
               {/* Price & Direct Reservation Action */}
-              <div className="pt-4 border-t border-[var(--border-light)] flex items-center justify-between gap-4">
-                <div>
+              <div className="pt-4 border-t border-[var(--border-light)] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                <div className="min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl sm:text-3xl font-extrabold text-amber-500">{formatPrice(activeSlide.price)}</span>
                     <span className="text-xs text-[var(--text-muted)] line-through font-semibold">{formatPrice(activeSlide.originalPrice)}</span>
                   </div>
-                  <span className="text-[10px] text-[var(--text-muted)] font-semibold block">per night • taxes included</span>
+                  <span className="text-[10px] text-[var(--text-muted)] font-semibold block">{t('perNight')} • {t('nightlyRate')}</span>
                 </div>
 
                 <Link
                   to={`/hotels/${activeSlide.hotelId}`}
-                  className="btn btn-primary px-6 py-3 text-xs font-extrabold shadow-lg shadow-amber-500/30 flex items-center gap-2"
+                  className="btn btn-primary px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-extrabold shadow-lg shadow-amber-500/30 flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer"
                 >
-                  <span>Reserve Suite</span>
+                  <span>{t('reserveSuite')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

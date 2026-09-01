@@ -1,9 +1,12 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const TermsConditions = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="container max-w-4xl pt-16 pb-12 space-y-6 animate-fade-in text-sm text-[var(--text-secondary)]">
-      <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">Terms & Conditions</h1>
+      <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">{t('termsOfService')}</h1>
       <p className="text-xs text-[var(--text-muted)]">Last updated: August 2026</p>
       
       <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] space-y-4">

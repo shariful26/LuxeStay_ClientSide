@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const FAQS = [
   { q: "How do I receive my digital stay voucher?", a: "Immediately after completing your booking checkout, your official Digital Stay Voucher with a unique QR code will pop up and remain accessible in your Customer Dashboard." },
@@ -9,13 +10,14 @@ const FAQS = [
 ];
 
 export const FAQ = () => {
+  const { t } = useLanguage();
   const [openIdx, setOpenIdx] = useState(0);
 
   return (
     <div className="container max-w-3xl pt-16 pb-12 space-y-8 animate-fade-in">
       <div className="text-center space-y-3">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">Help Center</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">Frequently Asked Questions</h1>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('faq')}</span>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">{t('faq')} & Help Center</h1>
         <p className="text-sm text-[var(--text-secondary)]">Find answers regarding booking, stay vouchers, and cancellation rules.</p>
       </div>
 
@@ -27,7 +29,7 @@ export const FAQ = () => {
           >
             <button 
               onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
-              className="w-full p-5 text-left flex items-center justify-between font-bold text-sm text-[var(--text-primary)]"
+              className="w-full p-5 text-left flex items-center justify-between font-bold text-sm text-[var(--text-primary)] cursor-pointer"
             >
               <span>{faq.q}</span>
               <ChevronDown className={`w-4 h-4 text-amber-500 transition-transform ${openIdx === idx ? 'rotate-180' : ''}`} />
