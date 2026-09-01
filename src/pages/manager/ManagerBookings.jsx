@@ -81,6 +81,17 @@ export const ManagerBookings = () => {
   }, [user]);
 
   const handleStatusChange = (id, newStatus) => {
+    // 1. Optimistic UI update in state & localStorage cache (0ms instant)
+    setBookings(prev => {
+      const updated = prev.map(b => b.id === id ? { ...b, status: newStatus } : b);
+      try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    if (selectedBooking?.id === id) {
+      setSelectedBooking(prev => prev ? { ...prev, status: newStatus } : null);
+    }
+
+    // 2. Server Persistence to MongoDB Atlas
     fetch(`/api/bookings/${id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -88,11 +99,18 @@ export const ManagerBookings = () => {
     })
       .then(res => res.json())
       .then(updated => {
-        setBookings(prev => prev.map(b => b.id === id ? updated : b));
-        if (selectedBooking?.id === id) {
-          setSelectedBooking(updated);
+        if (updated && updated.id) {
+          setBookings(prev => {
+            const list = prev.map(b => b.id === id ? { ...b, ...updated } : b);
+            try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(list)); } catch (e) {}
+            return list;
+          });
+          if (selectedBooking?.id === id) {
+            setSelectedBooking(updated);
+          }
         }
-      });
+      })
+      .catch(() => {});
   };
 
   const openAddModal = () => {

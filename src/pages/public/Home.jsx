@@ -188,6 +188,8 @@ export const Home = () => {
   const locations = ['Santorini', 'Maldives', 'New York', 'Kyoto', 'Swiss Alps'];
   const [locationIndex, setLocationIndex] = useState(0);
 
+  const [reviews, setReviews] = useState([]);
+
   useEffect(() => {
     fetch('/api/hotels?featured=true')
       .then(res => res.json())
@@ -209,6 +211,15 @@ export const Home = () => {
           try {
             localStorage.setItem('luxestay_cached_destinations', JSON.stringify(data));
           } catch (e) {}
+        }
+      })
+      .catch(() => { });
+
+    fetch('/api/reviews')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setReviews(data);
         }
       })
       .catch(() => { });
@@ -656,19 +667,19 @@ export const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {TESTIMONIALS.map((tItem, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] space-y-4">
+            {(reviews.length > 0 ? reviews.slice(0, 4) : TESTIMONIALS).map((tItem, idx) => (
+              <div key={idx} className="p-6 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] space-y-4 shadow-sm hover:border-amber-500/40 transition-colors">
                 <div className="flex items-center gap-1 text-amber-400">
-                  {[...Array(tItem.rating)].map((_, i) => (
+                  {[...Array(Math.min(5, Math.round(tItem.rating || 5)))].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-xs text-[var(--text-primary)] leading-relaxed italic">"{tItem.text}"</p>
+                <p className="text-xs text-[var(--text-primary)] leading-relaxed italic">"{tItem.comment || tItem.text}"</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-[var(--border-light)]">
-                  <img src={tItem.avatar} alt={tItem.name} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500" />
+                  <img src={tItem.avatar || tItem.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} alt={tItem.guestName || tItem.name} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500" />
                   <div>
-                    <h4 className="text-xs font-bold text-[var(--text-primary)]">{tItem.name}</h4>
-                    <span className="text-[11px] text-[var(--text-muted)] font-semibold">{tItem.location}</span>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)]">{tItem.guestName || tItem.name}</h4>
+                    <span className="text-[11px] text-[var(--text-muted)] font-semibold">{tItem.hotelName || tItem.location || tItem.guestCountry || 'Verified Guest Stay'}</span>
                   </div>
                 </div>
               </div>

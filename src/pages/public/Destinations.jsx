@@ -4,6 +4,7 @@ import { MapPin, ArrowRight, Star } from 'lucide-react';
 import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
 export const Destinations = () => {
+  const { t } = useLanguage();
   const [destinations, setDestinations] = useState(() => getInstantData('destinations', []));
 
   useEffect(() => {
@@ -13,8 +14,8 @@ export const Destinations = () => {
   return (
     <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">World Travel Guide</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">Explore Travel Destinations</h1>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('globalDestinations') || 'World Travel Guide'}</span>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">{t('exploreWorld') || 'Explore Travel Destinations'}</h1>
         <p className="text-sm text-[var(--text-secondary)]">Discover handpicked luxury resorts and boutique retreats across the world's most breathtaking locations.</p>
       </div>
 
@@ -35,11 +36,11 @@ export const Destinations = () => {
             <div className="relative z-10 space-y-2 text-white">
               <span className="badge badge-gold text-[10px]">{dest.country}</span>
               <h2 className="text-3xl font-extrabold group-hover:text-amber-400 transition-colors">{dest.name}</h2>
-              <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{dest.description}</p>
+              <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{dest.description || dest.tagline}</p>
               <div className="pt-2 flex items-center justify-between border-t border-white/20 text-xs font-bold text-amber-400">
-                <span>{dest.hotelCount} Properties</span>
+                <span>{dest.hotelCount} {t('properties') || 'Properties'}</span>
                 <span className="flex items-center gap-1">
-                  <span>Explore</span> <ArrowRight className="w-4 h-4" />
+                  <span>{t('explore') || 'Explore'}</span> <ArrowRight className="w-4 h-4" />
                 </span>
               </div>
             </div>

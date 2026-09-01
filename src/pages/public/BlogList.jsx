@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, User, ArrowRight, Clock } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
 export const BlogList = () => {
+  const { t } = useLanguage();
   const [blogs, setBlogs] = useState(() => getInstantData('blogs', []));
 
   useEffect(() => {
@@ -13,8 +14,8 @@ export const BlogList = () => {
   return (
     <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">Travel Inspiration</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">LuxeStay Travel Journal</h1>
+        <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('blog') || 'Travel Inspiration'}</span>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">LuxeStay {t('blog') || 'Travel Journal'}</h1>
         <p className="text-sm text-[var(--text-secondary)]">Insiders' guides to world-class resorts, hidden suites, and luxury culture.</p>
       </div>
 
@@ -37,7 +38,7 @@ export const BlogList = () => {
             </div>
 
             <Link to={`/blog/${blog.slug || blog.id}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline pt-3 border-t border-[var(--border-light)]">
-              <span>Read Full Article</span> <ArrowRight className="w-4 h-4" />
+              <span>{t('viewSuite') || 'Read Full Article'}</span> <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ))}
