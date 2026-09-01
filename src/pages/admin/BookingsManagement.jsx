@@ -3,9 +3,11 @@ import { Plus, X, Building2, ShieldCheck, CheckCircle2, DollarSign, ChevronLeft,
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const BookingsManagement = () => {
-  const [bookings, setBookings] = useState([]);
-  const [hotels, setHotels] = useState([]);
+  const [bookings, setBookings] = useState(() => getInstantData('bookings', []));
+  const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,25 +31,34 @@ export const BookingsManagement = () => {
   });
 
   useEffect(() => {
-    fetch('/api/bookings')
-      .then(res => res.json())
-      .then(data => setBookings(Array.isArray(data) ? data : []))
-      .catch(() => setBookings([]));
+    const fetchAdminBookings = async () => {
+      try {
+        const [bookingsRes, hotelsRes] = await Promise.all([
+          fetch('/api/bookings'),
+          fetch('/api/hotels')
+        ]);
+        const bookingsData = await bookingsRes.json();
+        const hotelsData = await hotelsRes.json();
 
-    fetch('/api/hotels')
-      .then(res => res.json())
-      .then(data => {
-        const hotelList = Array.isArray(data) ? data : [];
-        setHotels(hotelList);
-        if (hotelList.length > 0) {
-          setFormData(prev => ({ 
-            ...prev, 
-            hotelId: hotelList[0].id,
-            total: hotelList[0].pricePerNight || 550
-          }));
+        if (Array.isArray(bookingsData)) {
+          setBookings(bookingsData);
+          try { localStorage.setItem('luxestay_cache_bookings', JSON.stringify(bookingsData)); } catch (e) {}
         }
-      })
-      .catch(() => setHotels([]));
+        if (Array.isArray(hotelsData)) {
+          setHotels(hotelsData);
+          try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(hotelsData)); } catch (e) {}
+          if (hotelsData.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              hotelId: hotelsData[0].id,
+              total: hotelsData[0].pricePerNight || 550
+            }));
+          }
+        }
+      } catch (e) {}
+    };
+
+    fetchAdminBookings();
   }, []);
 
   const handleStatusChange = (id, newStatus) => {

@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const HotelsManagement = () => {
-  const [hotels, setHotels] = useState([]);
+  const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

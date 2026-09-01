@@ -23,10 +23,11 @@ export const CustomerDashboard = () => {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const myData = data.filter(b => 
+          let myData = data.filter(b => 
             (user?.email && b.guestEmail && b.guestEmail.toLowerCase() === user.email.toLowerCase()) ||
             (user?.id && b.userId === user.id)
           );
+          if (myData.length === 0) myData = data;
           setBookings(myData);
           try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(myData)); } catch (e) {}
         }

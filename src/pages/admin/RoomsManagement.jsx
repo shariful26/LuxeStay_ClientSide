@@ -3,8 +3,10 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 import { Bed, Maximize2, Users, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const RoomsManagement = () => {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState(() => getInstantData('rooms', []));
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const { formatPrice } = useCurrency();
@@ -12,7 +14,12 @@ export const RoomsManagement = () => {
   useEffect(() => {
     fetch('/api/rooms')
       .then(res => res.json())
-      .then(data => setRooms(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setRooms(data);
+          try { localStorage.setItem('luxestay_cache_rooms', JSON.stringify(data)); } catch (e) {}
+        }
+      })
       .catch(() => {});
   }, []);
 

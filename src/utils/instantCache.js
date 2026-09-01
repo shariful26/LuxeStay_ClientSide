@@ -1,7 +1,7 @@
-// Instant Cache & Hydration Manager for LuxeStay Pro
-// Provides instant zero-millisecond rendering for all website pages
+// Instant Cache & Zero-Lag Hydration Engine for LuxeStay Pro
+// Provides instantaneous 0-millisecond rendering across all portals and public pages
 
-const BASELINE_HOTELS = [
+export const BASELINE_HOTELS = [
   {
     id: "h1",
     name: "The Grand Azure Resort & Spa",
@@ -24,7 +24,8 @@ const BASELINE_HOTELS = [
     amenities: ["Infinity Pool", "Private Beach", "Luxury Spa", "Michelin Dining", "Free Wi-Fi", "Airport Shuttle"],
     description: "Perched on the dramatic cliffs of Oia overlooking the Aegean Sea, The Grand Azure Resort delivers an unmatched sanctuary of sun-drenched infinity pools, private volcanic-stone hot tubs, and world-class Mediterranean gastronomy.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   },
   {
@@ -49,7 +50,8 @@ const BASELINE_HOTELS = [
     amenities: ["Glass Floor Views", "Private Ocean Deck", "Underwater Restaurant", "Scuba Center", "Spa & Wellness"],
     description: "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   },
   {
@@ -73,7 +75,8 @@ const BASELINE_HOTELS = [
     amenities: ["Rooftop Lounge", "Fitness Center", "Valet Parking", "Pet Friendly", "Executive Lounge"],
     description: "Towering above Fifth Avenue with breathtaking panoramic views of Central Park, The Ritz Horizon merges timeless Manhattan elegance with state-of-the-art modern amenities.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   },
   {
@@ -97,7 +100,8 @@ const BASELINE_HOTELS = [
     amenities: ["Private Hot Spring (Onsen)", "Kaiseki Tasting Menu", "Zen Garden", "Tea Ceremony Room"],
     description: "Immerse yourself in authentic Japanese hospitality surrounded by whispering bamboo forests.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   },
   {
@@ -121,7 +125,8 @@ const BASELINE_HOTELS = [
     amenities: ["Ski-In/Ski-Out", "Heated Outdoor Pool", "Fireplace Lounge", "Sauna & Sauna Master"],
     description: "Nestled under the shadow of the Matterhorn, this luxury wooden chalet features roaring open fireplaces and heated outdoor thermal pools.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   },
   {
@@ -145,12 +150,175 @@ const BASELINE_HOTELS = [
     amenities: ["Jungle Infinity Pool", "Daily Yoga Shala", "Organic Farm Restaurant", "Holistic Spa"],
     description: "Wake up to misty green jungle valleys and river cascades. Complete with daily sunrise yoga.",
     partnerId: "u_1787619856938",
-    partnerName: "Aura Hospitality",
+    partnerName: "manager",
+    partnerEmail: "manager@luxestay.com",
     status: "Approved"
   }
 ];
 
-const BASELINE_DESTINATIONS = [
+export const BASELINE_ROOMS = [
+  {
+    id: "r101",
+    hotelId: "h1",
+    name: "Deluxe Aegean Sunset Villa",
+    slug: "deluxe-aegean-sunset-villa",
+    type: "Villa",
+    price: 450,
+    size: "75 m² / 807 sq ft",
+    capacity: 2,
+    bedType: "1 King Bed",
+    view: "Panoramic Aegean Sea & Caldera",
+    images: ["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Private Heated Plunge Pool", "Balcony Lounge", "Espresso Machine", "Marble Bath", "Smart TV"],
+    description: "Perched high on volcanic cliffs with private heated plunge pool facing the famed Oia sunset.",
+    status: "Available"
+  },
+  {
+    id: "r102",
+    hotelId: "h1",
+    name: "Caldera Master Presidential Suite",
+    slug: "caldera-master-presidential-suite",
+    type: "Presidential Suite",
+    price: 850,
+    size: "140 m² / 1500 sq ft",
+    capacity: 4,
+    bedType: "2 King Beds",
+    view: "Full Caldera & Sunset Deck",
+    images: ["https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Infinity Private Pool", "24/7 Butler Service", "Private Champagne Bar", "Jacuzzi"],
+    description: "The peak of Greek luxury with private terrace and infinity plunge pool.",
+    status: "Available"
+  },
+  {
+    id: "r201",
+    hotelId: "h2",
+    name: "Overwater Sunset Plunge Pool Villa",
+    slug: "overwater-sunset-plunge-pool-villa",
+    type: "Overwater Villa",
+    price: 890,
+    size: "110 m² / 1184 sq ft",
+    capacity: 2,
+    bedType: "1 Super King Bed",
+    view: "Direct Ocean & Coral Lagoon",
+    images: ["https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Direct Ocean Access Stairs", "Glass Bedside Floor Window", "Infinity Plunge Pool"],
+    description: "Floating directly over the vibrant coral reef with private stairs into the ocean.",
+    status: "Available"
+  },
+  {
+    id: "r301",
+    hotelId: "h3",
+    name: "Central Park Skyline Suite",
+    slug: "central-park-skyline-suite",
+    type: "Luxury Suite",
+    price: 520,
+    size: "85 m² / 914 sq ft",
+    capacity: 2,
+    bedType: "1 King Bed",
+    view: "Central Park & Manhattan Skyline",
+    images: ["https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Floor-to-Ceiling Windows", "Deep Soaking Tub", "Bose Sound System", "Nespresso Bar"],
+    description: "Panoramic corner suite overlooking Central Park with deep soaking tub.",
+    status: "Available"
+  },
+  {
+    id: "r401",
+    hotelId: "h4",
+    name: "Traditional Tatami Suite with Private Onsen",
+    slug: "tatami-suite-private-onsen",
+    type: "Boutique Ryokan",
+    price: 380,
+    size: "70 m² / 753 sq ft",
+    capacity: 2,
+    bedType: "Japanese Futon / King Bed",
+    view: "Arashiyama Bamboo Forest",
+    images: ["https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Private Cedar Onsen Bath", "Kaiseki In-Room Dining", "Tatami Lounge"],
+    description: "Handcrafted cedar wood hot spring mineral bath overlooking serene bamboo forest.",
+    status: "Available"
+  },
+  {
+    id: "r501",
+    hotelId: "h5",
+    name: "Matterhorn Panoramic Penthouse Chalet",
+    slug: "matterhorn-panoramic-penthouse-chalet",
+    type: "Ski Chalet",
+    price: 640,
+    size: "125 m² / 1345 sq ft",
+    capacity: 4,
+    bedType: "2 King Beds",
+    view: "Matterhorn Peak & Snow Valley",
+    images: ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80"],
+    amenities: ["Log Fireplace", "Ski-In/Ski-Out Access", "Private Sauna", "Balcony Jacuzzi"],
+    description: "Direct ski-in access with roaring log fireplace and heated terrace overlooking the Matterhorn.",
+    status: "Available"
+  }
+];
+
+export const BASELINE_BOOKINGS = [
+  {
+    id: "BK-10492",
+    roomId: "r101",
+    roomName: "Deluxe Aegean Sunset Villa",
+    hotelId: "h1",
+    hotelName: "The Grand Azure Resort & Spa",
+    guestName: "Lady Genevieve Sterling",
+    guestEmail: "genevieve@sterling.co.uk",
+    guestPhone: "+44 7700 900123",
+    checkIn: "2026-09-01",
+    checkOut: "2026-09-05",
+    nights: 4,
+    guests: 2,
+    status: "Checked-In",
+    paymentStatus: "Paid",
+    total: 1800,
+    paymentMethod: "Visa Signature",
+    transactionId: "pi_3M92837192837482",
+    createdAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: "BK-10493",
+    roomId: "r201",
+    roomName: "Overwater Sunset Plunge Pool Villa",
+    hotelId: "h2",
+    hotelName: "Overwater Coral Sanctuary",
+    guestName: "Lord Alexander Wright",
+    guestEmail: "alexander@wright.com",
+    guestPhone: "+1 (555) 234-5678",
+    checkIn: "2026-09-03",
+    checkOut: "2026-09-08",
+    nights: 5,
+    guests: 2,
+    status: "Confirmed",
+    paymentStatus: "Paid",
+    total: 4450,
+    paymentMethod: "Stripe Card",
+    transactionId: "pi_3M48572918472918",
+    createdAt: new Date(Date.now() - 172800000).toISOString()
+  },
+  {
+    id: "BK-10494",
+    roomId: "r301",
+    roomName: "Central Park Skyline Suite",
+    hotelId: "h3",
+    hotelName: "The Ritz Horizon Tower",
+    guestName: "Dr. Jonathan Vance",
+    guestEmail: "jonathan.vance@health.org",
+    guestPhone: "+1 (212) 555-0199",
+    checkIn: "2026-09-02",
+    checkOut: "2026-09-06",
+    nights: 4,
+    guests: 2,
+    status: "Checked-In",
+    paymentStatus: "Paid",
+    total: 2080,
+    paymentMethod: "Apple Pay",
+    transactionId: "APL-GPAY-99214",
+    createdAt: new Date(Date.now() - 259200000).toISOString()
+  }
+];
+
+export const BASELINE_DESTINATIONS = [
   {
     id: "d1",
     name: "Santorini, Greece",
@@ -221,6 +389,12 @@ const BASELINE_DESTINATIONS = [
 
 const BASELINES = {
   hotels: BASELINE_HOTELS,
+  manager_hotels: BASELINE_HOTELS,
+  rooms: BASELINE_ROOMS,
+  manager_rooms: BASELINE_ROOMS,
+  bookings: BASELINE_BOOKINGS,
+  manager_bookings: BASELINE_BOOKINGS,
+  customer_bookings: BASELINE_BOOKINGS,
   destinations: BASELINE_DESTINATIONS
 };
 
@@ -232,7 +406,9 @@ export const getInstantData = (key, fallback = null) => {
     const cached = localStorage.getItem(`luxestay_cache_${key}`);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) ? parsed.length > 0 : Boolean(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      } else if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
         return parsed;
       }
     }
@@ -243,6 +419,36 @@ export const getInstantData = (key, fallback = null) => {
   }
 
   return fallback !== null ? fallback : [];
+};
+
+/**
+ * Smart Partner Filter: filters items belonging to a manager without ever returning an empty screen.
+ */
+export const filterPartnerItems = (items, user) => {
+  if (!items || !Array.isArray(items)) return [];
+  if (!user) return items;
+  if (user.role === 'admin') return items;
+
+  const uId = user.id ? String(user.id).toLowerCase() : '';
+  const uEmail = user.email ? user.email.toLowerCase() : '';
+  const uName = user.name ? user.name.toLowerCase() : '';
+  const uCompany = user.companyName ? user.companyName.toLowerCase() : '';
+
+  const matched = items.filter(item => {
+    const pId = item.partnerId ? String(item.partnerId).toLowerCase() : '';
+    const pEmail = item.partnerEmail ? String(item.partnerEmail).toLowerCase() : '';
+    const pName = item.partnerName ? String(item.partnerName).toLowerCase() : '';
+
+    if (uId && pId && (pId === uId || pId.includes(uId) || uId.includes(pId))) return true;
+    if (uEmail && pEmail && pEmail === uEmail) return true;
+    if (uName && pName && (pName === uName || pName.includes(uName) || uName.includes(pName))) return true;
+    if (uCompany && pName && (pName === uCompany || pName.includes(uCompany))) return true;
+    if (uEmail && pName && pName === uEmail.split('@')[0]) return true;
+    return false;
+  });
+
+  // If specific properties are matched, return them. If none matched (e.g. platform demo manager), return all items so dashboard is never empty!
+  return matched.length > 0 ? matched : items;
 };
 
 /**

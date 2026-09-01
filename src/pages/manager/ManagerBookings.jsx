@@ -4,7 +4,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-import { getInstantData } from '../../utils/instantCache';
+import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const ManagerBookings = () => {
   const { user } = useAuth();
@@ -39,7 +39,6 @@ export const ManagerBookings = () => {
 
   const fetchBookingsData = async () => {
     try {
-      // Parallel simultaneous fetch (under 300ms instead of 4.5 seconds waterfall)
       const [hotelsRes, bookingsRes, roomsRes] = await Promise.all([
         fetch('/api/hotels'),
         fetch('/api/bookings'),
@@ -50,43 +49,19 @@ export const ManagerBookings = () => {
       const roomsData = await roomsRes.json();
 
       if (Array.isArray(hotelsData)) {
-        const myHotels = hotelsData.filter(h => {
-          if (!user) return false;
-          const uId = user.id ? String(user.id) : null;
-          const uEmail = user.email ? user.email.toLowerCase() : null;
-          const uName = user.name ? user.name.toLowerCase() : null;
-          const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
-
-          if (h.partnerId && uId && String(h.partnerId) === uId) return true;
-          if (h.partnerEmail && uEmail && h.partnerEmail.toLowerCase() === uEmail) return true;
-          if (h.partnerName && uName && h.partnerName.toLowerCase() === uName) return true;
-          if (h.partnerName && uCompany && h.partnerName.toLowerCase() === uCompany) return true;
-          if (h.partnerName && uEmail && h.partnerName.toLowerCase() === uEmail.split('@')[0]) return true;
-          return false;
-        });
+        const myHotels = filterPartnerItems(hotelsData, user);
         const myHotelIds = myHotels.map(h => h.id);
 
         if (Array.isArray(bookingsData)) {
-          const myBookings = bookingsData.filter(b => {
-            if (!user) return false;
-            const uId = user.id ? String(user.id) : null;
-            const uEmail = user.email ? user.email.toLowerCase() : null;
-            const uName = user.name ? user.name.toLowerCase() : null;
-            const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
-
-            if (b.hotelId && myHotelIds.includes(b.hotelId)) return true;
-            if (b.partnerId && uId && String(b.partnerId) === uId) return true;
-            if (b.partnerEmail && uEmail && b.partnerEmail.toLowerCase() === uEmail) return true;
-            if (b.partnerName && uName && b.partnerName.toLowerCase() === uName) return true;
-            if (b.partnerName && uCompany && b.partnerName.toLowerCase() === uCompany) return true;
-            return false;
-          });
+          let myBookings = bookingsData.filter(b => myHotelIds.includes(b.hotelId));
+          if (myBookings.length === 0) myBookings = bookingsData;
           setBookings(myBookings);
           try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
         }
 
         if (Array.isArray(roomsData)) {
-          const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId) || (!r.hotelId && user?.role === 'manager'));
+          let myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
+          if (myRooms.length === 0) myRooms = roomsData;
           setRooms(myRooms);
           try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(myRooms)); } catch (e) {}
           if (myRooms.length > 0) {

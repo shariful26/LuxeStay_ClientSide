@@ -5,7 +5,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-import { getInstantData } from '../../utils/instantCache';
+import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const MyHotels = () => {
   const [hotels, setHotels] = useState(() => getInstantData('manager_hotels', []));
@@ -17,20 +17,7 @@ export const MyHotels = () => {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const myData = data.filter(h => {
-            if (!user) return false;
-            const uId = user.id ? String(user.id) : null;
-            const uEmail = user.email ? user.email.toLowerCase() : null;
-            const uName = user.name ? user.name.toLowerCase() : null;
-            const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
-
-            if (h.partnerId && uId && String(h.partnerId) === uId) return true;
-            if (h.partnerEmail && uEmail && h.partnerEmail.toLowerCase() === uEmail) return true;
-            if (h.partnerName && uName && h.partnerName.toLowerCase() === uName) return true;
-            if (h.partnerName && uCompany && h.partnerName.toLowerCase() === uCompany) return true;
-            if (h.partnerName && uEmail && h.partnerName.toLowerCase() === uEmail.split('@')[0]) return true;
-            return false;
-          });
+          const myData = filterPartnerItems(data, user);
           setHotels(myData);
           try { localStorage.setItem('luxestay_cache_manager_hotels', JSON.stringify(myData)); } catch (e) {}
         }

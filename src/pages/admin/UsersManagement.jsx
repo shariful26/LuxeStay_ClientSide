@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { UserPlus, Search, Trash2, ShieldCheck, User, Briefcase, Shield, X, Sparkles, Phone, Mail, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const UsersManagement = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(() => getInstantData('users', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,7 +29,12 @@ export const UsersManagement = () => {
   useEffect(() => {
     fetch('/api/users')
       .then(res => res.json())
-      .then(data => setUsers(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setUsers(data);
+          try { localStorage.setItem('luxestay_cache_users', JSON.stringify(data)); } catch (e) {}
+        }
+      })
       .catch(() => {});
   }, []);
 

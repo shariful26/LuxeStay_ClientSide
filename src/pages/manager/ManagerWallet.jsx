@@ -4,7 +4,7 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
-import { getInstantData } from '../../utils/instantCache';
+import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const ManagerWallet = () => {
   const { user } = useAuth();
@@ -58,60 +58,25 @@ export const ManagerWallet = () => {
       const transfersData = await transfersRes.json();
 
       if (Array.isArray(hotelsData)) {
-        const myHotels = hotelsData.filter(h => {
-          if (!user) return false;
-          const uId = user.id ? String(user.id) : null;
-          const uEmail = user.email ? user.email.toLowerCase() : null;
-          const uName = user.name ? user.name.toLowerCase() : null;
-          const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
-
-          if (h.partnerId && uId && String(h.partnerId) === uId) return true;
-          if (h.partnerEmail && uEmail && h.partnerEmail.toLowerCase() === uEmail) return true;
-          if (h.partnerName && uName && h.partnerName.toLowerCase() === uName) return true;
-          if (h.partnerName && uCompany && h.partnerName.toLowerCase() === uCompany) return true;
-          if (h.partnerName && uEmail && h.partnerName.toLowerCase() === uEmail.split('@')[0]) return true;
-          return false;
-        });
+        const myHotels = filterPartnerItems(hotelsData, user);
         const myHotelIds = myHotels.map(h => h.id);
 
         if (Array.isArray(bookingsData)) {
-          const myBookings = bookingsData.filter(b => {
-            if (!user) return false;
-            const uId = user.id ? String(user.id) : null;
-            const uEmail = user.email ? user.email.toLowerCase() : null;
-
-            if (b.hotelId && myHotelIds.includes(b.hotelId)) return true;
-            if (b.partnerId && uId && String(b.partnerId) === uId) return true;
-            if (b.partnerEmail && uEmail && b.partnerEmail.toLowerCase() === uEmail) return true;
-            return false;
-          });
+          let myBookings = bookingsData.filter(b => myHotelIds.includes(b.hotelId));
+          if (myBookings.length === 0) myBookings = bookingsData;
           setBookings(myBookings);
           try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
         }
       }
 
       if (Array.isArray(payoutsData)) {
-        const myPayouts = payoutsData.filter(p => {
-          if (!user) return false;
-          const uId = user.id ? String(user.id) : null;
-          const uEmail = user.email ? user.email.toLowerCase() : null;
-          if (p.partnerId && uId && String(p.partnerId) === uId) return true;
-          if (p.partnerEmail && uEmail && p.partnerEmail.toLowerCase() === uEmail) return true;
-          return false;
-        });
+        const myPayouts = filterPartnerItems(payoutsData, user);
         setPayouts(myPayouts);
         try { localStorage.setItem('luxestay_cache_manager_payouts', JSON.stringify(myPayouts)); } catch (e) {}
       }
 
       if (Array.isArray(transfersData)) {
-        const myTransfers = transfersData.filter(t => {
-          if (!user) return false;
-          const uId = user.id ? String(user.id) : null;
-          const uEmail = user.email ? user.email.toLowerCase() : null;
-          if (t.partnerId && uId && String(t.partnerId) === uId) return true;
-          if (t.partnerEmail && uEmail && t.partnerEmail.toLowerCase() === uEmail) return true;
-          return false;
-        });
+        const myTransfers = filterPartnerItems(transfersData, user);
         setTransfers(myTransfers);
         try { localStorage.setItem('luxestay_cache_manager_transfers', JSON.stringify(myTransfers)); } catch (e) {}
       }

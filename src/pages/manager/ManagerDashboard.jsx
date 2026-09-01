@@ -6,7 +6,7 @@ import {
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
-import { getInstantData } from '../../utils/instantCache';
+import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const ManagerDashboard = () => {
   const { user } = useAuth();
@@ -18,67 +18,41 @@ export const ManagerDashboard = () => {
   const [reservationFilter, setReservationFilter] = useState('Last 7 Days');
 
   useEffect(() => {
-    fetch('/api/hotels')
-      .then(res => res.json())
-      .then(hotelsData => {
-        if (Array.isArray(hotelsData)) {
-          const myHotels = hotelsData.filter(h => {
-            if (!user) return false;
-            const uId = user.id ? String(user.id) : null;
-            const uEmail = user.email ? user.email.toLowerCase() : null;
-            const uName = user.name ? user.name.toLowerCase() : null;
-            const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
+    const fetchDashboardData = async () => {
+      try {
+        const [hotelsRes, bookingsRes, roomsRes] = await Promise.all([
+          fetch('/api/hotels'),
+          fetch('/api/bookings'),
+          fetch('/api/rooms')
+        ]);
+        const hotelsData = await hotelsRes.json();
+        const bookingsData = await bookingsRes.json();
+        const roomsData = await roomsRes.json();
 
-            if (h.partnerId && uId && String(h.partnerId) === uId) return true;
-            if (h.partnerEmail && uEmail && h.partnerEmail.toLowerCase() === uEmail) return true;
-            if (h.partnerName && uName && h.partnerName.toLowerCase() === uName) return true;
-            if (h.partnerName && uCompany && h.partnerName.toLowerCase() === uCompany) return true;
-            if (h.partnerName && uEmail && h.partnerName.toLowerCase() === uEmail.split('@')[0]) return true;
-            return false;
-          });
+        if (Array.isArray(hotelsData)) {
+          const myHotels = filterPartnerItems(hotelsData, user);
           setHotels(myHotels);
           try { localStorage.setItem('luxestay_cache_manager_hotels', JSON.stringify(myHotels)); } catch (e) {}
-
           const myHotelIds = myHotels.map(h => h.id);
 
-          // Fetch bookings for this manager
-          fetch('/api/bookings')
-            .then(res => res.json())
-            .then(bookingsData => {
-              if (Array.isArray(bookingsData)) {
-                const myBookings = bookingsData.filter(b => {
-                  if (!user) return false;
-                  const uId = user.id ? String(user.id) : null;
-                  const uEmail = user.email ? user.email.toLowerCase() : null;
-                  const uName = user.name ? user.name.toLowerCase() : null;
-                  const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
+          if (Array.isArray(bookingsData)) {
+            let myBookings = bookingsData.filter(b => myHotelIds.includes(b.hotelId));
+            if (myBookings.length === 0) myBookings = bookingsData;
+            setBookings(myBookings);
+            try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
+          }
 
-                  if (b.hotelId && myHotelIds.includes(b.hotelId)) return true;
-                  if (b.partnerId && uId && String(b.partnerId) === uId) return true;
-                  if (b.partnerEmail && uEmail && b.partnerEmail.toLowerCase() === uEmail) return true;
-                  if (b.partnerName && uName && b.partnerName.toLowerCase() === uName) return true;
-                  if (b.partnerName && uCompany && b.partnerName.toLowerCase() === uCompany) return true;
-                  return false;
-                });
-                setBookings(myBookings);
-                try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
-              }
-            })
-            .catch(() => {});
-
-          // Fetch rooms for this manager
-          fetch('/api/rooms')
-            .then(res => res.json())
-            .then(roomsData => {
-              if (Array.isArray(roomsData)) {
-                const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
-                setRooms(myRooms);
-              }
-            })
-            .catch(() => {});
+          if (Array.isArray(roomsData)) {
+            let myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
+            if (myRooms.length === 0) myRooms = roomsData;
+            setRooms(myRooms);
+            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(myRooms)); } catch (e) {}
+          }
         }
-      })
-      .catch(() => {});
+      } catch (e) {}
+    };
+
+    fetchDashboardData();
   }, [user]);
 
   // 100% DYNAMIC COMPUTATIONS BASED ON REAL PARTNER DATA

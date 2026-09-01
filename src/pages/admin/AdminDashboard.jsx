@@ -46,34 +46,50 @@ const NEWEST_BOOKINGS = [
   { id: 'b6', name: 'Samantha Humble', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' }
 ];
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const AdminDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(8);
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
-  const [bookings, setBookings] = useState([]);
-  const [hotels, setHotels] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [rooms, setRooms] = useState([]);
+  const [bookings, setBookings] = useState(() => getInstantData('bookings', []));
+  const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
+  const [users, setUsers] = useState(() => getInstantData('users', []));
+  const [rooms, setRooms] = useState(() => getInstantData('rooms', []));
 
   useEffect(() => {
-    fetch('/api/bookings')
-      .then(res => res.json())
-      .then(data => setBookings(Array.isArray(data) ? data : []))
-      .catch(() => setBookings([]));
+    const fetchAdminData = async () => {
+      try {
+        const [bookingsRes, hotelsRes, usersRes, roomsRes] = await Promise.all([
+          fetch('/api/bookings'),
+          fetch('/api/hotels'),
+          fetch('/api/users'),
+          fetch('/api/rooms')
+        ]);
+        const bookingsData = await bookingsRes.json();
+        const hotelsData = await hotelsRes.json();
+        const usersData = await usersRes.json();
+        const roomsData = await roomsRes.json();
 
-    fetch('/api/hotels')
-      .then(res => res.json())
-      .then(data => setHotels(Array.isArray(data) ? data : []))
-      .catch(() => setHotels([]));
+        if (Array.isArray(bookingsData)) {
+          setBookings(bookingsData);
+          try { localStorage.setItem('luxestay_cache_bookings', JSON.stringify(bookingsData)); } catch (e) {}
+        }
+        if (Array.isArray(hotelsData)) {
+          setHotels(hotelsData);
+          try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(hotelsData)); } catch (e) {}
+        }
+        if (Array.isArray(usersData)) {
+          setUsers(usersData);
+          try { localStorage.setItem('luxestay_cache_users', JSON.stringify(usersData)); } catch (e) {}
+        }
+        if (Array.isArray(roomsData)) {
+          setRooms(roomsData);
+          try { localStorage.setItem('luxestay_cache_rooms', JSON.stringify(roomsData)); } catch (e) {}
+        }
+      } catch (e) {}
+    };
 
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(data => setUsers(Array.isArray(data) ? data : []))
-      .catch(() => setUsers([]));
-
-    fetch('/api/rooms')
-      .then(res => res.json())
-      .then(data => setRooms(Array.isArray(data) ? data : []))
-      .catch(() => setRooms([]));
+    fetchAdminData();
   }, []);
 
   const handleReviewAction = (id, action) => {
