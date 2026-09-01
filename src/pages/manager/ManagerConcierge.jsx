@@ -3,6 +3,8 @@ import { UserCheck, ShieldAlert, CheckCircle, Clock, Plus, X, Search, Filter, Ph
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const ManagerConcierge = () => {
   const { user } = useAuth();
   
@@ -10,7 +12,7 @@ export const ManagerConcierge = () => {
   const [activeTab, setActiveTab] = useState('staff');
   
   // Staff Directory states
-  const [staff, setStaff] = useState([]);
+  const [staff, setStaff] = useState(() => getInstantData('concierge_staff', []));
   const [positionFilter, setPositionFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [scheduleFilter, setScheduleFilter] = useState('All');
@@ -28,34 +30,31 @@ export const ManagerConcierge = () => {
   });
 
   // Guest Requests states
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState(() => getInstantData('concierge_requests', []));
   const [requestSearch, setRequestSearch] = useState('');
 
-  const fetchStaff = () => {
-    fetch('/api/concierge')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setStaff(data);
-        }
-      })
-      .catch(() => {});
-  };
+  const fetchData = async () => {
+    try {
+      const [staffRes, reqRes] = await Promise.all([
+        fetch('/api/concierge'),
+        fetch('/api/concierge-requests')
+      ]);
+      const staffData = await staffRes.json();
+      const reqData = await reqRes.json();
 
-  const fetchRequests = () => {
-    fetch('/api/concierge-requests')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setRequests(data);
-        }
-      })
-      .catch(() => {});
+      if (Array.isArray(staffData)) {
+        setStaff(staffData);
+        try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(staffData)); } catch (e) {}
+      }
+      if (Array.isArray(reqData)) {
+        setRequests(reqData);
+        try { localStorage.setItem('luxestay_cache_concierge_requests', JSON.stringify(reqData)); } catch (e) {}
+      }
+    } catch (e) {}
   };
 
   useEffect(() => {
-    fetchStaff();
-    fetchRequests();
+    fetchData();
   }, []);
 
   const handleSaveStaff = (e) => {

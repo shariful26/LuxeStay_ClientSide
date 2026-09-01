@@ -3,10 +3,12 @@ import { ShieldAlert, CheckCircle, Clock, Hammer, HelpCircle, Save, Filter, Sear
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const ManagerHousekeeping = () => {
   const { user } = useAuth();
-  const [rooms, setRooms] = useState([]);
-  const [bookings, setBookings] = useState([]);
+  const [rooms, setRooms] = useState(() => getInstantData('manager_rooms', []));
+  const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
   const [editingNotesId, setEditingNotesId] = useState(null);
   const [noteInput, setNoteInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,24 +19,24 @@ export const ManagerHousekeeping = () => {
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchData = () => {
-    fetch('/api/rooms')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setRooms(data);
-        }
-      })
-      .catch(() => {});
+  const fetchData = async () => {
+    try {
+      const [roomsRes, bookingsRes] = await Promise.all([
+        fetch('/api/rooms'),
+        fetch('/api/bookings')
+      ]);
+      const roomsData = await roomsRes.json();
+      const bookingsData = await bookingsRes.json();
 
-    fetch('/api/bookings')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setBookings(data);
-        }
-      })
-      .catch(() => {});
+      if (Array.isArray(roomsData)) {
+        setRooms(roomsData);
+        try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(roomsData)); } catch (e) {}
+      }
+      if (Array.isArray(bookingsData)) {
+        setBookings(bookingsData);
+        try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(bookingsData)); } catch (e) {}
+      }
+    } catch (e) {}
   };
 
   useEffect(() => {

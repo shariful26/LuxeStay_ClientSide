@@ -4,10 +4,12 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const ManagerCalendar = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
   
   // Calendar Navigation states
   const [currentDate, setCurrentDate] = useState(new Date(2028, 5, 1)); // Default to June 2028 matching DB mock entries
@@ -19,7 +21,9 @@ export const ManagerCalendar = () => {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setBookings(data.filter(b => b.status !== 'Cancelled'));
+          const filtered = data.filter(b => b.status !== 'Cancelled');
+          setBookings(filtered);
+          try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(filtered)); } catch (e) {}
         }
       })
       .catch(() => {});

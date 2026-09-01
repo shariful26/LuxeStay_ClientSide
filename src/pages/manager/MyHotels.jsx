@@ -5,8 +5,10 @@ import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const MyHotels = () => {
-  const [hotels, setHotels] = useState([]);
+  const [hotels, setHotels] = useState(() => getInstantData('manager_hotels', []));
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
 
@@ -30,6 +32,7 @@ export const MyHotels = () => {
             return false;
           });
           setHotels(myData);
+          try { localStorage.setItem('luxestay_cache_manager_hotels', JSON.stringify(myData)); } catch (e) {}
         }
       })
       .catch(() => {});

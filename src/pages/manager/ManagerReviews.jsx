@@ -3,9 +3,11 @@ import { Star, MessageSquare, Globe, ChevronDown, Check, Reply, Filter, Smile, F
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const ManagerReviews = () => {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState(() => getInstantData('reviews', []));
   const [replyInputs, setReplyInputs] = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [statsPeriod, setStatsPeriod] = useState('Last 7 Days');
@@ -19,6 +21,7 @@ export const ManagerReviews = () => {
       .then(data => {
         if (Array.isArray(data)) {
           setReviews(data);
+          try { localStorage.setItem('luxestay_cache_reviews', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});

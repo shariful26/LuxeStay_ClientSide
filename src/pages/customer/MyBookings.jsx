@@ -5,9 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useBooking } from '../../context/BookingContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const MyBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [hotels, setHotels] = useState([]);
+  const [bookings, setBookings] = useState(() => getInstantData('customer_bookings', []));
+  const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [selectedExtendBooking, setSelectedExtendBooking] = useState(null);
   const [extraNights, setExtraNights] = useState(1);
   const [extending, setExtending] = useState(false);
@@ -21,7 +23,12 @@ export const MyBookings = () => {
   useEffect(() => {
     fetch('/api/hotels')
       .then(res => res.json())
-      .then(data => setHotels(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHotels(data);
+          try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(data)); } catch (e) {}
+        }
+      })
       .catch(() => {});
 
     fetch('/api/bookings')
@@ -33,6 +40,7 @@ export const MyBookings = () => {
             (user?.id && b.userId === user.id)
           );
           setBookings(myData);
+          try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(myData)); } catch (e) {}
         }
       })
       .catch(() => {});

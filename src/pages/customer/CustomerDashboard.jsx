@@ -9,12 +9,14 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useBooking } from '../../context/BookingContext';
 import { useCurrency } from '../../context/CurrencyContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const CustomerDashboard = () => {
   const { user } = useAuth();
   const { wishlist } = useWishlist();
   const { activeVoucher, setActiveVoucher, setIsVoucherModalOpen } = useBooking();
   const { formatPrice } = useCurrency();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(() => getInstantData('customer_bookings', []));
 
   useEffect(() => {
     fetch('/api/bookings')
@@ -26,6 +28,7 @@ export const CustomerDashboard = () => {
             (user?.id && b.userId === user.id)
           );
           setBookings(myData);
+          try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(myData)); } catch (e) {}
         }
       })
       .catch(() => {});

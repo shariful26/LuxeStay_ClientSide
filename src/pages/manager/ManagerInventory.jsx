@@ -3,9 +3,11 @@ import { Plus, X, Search, Edit2, RotateCcw, AlertTriangle, CheckCircle, HelpCirc
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInstantData } from '../../utils/instantCache';
+
 export const ManagerInventory = () => {
   const { user } = useAuth();
-  const [inventory, setInventory] = useState([]);
+  const [inventory, setInventory] = useState(() => getInstantData('inventory', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +27,7 @@ export const ManagerInventory = () => {
       .then(data => {
         if (Array.isArray(data)) {
           setInventory(data);
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});
