@@ -11,6 +11,7 @@ export const ManagerDashboard = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const [hotels, setHotels] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [timeFilter, setTimeFilter] = useState('Last 6 Months');
   const [reservationFilter, setReservationFilter] = useState('Last 7 Days');
@@ -38,6 +39,7 @@ export const ManagerDashboard = () => {
 
           const myHotelIds = myHotels.map(h => h.id);
 
+          // Fetch bookings for this manager
           fetch('/api/bookings')
             .then(res => res.json())
             .then(bookingsData => {
@@ -56,56 +58,75 @@ export const ManagerDashboard = () => {
               }
             })
             .catch(() => {});
+
+          // Fetch rooms for this manager
+          fetch('/api/rooms')
+            .then(res => res.json())
+            .then(roomsData => {
+              if (Array.isArray(roomsData)) {
+                const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
+                setRooms(myRooms);
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
   }, [user]);
 
-  // DYNAMIC COMPUTATIONS BASED ON PARTNER DATA
-  const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.total) || 0), 0);
-  const totalBookingsCount = bookings.length;
+  // 100% DYNAMIC COMPUTATIONS BASED ON REAL PARTNER DATA
+  const validBookings = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
+  const totalRevenue = validBookings.reduce((sum, b) => sum + (Number(b.total) || 0), 0);
   
-  const checkedInCount = bookings.filter(b => b.status?.toLowerCase() === 'checked-in' || b.status?.toLowerCase() === 'active').length;
-  const checkedOutCount = bookings.filter(b => b.status?.toLowerCase() === 'checked-out' || b.status?.toLowerCase() === 'completed').length;
-  const pendingArrivalsCount = bookings.filter(b => b.status?.toLowerCase() === 'confirmed' || b.status?.toLowerCase() === 'upcoming' || !b.status).length;
+  // Real count of new/upcoming confirmed bookings
+  const newBookingsCount = bookings.filter(b => {
+    const s = b.status?.toLowerCase();
+    return s === 'confirmed' || s === 'pending' || !s;
+  }).length;
+  
+  // Real count of currently checked-in / active guests
+  const checkedInCount = bookings.filter(b => {
+    const s = b.status?.toLowerCase();
+    return s === 'checked-in' || s === 'active';
+  }).length;
 
-  const totalCapacity = hotels.reduce((sum, h) => sum + (Number(h.capacity) || 4), 0) || 12;
-  const occupiedCount = checkedInCount || Math.min(totalBookingsCount, Math.round(totalCapacity * 0.4)) || 5;
-  const reservedCount = pendingArrivalsCount || Math.min(totalBookingsCount - occupiedCount, Math.round(totalCapacity * 0.3)) || 3;
-  const availableCount = Math.max(2, totalCapacity - occupiedCount - reservedCount);
-  const notReadyCount = Math.max(1, Math.round(hotels.length * 0.5)) || 1;
+  // Real count of checked-out / completed bookings
+  const checkedOutCount = bookings.filter(b => {
+    const s = b.status?.toLowerCase();
+    return s === 'checked-out' || s === 'completed';
+  }).length;
 
-  // Let's compute percentages for availability bar
-  const occupiedPercent = Math.round((occupiedCount / totalCapacity) * 100) || 40;
-  const reservedPercent = Math.round((reservedCount / totalCapacity) * 100) || 30;
-  const availablePercent = Math.round((availableCount / totalCapacity) * 100) || 20;
-  const notReadyPercent = 100 - occupiedPercent - reservedPercent - availablePercent;
+  // Total Rooms Capacity
+  const totalRoomsCount = rooms.length > 0 ? rooms.length : (hotels.length > 0 ? hotels.length * 4 : 0);
+  
+  // Dynamic Room Availability Breakdown
+  const occupiedCount = checkedInCount;
+  const reservedCount = newBookingsCount;
+  const notReadyCount = rooms.filter(r => r.housekeeping === 'Cleaning' || r.housekeeping === 'Maintenance').length;
+  const availableCount = Math.max(0, totalRoomsCount - occupiedCount - reservedCount - notReadyCount);
+
+  // Dynamic Percentages for Availability Progress Bar
+  const totalCapacityForBar = totalRoomsCount > 0 ? totalRoomsCount : 1;
+  const occupiedPercent = totalRoomsCount > 0 ? Math.min(100, Math.round((occupiedCount / totalCapacityForBar) * 100)) : 0;
+  const reservedPercent = totalRoomsCount > 0 ? Math.min(100 - occupiedPercent, Math.round((reservedCount / totalCapacityForBar) * 100)) : 0;
+  const notReadyPercent = totalRoomsCount > 0 ? Math.min(100 - occupiedPercent - reservedPercent, Math.round((notReadyCount / totalCapacityForBar) * 100)) : 0;
+  const availablePercent = totalRoomsCount > 0 ? Math.max(0, 100 - occupiedPercent - reservedPercent - notReadyPercent) : 100;
 
   // Average Rating
   const averageRating = hotels.length > 0
     ? (hotels.reduce((sum, h) => sum + (Number(h.starRating) || 5), 0) / hotels.length).toFixed(1)
-    : "4.8";
-
-  // Distribute totalRevenue across the last 6 months dynamically for the wave chart
-  const decRev = Math.round(totalRevenue * 0.12) || 12000;
-  const janRev = Math.round(totalRevenue * 0.18) || 18000;
-  const febRev = Math.round(totalRevenue * 0.25) || 25000;
-  const marRev = Math.round(totalRevenue * 0.15) || 15000;
-  const aprRev = Math.round(totalRevenue * 0.20) || 20000;
-  const mayRev = Math.round(totalRevenue * 0.10) || 10000;
+    : "5.0";
 
   // Distribute reservations by platform dynamically
-  const directBookingPercent = totalBookingsCount > 0 ? Math.round((bookings.filter(b => !b.paymentMethod || b.paymentMethod === 'Stripe Card').length / totalBookingsCount) * 100) : 61;
-  const bookingComPercent = totalBookingsCount > 0 ? Math.round((bookings.filter(b => b.paymentMethod === 'Paypal').length / totalBookingsCount) * 100) || 12 : 12;
-  const airbnbPercent = 15;
-  const expediaPercent = 100 - directBookingPercent - bookingComPercent - airbnbPercent;
+  const directBookingPercent = bookings.length > 0 ? Math.round((bookings.filter(b => !b.paymentMethod || b.paymentMethod.toLowerCase().includes('stripe') || b.paymentMethod.toLowerCase().includes('card')).length / bookings.length) * 100) : 100;
+  const bookingComPercent = bookings.length > 0 ? Math.round((bookings.filter(b => b.paymentMethod?.toLowerCase().includes('paypal')).length / bookings.length) * 100) : 0;
+  const airbnbPercent = bookings.length > 0 ? Math.round((bookings.filter(b => b.paymentMethod?.toLowerCase().includes('razorpay')).length / bookings.length) * 100) : 0;
+  const expediaPercent = Math.max(0, 100 - directBookingPercent - bookingComPercent - airbnbPercent);
 
   return (
     <PortalLayout role="manager" title="LuxStay Dashboard">
       <div className="space-y-6 pb-12 font-sans text-slate-800 animate-fade-in">
         
-
-
         {/* ROW 1: 4 KPI CARDS GRID */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
           
@@ -116,7 +137,7 @@ export const ManagerDashboard = () => {
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-600 block">New Bookings</span>
-              <span className="text-3xl font-black text-slate-900 mt-1 block">{totalBookingsCount}</span>
+              <span className="text-3xl font-black text-slate-900 mt-1 block">{newBookingsCount}</span>
             </div>
             <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold">
               <span className="px-2 py-0.5 rounded-full bg-white/80 text-emerald-700 font-black flex items-center gap-1">
@@ -126,14 +147,14 @@ export const ManagerDashboard = () => {
             </div>
           </div>
 
-          {/* Card 2: Check-In */}
+          {/* Card 2: Check-In (Dynamically shows currently checked in occupied suites) */}
           <div className="p-5 rounded-3xl bg-white border border-slate-200/70 shadow-2xs flex flex-col items-center justify-center text-center space-y-4">
             <div className="w-10 h-10 rounded-2xl bg-[#e2f896]/50 text-slate-800 flex items-center justify-center">
               <LogIn className="w-5 h-5 text-slate-800" />
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 block">Check-In</span>
-              <span className="text-3xl font-black text-slate-900 mt-1 block">{occupiedCount}</span>
+              <span className="text-3xl font-black text-slate-900 mt-1 block">{checkedInCount}</span>
             </div>
             <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold">
               <span className="px-2 py-0.5 rounded-full bg-lime-100 text-lime-800 font-black flex items-center gap-1">
