@@ -5,10 +5,19 @@ import { BookingModal } from '../../components/BookingModal';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInstantData, fetchInstantData } from '../../utils/instantCache';
+
 export const RoomDetail = () => {
   const { id } = useParams();
-  const [room, setRoom] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [room, setRoom] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`luxestay_cache_room_${id}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
@@ -16,17 +25,14 @@ export const RoomDetail = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    fetch(`/api/rooms/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    fetchInstantData(`/api/rooms/${id}`, `room_${id}`, (data) => {
+      if (data && data.id) {
         setRoom(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    });
   }, [id]);
 
-  if (loading) return <div className="py-20 text-center font-bold text-slate-500">Loading room specs...</div>;
-  if (!room) return <div className="py-20 text-center text-rose-500 font-bold">Room not found.</div>;
+  if (!room) return <div className="py-20 text-center text-slate-500 font-bold animate-pulse">Loading luxury suite details...</div>;
 
   return (
     <div className="container pt-8 sm:pt-10 pb-16 space-y-8 animate-fade-in">

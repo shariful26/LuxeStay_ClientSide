@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight, Star } from 'lucide-react';
+import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
 export const Destinations = () => {
-  const [destinations, setDestinations] = useState([]);
+  const [destinations, setDestinations] = useState(() => getInstantData('destinations', []));
 
   useEffect(() => {
-    fetch('/api/destinations')
-      .then(res => res.json())
-      .then(data => setDestinations(data))
-      .catch(() => {});
+    fetchInstantData('/api/destinations', 'destinations', setDestinations);
   }, []);
 
   return (

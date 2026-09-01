@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight, Clock } from 'lucide-react';
+import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
 export const BlogList = () => {
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState(() => getInstantData('blogs', []));
 
   useEffect(() => {
-    fetch('/api/blogs')
-      .then(res => res.json())
-      .then(data => setBlogs(data))
-      .catch(() => {});
+    fetchInstantData('/api/blogs', 'blogs', setBlogs);
   }, []);
 
   return (

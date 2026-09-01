@@ -6,13 +6,14 @@ import {
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerDashboard = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
-  const [hotels, setHotels] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [bookings, setBookings] = useState([]);
+  const [hotels, setHotels] = useState(() => getInstantData('manager_hotels', []));
+  const [rooms, setRooms] = useState(() => getInstantData('manager_rooms', []));
+  const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
   const [timeFilter, setTimeFilter] = useState('Last 6 Months');
   const [reservationFilter, setReservationFilter] = useState('Last 7 Days');
 
@@ -36,6 +37,7 @@ export const ManagerDashboard = () => {
             return false;
           });
           setHotels(myHotels);
+          try { localStorage.setItem('luxestay_cache_manager_hotels', JSON.stringify(myHotels)); } catch (e) {}
 
           const myHotelIds = myHotels.map(h => h.id);
 
@@ -48,13 +50,18 @@ export const ManagerDashboard = () => {
                   if (!user) return false;
                   const uId = user.id ? String(user.id) : null;
                   const uEmail = user.email ? user.email.toLowerCase() : null;
+                  const uName = user.name ? user.name.toLowerCase() : null;
+                  const uCompany = user.companyName ? user.companyName.toLowerCase() : null;
 
                   if (b.hotelId && myHotelIds.includes(b.hotelId)) return true;
                   if (b.partnerId && uId && String(b.partnerId) === uId) return true;
                   if (b.partnerEmail && uEmail && b.partnerEmail.toLowerCase() === uEmail) return true;
+                  if (b.partnerName && uName && b.partnerName.toLowerCase() === uName) return true;
+                  if (b.partnerName && uCompany && b.partnerName.toLowerCase() === uCompany) return true;
                   return false;
                 });
                 setBookings(myBookings);
+                try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
               }
             })
             .catch(() => {});

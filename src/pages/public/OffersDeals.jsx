@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Tag, Sparkles, Copy, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
 export const OffersDeals = () => {
   const { t } = useLanguage();
-  const [offers, setOffers] = useState([]);
+  const [offers, setOffers] = useState(() => getInstantData('offers', []));
   const [copiedCode, setCopiedCode] = useState('');
 
   useEffect(() => {
-    fetch('/api/offers')
-      .then(res => res.json())
-      .then(data => setOffers(data))
-      .catch(() => {});
+    fetchInstantData('/api/offers', 'offers', setOffers);
   }, []);
 
   const handleCopy = (code) => {

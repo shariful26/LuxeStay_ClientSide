@@ -13,10 +13,16 @@ const DEFAULT_FALLBACKS = [
   'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80'
 ];
 
+import { getInstantData, fetchInstantData } from '../../utils/instantCache';
+
 export const HotelDetail = () => {
   const { id } = useParams();
-  const [hotel, setHotel] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [hotel, setHotel] = useState(() => {
+    const allHotels = getInstantData('hotels', []);
+    const found = allHotels.find(h => h.id === id || h.slug === id);
+    return found || null;
+  });
+  const [loading, setLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -29,17 +35,14 @@ export const HotelDetail = () => {
   const [contactSuccess, setContactSuccess] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/hotels/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    fetchInstantData(`/api/hotels/${id}`, `hotel_${id}`, (data) => {
+      if (data && data.id) {
         setHotel(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    });
   }, [id]);
 
-  if (loading) return <div className="py-20 text-center font-bold text-slate-500">Loading suite details...</div>;
-  if (!hotel) return <div className="py-20 text-center text-rose-500 font-bold">Property not found.</div>;
+  if (!hotel) return <div className="py-20 text-center text-slate-500 font-bold animate-pulse">Loading verified property details...</div>;
 
   // Build full robust list of gallery images
   const rawImages = (hotel.images && hotel.images.length > 0) ? hotel.images : DEFAULT_FALLBACKS;
