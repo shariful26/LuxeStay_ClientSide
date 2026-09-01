@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerMessages = () => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => getInstantData('messages', []));
   const [activeChatId, setActiveChatId] = useState('');
   const [mobileTab, setMobileTab] = useState('chat'); // 'list' | 'chat'
   const [newMessage, setNewMessage] = useState('');
@@ -22,8 +23,9 @@ export const ManagerMessages = () => {
     fetch('/api/messages')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setMessages(data);
+          try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});
@@ -31,50 +33,30 @@ export const ManagerMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    // Poll for new messages every 3 seconds to keep chat live!
-    const interval = setInterval(fetchMessages, 3000);
+    // Fast real-time polling every 1.5 seconds
+    const interval = setInterval(fetchMessages, 1500);
     return () => clearInterval(interval);
   }, []);
 
   // Fetch real profile details dynamically from backend
   useEffect(() => {
-    const myId = user?.id || 'partner1';
     const customerIds = [...new Set(messages.map(msg => {
-      const isMyChat = msg.senderId === myId || msg.recipientId === myId;
-      if (!isMyChat) return null;
-      return msg.senderRole === 'customer' ? msg.senderId : msg.recipientId;
+      if (msg.senderRole === 'customer') return msg.senderId || 'alice';
+      if (msg.recipientRole === 'customer') return msg.recipientId || 'alice';
+      return null;
     }).filter(Boolean))];
 
     customerIds.forEach(id => {
       if (id && !fetchedProfiles[id]) {
-        setFetchedProfiles(prev => {
-          if (prev[id]) return prev;
-          return {
-            ...prev,
-            [id]: {
-              name: 'Customar',
-              avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-              phone: '+1 (555) 000-0000',
-              email: `${id}@example.com`,
-              status: 'Guest',
-              country: 'United Kingdom',
-              isPlaceholder: true
-            }
-          };
-        });
-
         fetch(`/api/users/${id}`)
-          .then(res => {
-            if (!res.ok) throw new Error();
-            return res.json();
-          })
+          .then(res => res.json())
           .then(data => {
             if (data && data.id) {
               setFetchedProfiles(prev => ({
                 ...prev,
                 [data.id]: {
-                  name: data.name,
-                  avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+                  name: data.name || 'Guest Customer',
+                  avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
                   phone: data.phone || '+1 (555) 000-0000',
                   email: data.email || `${data.id}@example.com`,
                   status: 'Guest • Online',
@@ -88,27 +70,33 @@ export const ManagerMessages = () => {
     });
   }, [messages, user?.id]);
 
-  // Default hardcoded profiles for display info
-  const defaultProfiles = {};
-
   // Group messages by customer
-  const chatGroups = {};
+  const chatGroups = {
+    alice: {
+      id: 'alice',
+      name: 'Alice Johnson',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      phone: '+1 (555) 234-5678',
+      email: 'alice@example.com',
+      status: 'Guest • Room 101',
+      country: 'United Kingdom',
+      messages: []
+    }
+  };
 
   messages.forEach(msg => {
-    const myId = user?.id ? String(user.id) : 'partner1';
-    const isMyChat = String(msg.senderId) === myId || String(msg.recipientId) === myId || msg.senderRole === 'manager' || msg.recipientRole === 'manager';
-    if (!isMyChat) return;
-
-    const customerId = msg.senderRole === 'customer' ? (msg.senderId || 'alice') : (msg.recipientId || 'alice');
+    const customerId = msg.senderRole === 'customer' 
+      ? (msg.senderId || 'alice') 
+      : (msg.recipientRole === 'customer' ? (msg.recipientId || 'alice') : 'alice');
     const customerName = msg.senderRole === 'customer' ? msg.senderName : msg.recipientName;
     const customerAvatar = msg.senderRole === 'customer' ? msg.senderAvatar : null;
-    
-    const resolvedProfile = fetchedProfiles[customerId] || defaultProfiles[customerId] || {
-      name: customerName || 'Customar',
-      avatar: customerAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+
+    const resolvedProfile = fetchedProfiles[customerId] || {
+      name: customerName || (customerId === 'alice' ? 'Alice Johnson' : 'Guest Customer'),
+      avatar: customerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       phone: '+1 (555) 000-0000',
       email: `${customerId}@example.com`,
-      status: 'Guest',
+      status: 'Guest • Online',
       country: 'United Kingdom'
     };
 
@@ -123,18 +111,14 @@ export const ManagerMessages = () => {
         country: resolvedProfile.country || 'United Kingdom',
         messages: []
       };
-    } else {
-      if (fetchedProfiles[customerId] && !fetchedProfiles[customerId].isPlaceholder) {
-        chatGroups[customerId].name = fetchedProfiles[customerId].name;
-        chatGroups[customerId].avatar = fetchedProfiles[customerId].avatar;
-        chatGroups[customerId].phone = fetchedProfiles[customerId].phone;
-        chatGroups[customerId].email = fetchedProfiles[customerId].email;
-        chatGroups[customerId].country = fetchedProfiles[customerId].country;
-      }
     }
 
+    const isCustomer = msg.senderRole === 'customer' || msg.senderId === customerId;
+
     chatGroups[customerId].messages.push({
-      sender: msg.senderRole === 'customer' ? customerId : 'manager',
+      sender: isCustomer ? customerId : 'manager',
+      senderRole: msg.senderRole,
+      senderName: msg.senderName,
       text: msg.text,
       time: msg.time,
       read: msg.read,
@@ -157,10 +141,9 @@ export const ManagerMessages = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         senderId: customerId,
-        recipientId: user.id || 'partner1'
+        recipientId: user.id || 'manager'
       })
-    })
-      .catch(() => {});
+    }).catch(() => {});
   };
 
   useEffect(() => {
@@ -204,30 +187,46 @@ export const ManagerMessages = () => {
     e.preventDefault();
     if (!newMessage.trim() && !attachment) return;
 
-    const myId = user?.id || 'partner1';
+    const myId = user?.id ? String(user.id) : 'manager';
     const myName = user?.name || 'Hotel Manager';
-    const myRole = user?.role || 'manager';
+    const myRole = 'manager';
+    const myAvatar = user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80';
 
     const sendPayload = (textValue) => {
-      const payload = {
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const optimisticMsg = {
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         senderId: myId,
         senderName: myName,
         senderRole: myRole,
-        senderAvatar: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+        senderAvatar: myAvatar,
         recipientId: activeChatId || 'alice',
         recipientName: activeChatData ? activeChatData.name : 'Guest Customer',
+        recipientRole: 'customer',
         text: textValue,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: nowTime,
+        read: false,
+        createdAt: new Date().toISOString()
       };
 
+      // 0ms Optimistic UI Update: Render immediately!
+      setMessages(prev => {
+        const updated = [...prev, optimisticMsg];
+        try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+
+      // Background persistence to MongoDB Atlas
       fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(optimisticMsg)
       })
         .then(res => res.json())
         .then(savedMsg => {
-          setMessages(prev => [...prev, savedMsg]);
+          if (savedMsg && savedMsg.id) {
+            setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? savedMsg : m));
+          }
         })
         .catch(() => {});
     };

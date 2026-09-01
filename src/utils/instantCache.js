@@ -387,6 +387,74 @@ export const BASELINE_DESTINATIONS = [
   }
 ];
 
+export const BASELINE_MESSAGES = [
+  {
+    id: "msg1",
+    senderId: "alice",
+    senderName: "Alice Johnson",
+    senderRole: "customer",
+    recipientId: "manager",
+    recipientName: "manager",
+    recipientRole: "manager",
+    text: "Hi, can I request a late check-out for Room 101?",
+    time: "9:15 AM",
+    read: true,
+    createdAt: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: "msg2",
+    senderId: "manager",
+    senderName: "manager",
+    senderRole: "manager",
+    recipientId: "alice",
+    recipientName: "Alice Johnson",
+    recipientRole: "customer",
+    text: "Hi Alice, we can accommodate a late check-out for you. How late would you like to stay?",
+    time: "9:30 AM",
+    read: true,
+    createdAt: new Date(Date.now() - 3000000).toISOString()
+  },
+  {
+    id: "msg3",
+    senderId: "alice",
+    senderName: "Alice Johnson",
+    senderRole: "customer",
+    recipientId: "manager",
+    recipientName: "manager",
+    recipientRole: "manager",
+    text: "I was hoping to stay until 2 PM, is that possible?",
+    time: "9:40 AM",
+    read: true,
+    createdAt: new Date(Date.now() - 2400000).toISOString()
+  },
+  {
+    id: "msg4",
+    senderId: "manager",
+    senderName: "manager",
+    senderRole: "manager",
+    recipientId: "alice",
+    recipientName: "Alice Johnson",
+    recipientRole: "customer",
+    text: "Yes, that is perfectly fine. We have updated your checkout window to 2 PM at no extra cost.",
+    time: "9:45 AM",
+    read: true,
+    createdAt: new Date(Date.now() - 1800000).toISOString()
+  },
+  {
+    id: "msg5",
+    senderId: "alice",
+    senderName: "Alice Johnson",
+    senderRole: "customer",
+    recipientId: "manager",
+    recipientName: "manager",
+    recipientRole: "manager",
+    text: "Awesome! Thank you so much for the quick response. See you tomorrow.",
+    time: "9:50 AM",
+    read: true,
+    createdAt: new Date(Date.now() - 1200000).toISOString()
+  }
+];
+
 const BASELINES = {
   hotels: BASELINE_HOTELS,
   manager_hotels: BASELINE_HOTELS,
@@ -395,7 +463,8 @@ const BASELINES = {
   bookings: BASELINE_BOOKINGS,
   manager_bookings: BASELINE_BOOKINGS,
   customer_bookings: BASELINE_BOOKINGS,
-  destinations: BASELINE_DESTINATIONS
+  destinations: BASELINE_DESTINATIONS,
+  messages: BASELINE_MESSAGES
 };
 
 /**

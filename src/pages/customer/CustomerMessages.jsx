@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { getInstantData } from '../../utils/instantCache';
 
 export const CustomerMessages = () => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([]);
-  const [activeChatId, setActiveChatId] = useState('');
+  const [messages, setMessages] = useState(() => getInstantData('messages', []));
+  const [activeChatId, setActiveChatId] = useState('manager');
   const [mobileTab, setMobileTab] = useState('chat'); // 'list' | 'chat'
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
@@ -22,8 +23,9 @@ export const CustomerMessages = () => {
     fetch('/api/messages')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setMessages(data);
+          try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});
@@ -31,48 +33,30 @@ export const CustomerMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    // Poll for new messages every 3 seconds to keep chat live!
-    const interval = setInterval(fetchMessages, 3000);
+    // Fast real-time polling every 1.5 seconds
+    const interval = setInterval(fetchMessages, 1500);
     return () => clearInterval(interval);
   }, []);
 
   // Fetch real profile details dynamically from backend
   useEffect(() => {
-    const myId = user?.id || 'alice';
+    const myId = user?.id ? String(user.id) : 'alice';
     const partnerIds = [...new Set(messages.map(msg => {
-      const isMyChat = msg.senderId === myId || msg.recipientId === myId;
-      if (!isMyChat) return null;
-      return msg.senderRole === 'manager' ? msg.senderId : msg.recipientId;
+      if (msg.senderRole === 'manager') return msg.senderId || 'manager';
+      if (msg.recipientRole === 'manager') return msg.recipientId || 'manager';
+      return null;
     }).filter(Boolean))];
 
     partnerIds.forEach(id => {
       if (id && id !== myId && !fetchedProfiles[id]) {
-        setFetchedProfiles(prev => {
-          if (prev[id]) return prev;
-          return {
-            ...prev,
-            [id]: {
-              name: 'Hotel Host',
-              avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-              phone: '+1 (555) 888-9999',
-              email: 'manager@luxestay.com',
-              status: 'Property Host',
-              isPlaceholder: true
-            }
-          };
-        });
-
         fetch(`/api/users/${id}`)
-          .then(res => {
-            if (!res.ok) throw new Error();
-            return res.json();
-          })
+          .then(res => res.json())
           .then(data => {
             if (data && data.id) {
               setFetchedProfiles(prev => ({
                 ...prev,
                 [data.id]: {
-                  name: data.name,
+                  name: data.name || 'Hotel Host',
                   avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
                   phone: data.phone || '+1 (555) 888-9999',
                   email: data.email || 'manager@luxestay.com',
@@ -86,59 +70,32 @@ export const CustomerMessages = () => {
     });
   }, [messages, user?.id]);
 
-
-
-  // Default hardcoded profiles for display info
-  const defaultManagerProfiles = {};
-
-  // Group messages by manager
-  const chatGroups = {};
+  // Group messages for the customer
+  const chatGroups = {
+    manager: {
+      id: 'manager',
+      name: 'LuxeStay Hotel Management',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      phone: '+1 (555) 000-1122',
+      email: 'manager@luxestay.com',
+      status: 'Property Host • Online',
+      messages: []
+    }
+  };
 
   messages.forEach(msg => {
-    // Determine the partner/manager ID in this chat
-    const partnerId = msg.senderRole === 'manager' ? (msg.senderId || 'partner1') : (msg.recipientId || 'partner1');
-    const partnerName = msg.senderRole === 'manager' ? msg.senderName : msg.recipientName;
-    
-    // Only show chats related to this specific guest
-    const myId = user?.id ? String(user.id) : 'alice';
-    const isMyChat = String(msg.senderId) === myId || String(msg.recipientId) === myId || msg.senderRole === 'customer' || msg.recipientRole === 'customer';
-    if (!isMyChat) return;
+    const isCustomerMsg = msg.senderRole === 'customer' || msg.senderId === 'alice' || (user?.id && String(msg.senderId) === String(user.id));
+    const isManagerMsg = msg.senderRole === 'manager' || msg.recipientRole === 'customer' || (user?.id && String(msg.recipientId) === String(user.id));
 
-    const partnerAvatar = msg.senderRole === 'manager' ? msg.senderAvatar : null;
-    
-    const resolvedProfile = fetchedProfiles[partnerId] || defaultManagerProfiles[partnerId] || {
-      name: partnerName || 'Hotel Host',
-      avatar: partnerAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      phone: '+1 (555) 888-9999',
-      email: 'manager@luxestay.com',
-      status: 'Property Host'
-    };
+    if (!isCustomerMsg && !isManagerMsg) return;
 
-    if (!chatGroups[partnerId]) {
-      chatGroups[partnerId] = {
-        id: partnerId,
-        name: partnerName || resolvedProfile.name,
-        avatar: partnerAvatar || (msg.senderRole === 'manager' ? msg.senderAvatar : null) || resolvedProfile.avatar,
-        phone: resolvedProfile.phone,
-        email: resolvedProfile.email,
-        status: resolvedProfile.status,
-        messages: []
-      };
-    } else {
-      const currentAvatar = partnerAvatar || (msg.senderRole === 'manager' ? msg.senderAvatar : null);
-      if (currentAvatar && chatGroups[partnerId].avatar.includes('unsplash.com/photo-1534528741775-53994a69daeb')) {
-        chatGroups[partnerId].avatar = currentAvatar;
-      }
-      if (fetchedProfiles[partnerId] && !fetchedProfiles[partnerId].isPlaceholder) {
-        chatGroups[partnerId].name = fetchedProfiles[partnerId].name;
-        chatGroups[partnerId].avatar = fetchedProfiles[partnerId].avatar;
-        chatGroups[partnerId].phone = fetchedProfiles[partnerId].phone;
-        chatGroups[partnerId].email = fetchedProfiles[partnerId].email;
-      }
-    }
+    // Direct into default manager thread or specific partner thread
+    const targetKey = 'manager';
 
-    chatGroups[partnerId].messages.push({
-      sender: msg.senderRole === 'customer' ? 'customer' : partnerId,
+    chatGroups[targetKey].messages.push({
+      sender: isCustomerMsg ? 'customer' : 'manager',
+      senderRole: msg.senderRole,
+      senderName: msg.senderName,
       text: msg.text,
       time: msg.time,
       read: msg.read,
@@ -163,8 +120,7 @@ export const CustomerMessages = () => {
         senderId: partnerId,
         recipientId: user.id || 'alice'
       })
-    })
-      .catch(() => {});
+    }).catch(() => {});
   };
 
   useEffect(() => {
@@ -208,30 +164,46 @@ export const CustomerMessages = () => {
     e.preventDefault();
     if (!newMessage.trim() && !attachment) return;
 
-    const myId = user?.id || 'alice';
+    const myId = user?.id ? String(user.id) : 'alice';
     const myName = user?.name || 'Alice Johnson';
     const myRole = 'customer';
+    const myAvatar = user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
 
     const sendPayload = (textValue) => {
-      const payload = {
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const optimisticMsg = {
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         senderId: myId,
         senderName: myName,
         senderRole: myRole,
-        senderAvatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-        recipientId: activeChatId || 'partner1',
-        recipientName: activeChatData ? activeChatData.name : 'Hotel Host',
+        senderAvatar: myAvatar,
+        recipientId: activeChatId || 'manager',
+        recipientName: activeChatData ? activeChatData.name : 'Hotel Management',
+        recipientRole: 'manager',
         text: textValue,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: nowTime,
+        read: false,
+        createdAt: new Date().toISOString()
       };
 
+      // 0ms Optimistic UI Update: Render in UI immediately!
+      setMessages(prev => {
+        const updated = [...prev, optimisticMsg];
+        try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+
+      // Background persistence to MongoDB Atlas
       fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(optimisticMsg)
       })
         .then(res => res.json())
         .then(savedMsg => {
-          setMessages(prev => [...prev, savedMsg]);
+          if (savedMsg && savedMsg.id) {
+            setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? savedMsg : m));
+          }
         })
         .catch(() => {});
     };
