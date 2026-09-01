@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X } from 'lucide-react';
+import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,6 +7,7 @@ export const CustomerMessages = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [activeChatId, setActiveChatId] = useState('');
+  const [mobileTab, setMobileTab] = useState('chat'); // 'list' | 'chat'
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
   const prevMessagesLengthRef = useRef(0);
@@ -95,12 +96,12 @@ export const CustomerMessages = () => {
 
   messages.forEach(msg => {
     // Determine the partner/manager ID in this chat
-    const partnerId = msg.senderRole === 'manager' ? msg.senderId : msg.recipientId;
+    const partnerId = msg.senderRole === 'manager' ? (msg.senderId || 'partner1') : (msg.recipientId || 'partner1');
     const partnerName = msg.senderRole === 'manager' ? msg.senderName : msg.recipientName;
     
     // Only show chats related to this specific guest
-    const myId = user?.id || 'alice';
-    const isMyChat = msg.senderId === myId || msg.recipientId === myId;
+    const myId = user?.id ? String(user.id) : 'alice';
+    const isMyChat = String(msg.senderId) === myId || String(msg.recipientId) === myId || msg.senderRole === 'customer' || msg.recipientRole === 'customer';
     if (!isMyChat) return;
 
     const partnerAvatar = msg.senderRole === 'manager' ? msg.senderAvatar : null;
@@ -216,9 +217,9 @@ export const CustomerMessages = () => {
         senderId: myId,
         senderName: myName,
         senderRole: myRole,
-        senderAvatar: user?.avatar || '',
-        recipientId: activeChatId,
-        recipientName: activeChatData.name,
+        senderAvatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+        recipientId: activeChatId || 'partner1',
+        recipientName: activeChatData ? activeChatData.name : 'Hotel Host',
         text: textValue,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -248,13 +249,36 @@ export const CustomerMessages = () => {
 
   return (
     <PortalLayout role="customer" title="My Guest Messages">
-      <div className="max-w-7xl mx-auto font-sans text-slate-800 dark:text-slate-100 animate-fade-in pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch h-[80vh]">
+      <div className="max-w-7xl mx-auto font-sans text-slate-800 dark:text-slate-100 animate-fade-in pb-4">
+        
+        {/* Mobile Tab Switcher Pills */}
+        <div className="lg:hidden flex items-center gap-2 mb-3 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+          <button
+            onClick={() => setMobileTab('list')}
+            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'list' ? 'bg-white dark:bg-slate-900 text-amber-500 shadow-xs' : 'text-slate-500'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> All Hosts ({Object.keys(chatGroups).length})
+          </button>
+          <button
+            onClick={() => setMobileTab('chat')}
+            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'chat' ? 'bg-amber-500 text-slate-950 shadow-xs font-black' : 'text-slate-500'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" /> Active Conversation
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-stretch h-[calc(100vh-140px)] min-h-[550px] max-h-[820px]">
           
           {/* LEFT PANEL: Channels List (3/12 cols) */}
-          <div className="lg:col-span-3 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md p-4 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-light)]">
+          <div className={`lg:col-span-3 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md p-4 flex flex-col justify-between h-full ${
+            mobileTab === 'list' ? 'flex' : 'hidden lg:flex'
+          }`}>
+            <div className="space-y-4 flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-light)] shrink-0">
                 <h3 className="text-sm font-extrabold text-[var(--text-primary)]">Messages</h3>
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase">
                   Property Hosts
@@ -262,7 +286,7 @@ export const CustomerMessages = () => {
               </div>
 
               {/* Search chat */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="text" 
@@ -272,65 +296,86 @@ export const CustomerMessages = () => {
               </div>
 
               {/* Channels List */}
-              <div className="space-y-1 overflow-y-auto max-h-[60vh] pr-1">
-                {Object.values(chatGroups).map((chat) => {
-                  const isActive = activeChatId === chat.id;
-                  const lastMsg = chat.messages[chat.messages.length - 1];
-                  const unreadMsgs = chat.messages.filter(m => m.sender !== 'customer' && !m.read);
-                  const hasUnread = unreadMsgs.length > 0;
-                  return (
-                    <div 
-                      key={chat.id}
-                      onClick={() => setActiveChatId(chat.id)}
-                      className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                        isActive 
-                          ? 'bg-amber-500/15 border border-amber-500 text-amber-500 font-extrabold shadow-xs' 
-                          : 'hover:bg-[var(--bg-tertiary)] border border-transparent text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      <img src={chat.avatar} className="w-10 h-10 rounded-full object-cover border border-[var(--border-light)]" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black truncate block text-[var(--text-primary)] flex items-center gap-1.5">
-                            {chat.name}
-                            {hasUnread && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-ping-once" title="Unread Message" />
-                            )}
-                          </span>
-                          <span className={`text-[9px] font-bold ${hasUnread ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{lastMsg?.time || ''}</span>
+              <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
+                {Object.values(chatGroups).length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-400 font-bold">No active host chats</div>
+                ) : (
+                  Object.values(chatGroups).map((chat) => {
+                    const isActive = activeChatId === chat.id;
+                    const lastMsg = chat.messages[chat.messages.length - 1];
+                    const unreadMsgs = chat.messages.filter(m => m.sender !== 'customer' && !m.read);
+                    const hasUnread = unreadMsgs.length > 0;
+                    return (
+                      <div 
+                        key={chat.id}
+                        onClick={() => {
+                          setActiveChatId(chat.id);
+                          setMobileTab('chat');
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
+                          isActive 
+                            ? 'bg-amber-500/15 border border-amber-500 text-amber-500 font-extrabold shadow-xs' 
+                            : 'hover:bg-[var(--bg-tertiary)] border border-transparent text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        <img src={chat.avatar} className="w-10 h-10 rounded-full object-cover border border-[var(--border-light)] shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black truncate block text-[var(--text-primary)] flex items-center gap-1.5">
+                              {chat.name}
+                              {hasUnread && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-ping-once" title="Unread Message" />
+                              )}
+                            </span>
+                            <span className={`text-[9px] font-bold shrink-0 ml-1 ${hasUnread ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{lastMsg?.time || ''}</span>
+                          </div>
+                          <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-muted)]'}`}>{lastMsg?.text || 'No messages yet'}</p>
                         </div>
-                        <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-muted)]'}`}>{lastMsg?.text || 'No messages yet'}</p>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
 
           {/* MIDDLE PANEL: Chat Window (6/12 cols) */}
-          <div className="lg:col-span-6 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md flex flex-col justify-between overflow-hidden">
+          <div className={`lg:col-span-6 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md flex flex-col justify-between h-full overflow-hidden ${
+            mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'
+          }`}>
             {!activeChatData ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
                 <MessageSquare className="w-12 h-12 text-amber-500 animate-bounce" />
-                <h4 className="text-sm font-extrabold text-[var(--text-primary)]">No active conversations</h4>
-                <p className="text-xs text-[var(--text-muted)] font-semibold max-w-xs">There are no message threads in the database right now. If you want to contact a host, please click "Contact Hotel Manager" on the hotel details catalog page!</p>
+                <h4 className="text-sm font-extrabold text-[var(--text-primary)]">No active conversation</h4>
+                <button
+                  onClick={() => setMobileTab('list')}
+                  className="lg:hidden px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold"
+                >
+                  View All Hosts
+                </button>
               </div>
             ) : (
               <>
                 {/* Header info */}
-                <div className="p-4 border-b border-[var(--border-light)] flex items-center justify-between bg-[var(--bg-tertiary)]/30">
-                  <div className="flex items-center gap-3">
-                    <img src={activeChatData.avatar} className="w-10 h-10 rounded-full object-cover border border-[var(--border-light)]" />
+                <div className="p-3 sm:p-4 border-b border-[var(--border-light)] flex items-center justify-between bg-[var(--bg-tertiary)]/30 shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      onClick={() => setMobileTab('list')}
+                      className="lg:hidden p-1.5 rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)] flex items-center gap-1 text-xs font-black mr-1"
+                      title="Back to all hosts"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                    <img src={activeChatData.avatar} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-[var(--border-light)] shrink-0" />
                     <div>
-                      <h4 className="text-xs font-black text-[var(--text-primary)]">{activeChatData.name}</h4>
+                      <h4 className="text-xs sm:text-sm font-black text-[var(--text-primary)] leading-none">{activeChatData.name}</h4>
                       <span className="text-[9px] text-emerald-500 font-bold block mt-0.5">{activeChatData.status}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Conversation Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-tertiary)]/20 min-h-[40vh] max-h-[50vh]">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 bg-[var(--bg-tertiary)]/20 min-h-0">
                   {activeChatData.messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2 opacity-60">
                       <MessageSquare className="w-10 h-10 text-amber-500" />
@@ -353,7 +398,7 @@ export const CustomerMessages = () => {
                             />
                           )}
                           
-                          <div className={msg.text.startsWith('data:image/') ? "max-w-[80%]" : `max-w-[80%] rounded-2xl px-4 py-2.5 text-xs font-medium shadow-xs ${
+                          <div className={msg.text.startsWith('data:image/') ? "max-w-[78%]" : `max-w-[78%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 text-xs font-medium shadow-xs ${
                             isMe 
                               ? 'bg-amber-600 text-white rounded-tr-none' 
                               : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-tl-none'
@@ -389,7 +434,7 @@ export const CustomerMessages = () => {
                                 </div>
                               </div>
                             ) : (
-                              <span>{msg.text}</span>
+                              <span className="break-words leading-relaxed">{msg.text}</span>
                             )}
                           </div>
                         </div>
@@ -399,8 +444,8 @@ export const CustomerMessages = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Bottom Input Area */}
-                <div className="p-4 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)]/10 space-y-3 relative">
+                {/* Bottom Input Area (LOCKED & STICKY AT BOTTOM) */}
+                <div className="p-2 sm:p-3 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)]/20 space-y-2 relative shrink-0">
                   {/* Emoji Picker Overlay */}
                   {showEmojiPicker && (
                     <div className="absolute bottom-16 left-4 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl p-3.5 shadow-2xl flex items-center gap-2.5 z-50 animate-fade-in text-sm select-none">
@@ -422,8 +467,8 @@ export const CustomerMessages = () => {
 
                   {/* Attachment Preview */}
                   {attachment && (
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 w-fit max-w-full animate-fade-in text-[10px] font-extrabold text-amber-600">
-                      <span>📎 Attachment Ready: {attachment.name.substring(0, 20)}...</span>
+                    <div className="flex items-center gap-2 p-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 w-fit max-w-full animate-fade-in text-[10px] font-extrabold text-amber-600">
+                      <span>📎 Attachment: {attachment.name.substring(0, 15)}...</span>
                       <button
                         type="button"
                         onClick={() => setAttachment(null)}
@@ -434,11 +479,11 @@ export const CustomerMessages = () => {
                     </div>
                   )}
 
-                  <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
                     <button 
                       type="button" 
                       onClick={() => setShowEmojiPicker(prev => !prev)}
-                      className={`p-2.5 rounded-xl border text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-amber-500 transition-all cursor-pointer ${showEmojiPicker ? 'border-amber-500 text-amber-500 bg-amber-500/10' : 'border-[var(--border-light)]'}`}
+                      className={`p-2 rounded-xl border text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-amber-500 transition-all cursor-pointer shrink-0 ${showEmojiPicker ? 'border-amber-500 text-amber-500 bg-amber-500/10' : 'border-[var(--border-light)]'}`}
                       title="Add Emoji"
                     >
                       <Smile className="w-4 h-4" />
@@ -447,7 +492,7 @@ export const CustomerMessages = () => {
                     <button 
                       type="button" 
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-2.5 rounded-xl border border-[var(--border-light)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-amber-500 transition-all cursor-pointer"
+                      className="p-2 rounded-xl border border-[var(--border-light)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-amber-500 transition-all cursor-pointer shrink-0"
                       title="Attach File"
                     >
                       <Paperclip className="w-4 h-4" />
@@ -464,12 +509,12 @@ export const CustomerMessages = () => {
                       type="text" 
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Write your response message here..."
-                      className="flex-1 p-3 rounded-2xl border border-[var(--border-light)] text-xs bg-[var(--bg-tertiary)] outline-none focus:bg-[var(--bg-card)] text-[var(--text-primary)] font-medium"
+                      placeholder="Type a message..."
+                      className="flex-1 min-w-0 p-2.5 rounded-xl border border-[var(--border-light)] text-xs bg-[var(--bg-card)] outline-none focus:border-amber-500 text-[var(--text-primary)] font-medium"
                     />
                     <button 
                       type="submit" 
-                      className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center hover:bg-amber-700 transition-colors shadow-lg shadow-amber-600/20 cursor-pointer"
+                      className="p-2.5 rounded-xl bg-amber-600 text-white flex items-center justify-center hover:bg-amber-700 transition-colors shadow-md shadow-amber-600/20 cursor-pointer shrink-0"
                       title="Send Message"
                     >
                       <Send className="w-4 h-4" />
@@ -480,8 +525,8 @@ export const CustomerMessages = () => {
             )}
           </div>
 
-          {/* RIGHT PANEL: Host Profile details (3/12 cols) */}
-          <div className="lg:col-span-3 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md p-6 flex flex-col justify-between overflow-hidden">
+          {/* RIGHT PANEL: Host Profile details (3/12 cols, desktop only) */}
+          <div className="hidden lg:flex lg:col-span-3 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] shadow-md p-6 flex-col justify-between overflow-y-auto h-full">
             {!activeChatData ? (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-[var(--text-muted)]">
                 <User className="w-10 h-10 mb-2 opacity-50 text-amber-500" />

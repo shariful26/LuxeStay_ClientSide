@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare } from 'lucide-react';
+import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,6 +7,7 @@ export const ManagerMessages = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [activeChatId, setActiveChatId] = useState('');
+  const [mobileTab, setMobileTab] = useState('chat'); // 'list' | 'chat'
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachment, setAttachment] = useState(null);
@@ -94,11 +95,11 @@ export const ManagerMessages = () => {
   const chatGroups = {};
 
   messages.forEach(msg => {
-    const myId = user?.id || 'partner1';
-    const isMyChat = msg.senderId === myId || msg.recipientId === myId;
+    const myId = user?.id ? String(user.id) : 'partner1';
+    const isMyChat = String(msg.senderId) === myId || String(msg.recipientId) === myId || msg.senderRole === 'manager' || msg.recipientRole === 'manager';
     if (!isMyChat) return;
 
-    const customerId = msg.senderRole === 'customer' ? msg.senderId : msg.recipientId;
+    const customerId = msg.senderRole === 'customer' ? (msg.senderId || 'alice') : (msg.recipientId || 'alice');
     const customerName = msg.senderRole === 'customer' ? msg.senderName : msg.recipientName;
     const customerAvatar = msg.senderRole === 'customer' ? msg.senderAvatar : null;
     
@@ -204,7 +205,7 @@ export const ManagerMessages = () => {
     if (!newMessage.trim() && !attachment) return;
 
     const myId = user?.id || 'partner1';
-    const myName = user?.name || 'Shariful Islam';
+    const myName = user?.name || 'Hotel Manager';
     const myRole = user?.role || 'manager';
 
     const sendPayload = (textValue) => {
@@ -212,9 +213,9 @@ export const ManagerMessages = () => {
         senderId: myId,
         senderName: myName,
         senderRole: myRole,
-        senderAvatar: user?.avatar || '',
-        recipientId: activeChatId,
-        recipientName: activeChatData.name,
+        senderAvatar: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+        recipientId: activeChatId || 'alice',
+        recipientName: activeChatData ? activeChatData.name : 'Guest Customer',
         text: textValue,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -244,13 +245,36 @@ export const ManagerMessages = () => {
 
   return (
     <PortalLayout role="manager" title="LuxStay Guest Messages">
-      <div className="max-w-7xl mx-auto font-sans text-slate-800 animate-fade-in pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch h-[80vh]">
+      <div className="max-w-7xl mx-auto font-sans text-slate-800 animate-fade-in pb-4">
+        
+        {/* Mobile Tab Switcher Pills */}
+        <div className="lg:hidden flex items-center gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
+          <button
+            onClick={() => setMobileTab('list')}
+            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'list' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> All Chats ({Object.keys(chatGroups).length})
+          </button>
+          <button
+            onClick={() => setMobileTab('chat')}
+            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'chat' ? 'bg-[#e2f896] text-slate-950 shadow-xs' : 'text-slate-500'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" /> Active Conversation
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-stretch h-[calc(100vh-140px)] min-h-[550px] max-h-[820px]">
           
           {/* LEFT PANEL: Chat List Channels (3/12 cols) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/70 shadow-md p-4 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2">
+          <div className={`lg:col-span-3 bg-white rounded-3xl border border-slate-200/70 shadow-md p-4 flex flex-col justify-between h-full ${
+            mobileTab === 'list' ? 'flex' : 'hidden lg:flex'
+          }`}>
+            <div className="space-y-4 flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
                 <h3 className="text-base font-extrabold text-slate-900">Messages</h3>
                 <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase">
                   Active Chats
@@ -258,7 +282,7 @@ export const ManagerMessages = () => {
               </div>
 
               {/* Search chat */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="text" 
@@ -268,57 +292,78 @@ export const ManagerMessages = () => {
               </div>
 
               {/* Channels List */}
-              <div className="space-y-1 overflow-y-auto max-h-[60vh] pr-1">
-                {Object.values(chatGroups).map((chat) => {
-                  const isActive = activeChatId === chat.id;
-                  const lastMsg = chat.messages[chat.messages.length - 1];
-                  const unreadMsgs = chat.messages.filter(m => m.sender !== 'manager' && !m.read);
-                  const hasUnread = unreadMsgs.length > 0;
-                  return (
-                    <div 
-                      key={chat.id}
-                      onClick={() => setActiveChatId(chat.id)}
-                      className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                        isActive ? 'bg-[#e2f896] text-slate-950 font-extrabold shadow-sm' : 'hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <img src={chat.avatar} className="w-10 h-10 rounded-full object-cover border border-slate-100" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black truncate block flex items-center gap-1.5">
-                            {chat.name}
-                            {hasUnread && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" title="Unread Message" />
-                            )}
-                          </span>
-                          <span className={`text-[9px] font-bold ${hasUnread ? 'text-rose-500 font-black' : 'text-slate-400'}`}>{lastMsg?.time || '10:00 AM'}</span>
+              <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
+                {Object.values(chatGroups).length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-400 font-bold">No active conversations</div>
+                ) : (
+                  Object.values(chatGroups).map((chat) => {
+                    const isActive = activeChatId === chat.id;
+                    const lastMsg = chat.messages[chat.messages.length - 1];
+                    const unreadMsgs = chat.messages.filter(m => m.sender !== 'manager' && !m.read);
+                    const hasUnread = unreadMsgs.length > 0;
+                    return (
+                      <div 
+                        key={chat.id}
+                        onClick={() => {
+                          setActiveChatId(chat.id);
+                          setMobileTab('chat');
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
+                          isActive ? 'bg-[#e2f896] text-slate-950 font-extrabold shadow-sm' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <img src={chat.avatar} className="w-10 h-10 rounded-full object-cover border border-slate-100 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black truncate block flex items-center gap-1.5">
+                              {chat.name}
+                              {hasUnread && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" title="Unread Message" />
+                              )}
+                            </span>
+                            <span className={`text-[9px] font-bold shrink-0 ml-1 ${hasUnread ? 'text-rose-500 font-black' : 'text-slate-400'}`}>{lastMsg?.time || '10:00 AM'}</span>
+                          </div>
+                          <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{lastMsg?.text || 'No messages yet'}</p>
                         </div>
-                        <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{lastMsg?.text || 'No messages yet'}</p>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
 
           {/* MIDDLE PANEL: Active Chat Thread (6/12 cols) */}
-          <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/70 shadow-md p-4 flex flex-col justify-between h-full">
+          <div className={`lg:col-span-6 bg-white rounded-3xl border border-slate-200/70 shadow-md p-3 sm:p-4 flex flex-col justify-between h-full overflow-hidden ${
+            mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'
+          }`}>
             {!activeChatData ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
                 <MessageSquare className="w-12 h-12 text-slate-300 animate-bounce" />
-                <h4 className="text-sm font-extrabold text-slate-900">No active conversations</h4>
-                <p className="text-xs text-slate-400 font-semibold max-w-xs">There are no guest messages matching this manager's properties in the database right now.</p>
+                <h4 className="text-sm font-extrabold text-slate-900">No active conversation selected</h4>
+                <button
+                  onClick={() => setMobileTab('list')}
+                  className="lg:hidden px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                >
+                  View All Chats
+                </button>
               </div>
             ) : (
               <>
                 {/* Thread Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <img src={activeChatData.avatar} className="w-9 h-9 rounded-full object-cover" />
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      onClick={() => setMobileTab('list')}
+                      className="lg:hidden p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1 text-xs font-black mr-1"
+                      title="Back to all chats"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                    <img src={activeChatData.avatar} className="w-9 h-9 rounded-full object-cover shrink-0" />
                     <div>
-                      <h4 className="text-sm font-black text-slate-900">{activeChatData.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-semibold">{activeChatData.status}</p>
+                      <h4 className="text-sm font-black text-slate-900 leading-none">{activeChatData.name}</h4>
+                      <p className="text-[10px] text-emerald-600 font-bold mt-0.5">{activeChatData.status}</p>
                     </div>
                   </div>
                   <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
@@ -327,10 +372,10 @@ export const ManagerMessages = () => {
                 </div>
 
                 {/* Message History */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[50vh]">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 min-h-0">
                   {activeChatData.messages.map((msg, idx) => {
-                    const isGuest = msg.sender === activeChatData.id;
-                    const isImage = msg.text.startsWith('data:image/');
+                    const isGuest = msg.sender === activeChatData.id || msg.sender === 'customer' || msg.sender === 'alice';
+                    const isImage = msg.text && msg.text.startsWith('data:image/');
                     return (
                       <div key={idx} className={`flex items-end gap-2 ${isGuest ? 'justify-start' : 'justify-end'}`}>
                         {isGuest && (
@@ -341,10 +386,10 @@ export const ManagerMessages = () => {
                           />
                         )}
                         
-                        <div className={isImage ? "max-w-[70%]" : `max-w-[70%] p-3.5 rounded-3xl text-xs ${
+                        <div className={isImage ? "max-w-[78%]" : `max-w-[78%] sm:max-w-[70%] p-3 sm:p-3.5 rounded-3xl text-xs ${
                           isGuest 
                             ? 'bg-[#e2f896] text-slate-950 font-bold rounded-tl-none shadow-2xs' 
-                            : 'bg-slate-50 text-slate-800 border border-slate-200/50 font-medium rounded-tr-none'
+                            : 'bg-slate-900 text-white font-medium rounded-tr-none'
                         }`}>
                           {isImage ? (
                             <div className="relative group/image overflow-hidden rounded-2xl">
@@ -377,7 +422,7 @@ export const ManagerMessages = () => {
                               </div>
                             </div>
                           ) : (
-                            <p className="leading-relaxed">{msg.text}</p>
+                            <p className="leading-relaxed break-words">{msg.text}</p>
                           )}
                           <span className={`text-[8px] mt-1 block text-right font-bold ${isGuest ? 'text-slate-500' : 'text-slate-400'}`}>
                             {msg.time}
@@ -397,8 +442,8 @@ export const ManagerMessages = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Controls Panel */}
-                <div className="pt-3 border-t border-slate-100 bg-slate-50/50 p-2.5 rounded-2xl relative space-y-2">
+                {/* Input Controls Panel (ALWAYS VISIBLE & LOCKED AT BOTTOM) */}
+                <div className="pt-2 border-t border-slate-100 bg-slate-50/80 p-2 sm:p-2.5 rounded-2xl relative shrink-0 space-y-2">
                   {/* Emoji Picker Box */}
                   {showEmojiPicker && (
                     <div className="absolute bottom-16 left-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-lg flex items-center gap-1.5 z-20 animate-fade-in text-sm select-none">
@@ -418,7 +463,7 @@ export const ManagerMessages = () => {
                   {/* Attachment indicator banner */}
                   {attachment && (
                     <div className="flex items-center gap-2 p-1.5 rounded-lg bg-[#e2f896]/30 border border-[#e2f896]/60 w-fit max-w-full text-[10px] font-extrabold text-slate-800">
-                      <span>📎 Attachment Ready: {attachment.name.substring(0, 20)}...</span>
+                      <span>📎 Attachment: {attachment.name.substring(0, 15)}...</span>
                       <button
                         type="button"
                         onClick={() => setAttachment(null)}
@@ -429,11 +474,11 @@ export const ManagerMessages = () => {
                     </div>
                   )}
 
-                  <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
                     <button 
                       type="button" 
                       onClick={() => setShowEmojiPicker(prev => !prev)}
-                      className={`p-2 rounded-full border text-slate-400 hover:text-slate-700 transition-colors cursor-pointer ${showEmojiPicker ? 'border-slate-300 text-slate-700 bg-slate-100' : 'border-slate-200'}`}
+                      className={`p-2 rounded-full border text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0 ${showEmojiPicker ? 'border-slate-300 text-slate-700 bg-slate-100' : 'border-slate-200'}`}
                       title="Add Emoji"
                     >
                       <Smile className="w-4 h-4" />
@@ -442,7 +487,7 @@ export const ManagerMessages = () => {
                     <button 
                       type="button" 
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="p-2 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                     >
                       <Paperclip className="w-4 h-4" />
                     </button>
@@ -456,18 +501,18 @@ export const ManagerMessages = () => {
                     
                     <input 
                       type="text" 
-                      placeholder="Write your response message here..."
+                      placeholder="Type your response..."
                       value={newMessage}
                       onChange={(e) => {
                         setNewMessage(e.target.value);
                         if (showEmojiPicker) setShowEmojiPicker(false);
                       }}
-                      className="flex-1 px-4 py-2.5 rounded-full border border-slate-200 text-xs outline-none bg-slate-50 focus:bg-white text-slate-800 font-medium"
+                      className="flex-1 min-w-0 px-3.5 py-2.5 rounded-full border border-slate-200 text-xs outline-none bg-white focus:border-amber-400 text-slate-800 font-medium"
                     />
 
                     <button 
                       type="submit"
-                      className="p-2.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+                      className="p-2.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer shadow-xs shrink-0"
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -477,8 +522,8 @@ export const ManagerMessages = () => {
             )}
           </div>
 
-          {/* RIGHT PANEL: Guest Details & Shared Assets (3/12 cols) */}
-          <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/70 shadow-md p-4 flex flex-col justify-between">
+          {/* RIGHT PANEL: Guest Details & Shared Assets (3/12 cols, desktop only) */}
+          <div className="hidden lg:flex lg:col-span-3 bg-white rounded-3xl border border-slate-200/70 shadow-md p-4 flex-col justify-between overflow-y-auto h-full">
             {!activeChatData ? (
               <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-slate-300">
                 <User className="w-10 h-10 mb-2 opacity-50 text-[#e2f896]" />
