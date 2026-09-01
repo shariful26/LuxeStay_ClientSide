@@ -159,8 +159,22 @@ const TESTIMONIALS = [
 export const Home = () => {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
-  const [hotels, setHotels] = useState([]);
-  const [destinations, setDestinations] = useState([]);
+  const [hotels, setHotels] = useState(() => {
+    try {
+      const cached = localStorage.getItem('luxestay_cached_featured_hotels');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [destinations, setDestinations] = useState(() => {
+    try {
+      const cached = localStorage.getItem('luxestay_cached_destinations');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [activeCategory, setActiveCategory] = useState('');
   const [homeViewMode, setHomeViewMode] = useState('list');
   const [galleryCategory, setGalleryCategory] = useState('ALL PHOTOS');
@@ -177,12 +191,26 @@ export const Home = () => {
   useEffect(() => {
     fetch('/api/hotels?featured=true')
       .then(res => res.json())
-      .then(data => setHotels(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHotels(data);
+          try {
+            localStorage.setItem('luxestay_cached_featured_hotels', JSON.stringify(data));
+          } catch (e) {}
+        }
+      })
       .catch(() => { });
 
     fetch('/api/destinations')
       .then(res => res.json())
-      .then(data => setDestinations(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDestinations(data);
+          try {
+            localStorage.setItem('luxestay_cached_destinations', JSON.stringify(data));
+          } catch (e) {}
+        }
+      })
       .catch(() => { });
   }, []);
 

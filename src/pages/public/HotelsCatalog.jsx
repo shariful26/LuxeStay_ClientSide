@@ -22,8 +22,22 @@ const ALL_AMENITIES = [
 export const HotelsCatalog = () => {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [hotels, setHotels] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [hotels, setHotels] = useState(() => {
+    try {
+      const cached = localStorage.getItem('luxestay_cached_hotels');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('luxestay_cached_hotels');
+      return cached ? false : true;
+    } catch (e) {
+      return true;
+    }
+  });
   const [viewMode, setViewMode] = useState('list'); // Default Booking.com list view
   const [sortBy, setSortBy] = useState('rating');
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +59,6 @@ export const HotelsCatalog = () => {
   }, [categoryQuery]);
 
   useEffect(() => {
-    setLoading(true);
     let url = '/api/hotels?isPublic=true&';
     if (destQuery) url += `destination=${destQuery}&`;
     if (filters.category) url += `category=${filters.category}&`;
@@ -53,7 +66,12 @@ export const HotelsCatalog = () => {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        let filtered = data.filter(h => {
+        if (Array.isArray(data)) {
+          try {
+            localStorage.setItem('luxestay_cached_hotels', JSON.stringify(data));
+          } catch (e) {}
+        }
+        let filtered = (Array.isArray(data) ? data : []).filter(h => {
           if (!h.status) return true;
           const s = String(h.status).toLowerCase();
           const isApproved = s === 'approved' || s === 'active' || (s !== 'pending approval' && s !== 'pending' && s !== 'rejected');
@@ -318,8 +336,12 @@ export const HotelsCatalog = () => {
           </div>
 
           {/* Hotel Items Rendering */}
-          {loading ? (
-            <div className="py-20 text-center text-sm font-bold text-[var(--text-muted)]">Loading verified luxury stays...</div>
+          {loading && hotels.length === 0 ? (
+            <div className="space-y-4 animate-pulse">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-56 bg-slate-200 dark:bg-slate-800/60 rounded-3xl border border-[var(--border-light)] p-6 flex flex-col justify-between" />
+              ))}
+            </div>
           ) : hotels.length === 0 ? (
             <div className="py-20 text-center space-y-4 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-light)] p-8">
               <MapPin className="w-12 h-12 mx-auto text-amber-500/40" />
