@@ -140,7 +140,11 @@ export const RoomManagement = () => {
     if (window.confirm("Are you sure you want to permanently delete this room type?")) {
       fetch(`/api/rooms/${roomId}`, { method: 'DELETE' })
         .then(() => {
-          setRooms(prev => prev.filter(r => r.id !== roomId));
+          setRooms(prev => {
+            const next = prev.filter(r => r.id !== roomId);
+            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
           if (selectedRoom?.id === roomId) {
             setSelectedRoom(null);
           }

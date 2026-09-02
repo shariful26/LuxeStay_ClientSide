@@ -38,7 +38,19 @@ export const UsersManagement = () => {
       .catch(() => {});
   }, []);
 
+  const updateUsersCache = (newList) => {
+    try {
+      localStorage.setItem('luxestay_cache_users', JSON.stringify(newList));
+    } catch (e) {}
+  };
+
   const handleRoleChange = async (id, newRole) => {
+    setUsers(prev => {
+      const next = prev.map(u => u.id === id ? { ...u, role: newRole } : u);
+      updateUsersCache(next);
+      return next;
+    });
+
     try {
       const res = await fetch(`/api/users/${id}/role`, {
         method: 'PUT',
@@ -47,13 +59,13 @@ export const UsersManagement = () => {
       });
       if (res.ok) {
         const updated = await res.json();
-        setUsers(prev => prev.map(u => u.id === id ? updated : u));
-      } else {
-        setUsers(prev => prev.map(u => u.id === id ? { ...u, role: newRole } : u));
+        setUsers(prev => {
+          const next = prev.map(u => u.id === id ? { ...u, ...updated, role: newRole } : u);
+          updateUsersCache(next);
+          return next;
+        });
       }
-    } catch (e) {
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, role: newRole } : u));
-    }
+    } catch (e) {}
   };
 
   const handleDeleteUser = async (id) => {
@@ -61,7 +73,11 @@ export const UsersManagement = () => {
     try {
       await fetch(`/api/users/${id}`, { method: 'DELETE' });
     } catch (e) {}
-    setUsers(prev => prev.filter(u => u.id !== id));
+    setUsers(prev => {
+      const next = prev.filter(u => u.id !== id);
+      updateUsersCache(next);
+      return next;
+    });
   };
 
   const handleAddUser = async (e) => {
@@ -78,14 +94,22 @@ export const UsersManagement = () => {
 
       if (res.ok) {
         const createdUser = await res.json();
-        setUsers([createdUser, ...users]);
+        setUsers(prev => {
+          const next = [createdUser, ...prev];
+          updateUsersCache(next);
+          return next;
+        });
       } else {
         const fallbackUser = {
           id: `u_${Date.now()}`,
           ...formData,
           memberSince: '2026'
         };
-        setUsers([fallbackUser, ...users]);
+        setUsers(prev => {
+          const next = [fallbackUser, ...prev];
+          updateUsersCache(next);
+          return next;
+        });
       }
     } catch (err) {
       const fallbackUser = {
@@ -93,7 +117,11 @@ export const UsersManagement = () => {
         ...formData,
         memberSince: '2026'
       };
-      setUsers([fallbackUser, ...users]);
+      setUsers(prev => {
+        const next = [fallbackUser, ...prev];
+        updateUsersCache(next);
+        return next;
+      });
     } finally {
       setLoading(false);
       setIsAddModalOpen(false);

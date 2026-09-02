@@ -70,15 +70,32 @@ export const HotelsManagement = () => {
     address: 'Caldera Cliffside, Santorini, Greece'
   });
 
+  const updateCache = (newHotelsList) => {
+    try {
+      localStorage.setItem('luxestay_cache_hotels', JSON.stringify(newHotelsList));
+    } catch (e) {}
+  };
+
   useEffect(() => {
     fetch('/api/hotels')
       .then(res => res.json())
-      .then(data => setHotels(data))
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setHotels(data);
+          updateCache(data);
+        }
+      })
       .catch(() => {});
   }, []);
 
   const toggleFeatured = async (hotel) => {
     const updatedFeatured = !hotel.featured;
+    setHotels(prev => {
+      const next = prev.map(h => h.id === hotel.id ? { ...h, featured: updatedFeatured } : h);
+      updateCache(next);
+      return next;
+    });
+
     try {
       const res = await fetch(`/api/hotels/${hotel.id}`, {
         method: 'PUT',
@@ -87,16 +104,22 @@ export const HotelsManagement = () => {
       });
       if (res.ok) {
         const updated = await res.json();
-        setHotels(prev => prev.map(h => h.id === hotel.id ? updated : h));
-      } else {
-        setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, featured: updatedFeatured } : h));
+        setHotels(prev => {
+          const next = prev.map(h => h.id === hotel.id ? { ...h, ...updated, featured: updatedFeatured } : h);
+          updateCache(next);
+          return next;
+        });
       }
-    } catch (e) {
-      setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, featured: updatedFeatured } : h));
-    }
+    } catch (e) {}
   };
 
   const updateHotelStatus = async (hotel, newStatus) => {
+    setHotels(prev => {
+      const next = prev.map(h => h.id === hotel.id ? { ...h, status: newStatus } : h);
+      updateCache(next);
+      return next;
+    });
+
     try {
       const res = await fetch(`/api/hotels/${hotel.id}`, {
         method: 'PUT',
@@ -104,13 +127,14 @@ export const HotelsManagement = () => {
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
-        setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, status: newStatus } : h));
-      } else {
-        setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, status: newStatus } : h));
+        const updated = await res.json();
+        setHotels(prev => {
+          const next = prev.map(h => h.id === hotel.id ? { ...h, ...updated, status: newStatus } : h);
+          updateCache(next);
+          return next;
+        });
       }
-    } catch (e) {
-      setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, status: newStatus } : h));
-    }
+    } catch (e) {}
   };
 
   const getNormalizedStatus = (status) => {
@@ -175,9 +199,17 @@ export const HotelsManagement = () => {
 
         if (res.ok) {
           const updated = await res.json();
-          setHotels(prev => prev.map(h => h.id === editingHotel.id ? updated : h));
+          setHotels(prev => {
+            const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...updated } : h);
+            updateCache(next);
+            return next;
+          });
         } else {
-          setHotels(prev => prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h));
+          setHotels(prev => {
+            const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h);
+            updateCache(next);
+            return next;
+          });
         }
       } else {
         // CREATE NEW HOTEL (POST)
@@ -193,7 +225,11 @@ export const HotelsManagement = () => {
 
         if (res.ok) {
           const created = await res.json();
-          setHotels([created, ...hotels]);
+          setHotels(prev => {
+            const next = [created, ...prev];
+            updateCache(next);
+            return next;
+          });
         } else {
           const fallback = {
             id: `h${Date.now()}`,
@@ -202,12 +238,20 @@ export const HotelsManagement = () => {
             images: [formData.image],
             featured: false
           };
-          setHotels([fallback, ...hotels]);
+          setHotels(prev => {
+            const next = [fallback, ...prev];
+            updateCache(next);
+            return next;
+          });
         }
       }
     } catch (err) {
       if (editingHotel) {
-        setHotels(prev => prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h));
+        setHotels(prev => {
+          const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h);
+          updateCache(next);
+          return next;
+        });
       } else {
         const fallback = {
           id: `h${Date.now()}`,
@@ -216,7 +260,11 @@ export const HotelsManagement = () => {
           images: [formData.image],
           featured: false
         };
-        setHotels([fallback, ...hotels]);
+        setHotels(prev => {
+          const next = [fallback, ...prev];
+          updateCache(next);
+          return next;
+        });
       }
     } finally {
       setLoading(false);
@@ -230,7 +278,11 @@ export const HotelsManagement = () => {
     try {
       await fetch(`/api/hotels/${id}`, { method: 'DELETE' });
     } catch (e) {}
-    setHotels(prev => prev.filter(h => h.id !== id));
+    setHotels(prev => {
+      const next = prev.filter(h => h.id !== id);
+      updateCache(next);
+      return next;
+    });
   };
 
   const pendingCount = hotels.filter(h => getNormalizedStatus(h.status) === 'Pending').length;
