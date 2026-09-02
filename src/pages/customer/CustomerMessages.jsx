@@ -47,20 +47,22 @@ export const CustomerMessages = () => {
   useEffect(() => {
     const myId = user?.id ? String(user.id) : 'customer';
     const partnerIds = [...new Set(messages.map(msg => {
-      if (msg.senderRole === 'manager') return msg.senderId || 'manager';
-      if (msg.recipientRole === 'manager') return msg.recipientId || 'manager';
+      if (msg.senderRole === 'manager') return msg.senderId;
+      if (msg.recipientRole === 'manager') return msg.recipientId;
       return null;
-    }).filter(Boolean))];
+    }).filter(id => Boolean(id) && id !== 'manager' && id !== myId))];
 
     partnerIds.forEach(id => {
-      if (id && id !== myId && !fetchedProfiles[id]) {
+      if (id && !fetchedProfiles[id]) {
+        // Mark as requested immediately to prevent loop
+        setFetchedProfiles(prev => ({ ...prev, [id]: { loading: true } }));
         fetch(`/api/users/${id}`)
           .then(res => res.json())
           .then(data => {
-            if (data && data.id) {
+            if (data && data.name) {
               setFetchedProfiles(prev => ({
                 ...prev,
-                [data.id]: {
+                [id]: {
                   name: data.name || 'Hotel Host',
                   avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
                   phone: data.phone || '+1 (555) 000-1122',

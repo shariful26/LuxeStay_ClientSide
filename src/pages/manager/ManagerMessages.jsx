@@ -46,24 +46,26 @@ export const ManagerMessages = () => {
   // Fetch real profile details dynamically from backend
   useEffect(() => {
     const customerIds = [...new Set(messages.map(msg => {
-      if (msg.senderRole === 'customer') return msg.senderId || 'customer';
-      if (msg.recipientRole === 'customer') return msg.recipientId || 'customer';
+      if (msg.senderRole === 'customer') return msg.senderId;
+      if (msg.recipientRole === 'customer') return msg.recipientId;
       return null;
-    }).filter(Boolean))];
+    }).filter(id => Boolean(id) && id !== 'customer'))];
 
     customerIds.forEach(id => {
       if (id && !fetchedProfiles[id]) {
+        // Mark as requested immediately to prevent loop
+        setFetchedProfiles(prev => ({ ...prev, [id]: { loading: true } }));
         fetch(`/api/users/${id}`)
           .then(res => res.json())
           .then(data => {
-            if (data && data.id) {
+            if (data && data.name) {
               setFetchedProfiles(prev => ({
                 ...prev,
-                [data.id]: {
+                [id]: {
                   name: data.name || 'Guest Customer',
                   avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
                   phone: data.phone || '+1 (555) 000-0000',
-                  email: data.email || `${data.id}@example.com`,
+                  email: data.email || `${id}@example.com`,
                   status: 'Guest • Online',
                   country: data.country || 'United States'
                 }
