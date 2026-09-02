@@ -266,9 +266,8 @@ export const ManagerHousekeeping = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {currentRooms.map((room, idx) => {
-                  const resStatus = getReservationStatus(room.name);
-                  // Calculate mock floor based on idx or room name
-                  const floorText = idx < 2 ? '1st' : idx < 4 ? '2nd' : '3rd';
+                  // Compute floor based on room floor or position
+                  const floorText = room.floor || (idx < 2 ? '1st Floor' : idx < 4 ? '2nd Floor' : '3rd Floor');
                   const roomStatus = room.housekeepingStatus || 'Ready';
                   const roomPriority = room.housekeepingPriority || 'Medium';
 
@@ -316,9 +315,9 @@ export const ManagerHousekeeping = () => {
                               : 'bg-slate-100 text-slate-700 border-slate-200'
                           }`}
                         >
-                          <option value="High">● High</option>
-                          <option value="Medium">● Medium</option>
-                          <option value="Low">● Low</option>
+                          <option value="High">High Priority</option>
+                          <option value="Medium">Medium Priority</option>
+                          <option value="Low">Low Priority</option>
                         </select>
                       </td>
 

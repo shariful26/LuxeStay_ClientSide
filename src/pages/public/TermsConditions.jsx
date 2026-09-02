@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, FileText, CreditCard, RefreshCw, Clock, 
-  Sparkles, CheckCircle2, AlertCircle, Phone, Mail, HelpCircle, Award, Scale, ChevronRight, ArrowLeft 
+  Sparkles, CheckCircle2, AlertCircle, Phone, Mail, HelpCircle, Award, Scale, ChevronRight, ArrowLeft, Check 
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -69,11 +69,11 @@ export const TermsConditions = () => {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] space-y-1">
-              <span className="text-xs font-black text-emerald-500 block">✓ 100% Full Refund</span>
+              <span className="text-xs font-black text-emerald-500 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> 100% Full Refund</span>
               <p className="text-[11px] text-[var(--text-secondary)]">Cancellations made 48 hours or more prior to scheduled 3:00 PM local property check-in.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] space-y-1">
-              <span className="text-xs font-black text-amber-500 block">✓ Flexible Date Shifting</span>
+              <span className="text-xs font-black text-amber-500 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Flexible Date Shifting</span>
               <p className="text-[11px] text-[var(--text-secondary)]">Shift your stay dates up to 24 hours in advance with zero administrative rebooking penalties.</p>
             </div>
           </div>

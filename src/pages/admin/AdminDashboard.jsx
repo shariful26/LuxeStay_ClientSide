@@ -1,105 +1,125 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Bookmark, Building2, Calendar as CalendarIcon, LogIn, LogOut, 
-  MoreVertical, Check, X, Star
+  MoreVertical, Check, X, Star, Users, ArrowUpRight, Globe, Lock, Trash2, Eye, EyeOff, ShieldCheck, RefreshCw, Filter
 } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { CountUp } from '../../components/CountUp';
-
-const INITIAL_REVIEWS = [
-  {
-    id: 'rev1',
-    name: 'Ali Muzair',
-    date: 'Posted on 26/04/2020, 12:42 AM',
-    rating: 4,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    comment: 'I have been there many times. Rooms, Food and Service are excellent. We did lots of Excursions and all the places are from the Hotel reachable.',
-    status: 'pending'
-  },
-  {
-    id: 'rev2',
-    name: 'Keanu Repes',
-    date: 'Posted on 26/04/2020, 12:42 AM',
-    rating: 4,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-    comment: 'I have been there many times. Rooms, Food and Service are excellent. We did lots of Excursions and all the places are from the Hotel reachable.',
-    status: 'pending'
-  },
-  {
-    id: 'rev3',
-    name: 'Chintya Clara',
-    date: 'Posted on 26/04/2020, 12:42 AM',
-    rating: 4,
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    comment: 'I have been there many times. Rooms, Food and Service are excellent. We did lots of Excursions and all the places are from the Hotel reachable.',
-    status: 'pending'
-  }
-];
-
-const NEWEST_BOOKINGS = [
-  { id: 'b1', name: 'Samantha Humble', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' },
-  { id: 'b2', name: 'Louise Marquee', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80' },
-  { id: 'b3', name: 'Richard Smile', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80' },
-  { id: 'b4', name: 'Bella Yen', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80' },
-  { id: 'b5', name: 'Richard Smile', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80' },
-  { id: 'b6', name: 'Samantha Humble', date: 'October 3rd, 2020', room: 'Room A-21', guests: '3-5 Person', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' }
-];
-
+import { useCurrency } from '../../context/CurrencyContext';
 import { getInstantData } from '../../utils/instantCache';
 
 export const AdminDashboard = () => {
-  const [selectedDate, setSelectedDate] = useState(8);
-  const [reviews, setReviews] = useState(INITIAL_REVIEWS);
+  const { formatPrice } = useCurrency();
+  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
+  const [reviews, setReviews] = useState(() => getInstantData('reviews', []));
   const [bookings, setBookings] = useState(() => getInstantData('bookings', []));
   const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [users, setUsers] = useState(() => getInstantData('users', []));
   const [rooms, setRooms] = useState(() => getInstantData('rooms', []));
 
+  // 3-dots interactive menus state
+  const [activeReviewMenu, setActiveReviewMenu] = useState(null);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState('all'); // 'all' | 'public' | 'only_me' | 'pending'
+
+  const fetchAdminData = async () => {
+    try {
+      const [bookingsRes, hotelsRes, usersRes, roomsRes, reviewsRes] = await Promise.all([
+        fetch('/api/bookings'),
+        fetch('/api/hotels'),
+        fetch('/api/users'),
+        fetch('/api/rooms'),
+        fetch('/api/reviews?role=admin&scope=all')
+      ]);
+      const bookingsData = await bookingsRes.json();
+      const hotelsData = await hotelsRes.json();
+      const usersData = await usersRes.json();
+      const roomsData = await roomsRes.json();
+      const reviewsData = await reviewsRes.json();
+
+      if (Array.isArray(bookingsData)) {
+        setBookings(bookingsData);
+        try { localStorage.setItem('luxestay_cache_bookings', JSON.stringify(bookingsData)); } catch (e) {}
+      }
+      if (Array.isArray(hotelsData)) {
+        setHotels(hotelsData);
+        try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(hotelsData)); } catch (e) {}
+      }
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+        try { localStorage.setItem('luxestay_cache_users', JSON.stringify(usersData)); } catch (e) {}
+      }
+      if (Array.isArray(roomsData)) {
+        setRooms(roomsData);
+        try { localStorage.setItem('luxestay_cache_rooms', JSON.stringify(roomsData)); } catch (e) {}
+      }
+      if (Array.isArray(reviewsData)) {
+        setReviews(reviewsData);
+        try { localStorage.setItem('luxestay_cache_reviews', JSON.stringify(reviewsData)); } catch (e) {}
+      }
+    } catch (e) {}
+  };
+
   useEffect(() => {
-    const fetchAdminData = async () => {
-      try {
-        const [bookingsRes, hotelsRes, usersRes, roomsRes] = await Promise.all([
-          fetch('/api/bookings'),
-          fetch('/api/hotels'),
-          fetch('/api/users'),
-          fetch('/api/rooms')
-        ]);
-        const bookingsData = await bookingsRes.json();
-        const hotelsData = await hotelsRes.json();
-        const usersData = await usersRes.json();
-        const roomsData = await roomsRes.json();
-
-        if (Array.isArray(bookingsData)) {
-          setBookings(bookingsData);
-          try { localStorage.setItem('luxestay_cache_bookings', JSON.stringify(bookingsData)); } catch (e) {}
-        }
-        if (Array.isArray(hotelsData)) {
-          setHotels(hotelsData);
-          try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(hotelsData)); } catch (e) {}
-        }
-        if (Array.isArray(usersData)) {
-          setUsers(usersData);
-          try { localStorage.setItem('luxestay_cache_users', JSON.stringify(usersData)); } catch (e) {}
-        }
-        if (Array.isArray(roomsData)) {
-          setRooms(roomsData);
-          try { localStorage.setItem('luxestay_cache_rooms', JSON.stringify(roomsData)); } catch (e) {}
-        }
-      } catch (e) {}
-    };
-
     fetchAdminData();
   }, []);
 
-  const handleReviewAction = (id, action) => {
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveReviewMenu(null);
+      setHeaderMenuOpen(false);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  const handleReviewAction = async (id, action) => {
+    setActiveReviewMenu(null);
     setReviews(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
+    try {
+      await fetch(`/api/reviews/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action })
+      });
+    } catch (e) {}
+  };
+
+  const handleSetVisibility = async (id, visibility) => {
+    setActiveReviewMenu(null);
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, visibility } : r));
+    try {
+      await fetch(`/api/reviews/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visibility })
+      });
+    } catch (e) {}
+  };
+
+  const handleDeleteReview = async (id) => {
+    setActiveReviewMenu(null);
+    setReviews(prev => prev.filter(r => r.id !== id));
+    try {
+      await fetch(`/api/reviews/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {}
   };
 
   const safeBookings = Array.isArray(bookings) ? bookings : [];
   const safeHotels = Array.isArray(hotels) ? hotels : [];
   const safeUsers = Array.isArray(users) ? users : [];
   const safeRooms = Array.isArray(rooms) ? rooms : [];
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+
+  const filteredReviews = safeReviews.filter(r => {
+    if (reviewFilter === 'public') return r.visibility === 'public' || (!r.visibility && r.status !== 'rejected');
+    if (reviewFilter === 'only_me') return r.visibility === 'only_me' || r.visibility === 'private';
+    if (reviewFilter === 'pending') return r.status === 'pending' || !r.status;
+    return true;
+  });
 
   const totalGrossRevenue = safeBookings.reduce((sum, b) => sum + (b?.total || 0), 0);
   const adminCommission = Math.round(totalGrossRevenue * 0.15);
@@ -111,6 +131,10 @@ export const AdminDashboard = () => {
 
   const totalRoomsAvailable = Math.max(100, (safeRooms.length || 15) * 45);
   const availableToday = totalRoomsAvailable - checkInCount - pendingCount;
+
+  const totalActiveGuests = (checkInCount + checkOutCount) || 1;
+  const checkInPercent = Math.min(100, Math.max(0, Math.round((checkInCount / totalActiveGuests) * 100))) || 65;
+  const checkOutPercent = 100 - checkInPercent;
 
   return (
     <PortalLayout role="admin" title="Admin Dashboard">
@@ -219,9 +243,18 @@ export const AdminDashboard = () => {
             </div>
 
             <div className="flex flex-wrap justify-between gap-2 pt-2 text-[11px]">
-              <span className="text-amber-500 font-bold">• Pending: <CountUp end={pendingCount} /></span>
-              <span className="text-emerald-500 font-bold">• Checked In: <CountUp end={checkInCount} /></span>
-              <span className="text-purple-500 font-bold">• Checked Out: <CountUp end={checkOutCount} /></span>
+              <span className="text-amber-500 font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                <span>Pending: <CountUp end={pendingCount} /></span>
+              </span>
+              <span className="text-emerald-500 font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                <span>Checked In: <CountUp end={checkInCount} /></span>
+              </span>
+              <span className="text-purple-500 font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-500 inline-block"></span>
+                <span>Checked Out: <CountUp end={checkOutCount} /></span>
+              </span>
             </div>
           </div>
 
@@ -330,21 +363,38 @@ export const AdminDashboard = () => {
           {/* Newest Booking Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-extrabold text-[var(--text-primary)]">Newest Booking</h3>
-              <Link to="/admin/bookings" className="text-xs font-bold text-blue-600 hover:underline">More</Link>
+              <div>
+                <h3 className="text-base font-extrabold text-[var(--text-primary)]">Newest Bookings</h3>
+                <span className="text-[11px] text-[var(--text-muted)] font-medium">Recent customer reservations from marketplace</span>
+              </div>
+              <Link to="/admin/bookings" className="text-xs font-bold text-amber-500 hover:text-amber-600 flex items-center gap-1">
+                <span>View All</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {NEWEST_BOOKINGS.map(bk => (
-                <div key={bk.id} className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm flex items-center gap-3">
-                  <img src={bk.avatar} alt={bk.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-amber-500 flex-shrink-0" />
+              {safeBookings.slice(0, 6).map((bk, idx) => (
+                <div key={bk.id || idx} className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-xs flex items-center gap-3 hover:border-amber-500/40 transition-colors">
+                  <img 
+                    src={bk.guestAvatar || bk.avatar || `https://images.unsplash.com/photo-${1534528741775 + ((idx * 73) % 500)}?auto=format&fit=crop&w=150&q=80`} 
+                    alt={bk.guestName || bk.name} 
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'; }}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-amber-500 flex-shrink-0" 
+                  />
                   <div className="flex-1 overflow-hidden">
-                    <h4 className="text-xs font-extrabold text-[var(--text-primary)] truncate">{bk.name}</h4>
-                    <span className="text-[10px] text-blue-600 font-bold block">{bk.date}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-semibold">{bk.room} • {bk.guests}</span>
+                    <h4 className="text-xs font-extrabold text-[var(--text-primary)] truncate">{bk.guestName || bk.name || 'VIP Guest'}</h4>
+                    <span className="text-[10px] text-amber-500 font-bold block truncate">{bk.hotelName || 'Luxury Resort'}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-semibold truncate block">{bk.roomName || 'Executive Suite'} • {bk.guests || 2} Person</span>
                   </div>
                 </div>
               ))}
+
+              {safeBookings.length === 0 && (
+                <div className="col-span-2 text-center py-8 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] text-xs text-[var(--text-muted)] font-bold">
+                  No recent bookings recorded yet.
+                </div>
+              )}
             </div>
           </div>
 
@@ -357,72 +407,276 @@ export const AdminDashboard = () => {
           <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-xs grid grid-cols-2 gap-4 text-center">
             <div className="space-y-2">
               <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full border-4 border-amber-500 flex items-center justify-center text-amber-500 font-extrabold text-xs">
-                70%
+                {checkInPercent}%
               </div>
               <span className="text-xs font-extrabold text-[var(--text-primary)] block">Check In</span>
             </div>
 
             <div className="space-y-2">
               <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full border-4 border-slate-300 dark:border-slate-700 flex items-center justify-center text-[var(--text-secondary)] font-extrabold text-xs">
-                30%
+                {checkOutPercent}%
               </div>
               <span className="text-xs font-extrabold text-[var(--text-primary)] block">Check Out</span>
             </div>
           </div>
 
           {/* Latest Customer Review List */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-xl space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-light)]">
-              <h3 className="text-base font-extrabold text-[var(--text-primary)]">Latest Customer Review</h3>
-              <MoreVertical className="w-4 h-4 text-[var(--text-muted)] cursor-pointer" />
+          <div className="p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-xl space-y-6 relative">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-light)] relative">
+              <div>
+                <h3 className="text-base font-extrabold text-[var(--text-primary)]">Latest Customer Reviews</h3>
+                <span className="text-[10px] text-[var(--text-muted)] font-bold block">
+                  {filteredReviews.length} {reviewFilter !== 'all' ? `(${reviewFilter})` : ''} of {safeReviews.length} total verified ratings
+                </span>
+              </div>
+              
+              {/* Header 3-Dots Filter & Actions Menu */}
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHeaderMenuOpen(prev => !prev);
+                  }}
+                  title="Review Moderation Options" 
+                  className={`p-2 rounded-xl transition-all cursor-pointer ${
+                    headerMenuOpen 
+                      ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-500/30' 
+                      : 'hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {headerMenuOpen && (
+                  <div className="absolute right-0 top-10 w-56 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl p-2 z-50 animate-fade-in space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] px-3 py-1 block">
+                      Filter Visibility
+                    </span>
+                    
+                    <button
+                      type="button"
+                      onClick={() => { setReviewFilter('all'); setHeaderMenuOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors ${
+                        reviewFilter === 'all' ? 'bg-amber-500/15 text-amber-500 font-black' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2"><Filter className="w-3.5 h-3.5" /> All Reviews</span>
+                      {reviewFilter === 'all' && <Check className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setReviewFilter('public'); setHeaderMenuOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors ${
+                        reviewFilter === 'public' ? 'bg-emerald-500/15 text-emerald-500 font-black' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2"><Globe className="w-3.5 h-3.5" /> Public Only</span>
+                      {reviewFilter === 'public' && <Check className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setReviewFilter('only_me'); setHeaderMenuOpen(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors ${
+                        reviewFilter === 'only_me' ? 'bg-purple-500/15 text-purple-500 font-black' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2"><Lock className="w-3.5 h-3.5" /> Only Me (Staff)</span>
+                      {reviewFilter === 'only_me' && <Check className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <div className="border-t border-[var(--border-light)] my-1"></div>
+
+                    <button
+                      type="button"
+                      onClick={() => { fetchAdminData(); setHeaderMenuOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-amber-500 hover:bg-amber-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Refresh Live Reviews
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-6">
-              {(Array.isArray(reviews) ? reviews : []).map(rev => (
-                <div key={rev.id} className="space-y-3 pb-4 border-b border-[var(--border-light)] last:border-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img src={rev.avatar || rev.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} alt={rev.name || rev.guestName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{rev.name || rev.guestName}</h4>
-                        <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] block truncate">{rev.date || rev.createdAt?.substring(0, 10)}</span>
+              {filteredReviews.slice(0, 5).map((rev, idx) => (
+                <div key={rev.id || idx} className="space-y-3 pb-4 border-b border-[var(--border-light)] last:border-0 last:pb-0 relative">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <img 
+                        src={rev.guestAvatar || rev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} 
+                        alt={rev.guestName || rev.name} 
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'; }}
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{rev.guestName || rev.name || 'Verified Customer'}</h4>
+                        <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] block truncate">
+                          {rev.hotelName ? `${rev.hotelName} • ` : ''}{rev.date || rev.createdAt?.substring(0, 10) || 'Recently'}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center text-amber-400 flex-shrink-0">
-                      {[...Array(Math.min(5, Math.max(1, Math.round(rev.rating || 5))))].map((_, i) => (
-                        <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
-                      ))}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center text-amber-400">
+                        {[...Array(Math.min(5, Math.max(1, Math.round(rev.rating || 5))))].map((_, i) => (
+                          <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
+                        ))}
+                      </div>
+
+                      {/* Review Card 3-Dots Action Menu */}
+                      <div className="relative" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveReviewMenu(activeReviewMenu === rev.id ? null : rev.id);
+                          }}
+                          className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                            activeReviewMenu === rev.id 
+                              ? 'bg-amber-500 text-slate-950 shadow-xs' 
+                              : 'hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                          }`}
+                          title="Manage this review"
+                        >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+
+                        {activeReviewMenu === rev.id && (
+                          <div className="absolute right-0 top-8 w-52 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl p-2 z-50 animate-fade-in space-y-1">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] px-3 py-1 block">
+                              Review Visibility
+                            </span>
+
+                            {/* Option 1: Set to Public */}
+                            <button
+                              type="button"
+                              onClick={() => handleSetVisibility(rev.id, 'public')}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors ${
+                                rev.visibility !== 'only_me' && rev.visibility !== 'private'
+                                  ? 'bg-emerald-500/15 text-emerald-500 font-black'
+                                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                              }`}
+                            >
+                              <Globe className="w-3.5 h-3.5" />
+                              <span>Public (Visible to all)</span>
+                            </button>
+
+                            {/* Option 2: Set to Only Me */}
+                            <button
+                              type="button"
+                              onClick={() => handleSetVisibility(rev.id, 'only_me')}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors ${
+                                rev.visibility === 'only_me' || rev.visibility === 'private'
+                                  ? 'bg-purple-500/15 text-purple-500 font-black'
+                                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                              }`}
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Only Me (Admin/Manager)</span>
+                            </button>
+
+                            <div className="border-t border-[var(--border-light)] my-1"></div>
+
+                            {/* Option 3: Approve */}
+                            <button
+                              type="button"
+                              onClick={() => handleReviewAction(rev.id, 'approved')}
+                              className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-500 hover:bg-emerald-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Approve Review</span>
+                            </button>
+
+                            {/* Option 4: Reject */}
+                            <button
+                              type="button"
+                              onClick={() => handleReviewAction(rev.id, 'rejected')}
+                              className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-amber-500 hover:bg-amber-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>Reject / Hide</span>
+                            </button>
+
+                            <div className="border-t border-[var(--border-light)] my-1"></div>
+
+                            {/* Option 5: Delete Permanently */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReview(rev.id)}
+                              className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete Review</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-medium">
-                    {rev.comment}
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-medium line-clamp-3">
+                    {rev.comment || rev.title}
                   </p>
 
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button 
-                      onClick={() => handleReviewAction(rev.id, 'approved')}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-white transition-all ${
-                        rev.status === 'approved' ? 'bg-emerald-600 ring-2 ring-emerald-400' : 'bg-emerald-500 hover:bg-emerald-600'
-                      }`}
-                      title="Approve Review"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleReviewAction(rev.id, 'rejected')}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-white transition-all ${
-                        rev.status === 'rejected' ? 'bg-rose-600 ring-2 ring-rose-400' : 'bg-rose-500 hover:bg-rose-600'
-                      }`}
-                      title="Reject Review"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Visibility Pill */}
+                      {rev.visibility === 'only_me' || rev.visibility === 'private' ? (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" /> Only Me
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center gap-1">
+                          <Globe className="w-2.5 h-2.5" /> Public
+                        </span>
+                      )}
+
+                      {/* Status Pill */}
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        rev.status === 'approved'
+                          ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                          : rev.status === 'rejected'
+                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                      }`}>
+                        {rev.status || 'Verified Stay'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button 
+                        onClick={() => handleReviewAction(rev.id, 'approved')}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-white transition-all cursor-pointer ${
+                          rev.status === 'approved' ? 'bg-emerald-600 ring-2 ring-emerald-400' : 'bg-emerald-500 hover:bg-emerald-600'
+                        }`}
+                        title="Approve Review"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleReviewAction(rev.id, 'rejected')}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-white transition-all cursor-pointer ${
+                          rev.status === 'rejected' ? 'bg-rose-600 ring-2 ring-rose-400' : 'bg-rose-500 hover:bg-rose-600'
+                        }`}
+                        title="Reject Review"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                 </div>
               ))}
+
+              {filteredReviews.length === 0 && (
+                <div className="text-center py-8 text-xs text-[var(--text-muted)] font-semibold">
+                  No customer reviews found matching filter.
+                </div>
+              )}
             </div>
 
           </div>

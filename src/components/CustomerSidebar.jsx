@@ -113,7 +113,10 @@ export const CustomerSidebar = ({ isOpen, onClose, isCollapsed }) => {
                             : 'text-[var(--text-secondary)] hover:text-amber-500 hover:bg-[var(--bg-tertiary)]'
                         }`}
                       >
-                        <span>• {item.label}</span>
+                        <span className="flex items-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 flex-shrink-0"></span>
+                          <span>{item.label}</span>
+                        </span>
                         {item.label === 'My Messages' && unreadCount > 0 && (
                           <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
                             {unreadCount}

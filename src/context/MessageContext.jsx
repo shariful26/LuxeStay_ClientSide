@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MessageContext = createContext();
@@ -71,7 +71,7 @@ export const MessageProvider = ({ children }) => {
       prevMessagesRef.current = incomingMessages;
       isFirstLoadRef.current = false;
     } catch (err) {
-      console.warn('Failed to poll messages for unread status:', err.message);
+      // safe fallback on polling failure
     }
   };
 
@@ -131,8 +131,9 @@ export const MessageProvider = ({ children }) => {
             <p className="text-[11px] text-[var(--text-secondary)] font-medium leading-relaxed truncate">
               {toast.text}
             </p>
-            <span className="text-[8px] font-bold text-amber-500 mt-1 block">
-              Click to reply →
+            <span className="text-[8px] font-bold text-amber-500 mt-1 flex items-center gap-1">
+              <span>Click to reply</span>
+              <ArrowRight className="w-3 h-3" />
             </span>
           </div>
         </div>

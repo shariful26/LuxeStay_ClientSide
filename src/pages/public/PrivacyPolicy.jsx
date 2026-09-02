@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, Lock, Eye, Database, Globe, 
-  CheckCircle2, Bell, Sparkles, Mail, FileText, ChevronRight, UserCheck, KeyRound, ArrowLeft 
+  CheckCircle2, Bell, Sparkles, Mail, FileText, ChevronRight, UserCheck, KeyRound, ArrowLeft, Check 
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -66,8 +66,8 @@ export const PrivacyPolicy = () => {
       content: (
         <div className="space-y-3">
           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
-            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block uppercase tracking-wider">
-              ✓ Our Unbreakable Guarantee:
+            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider">
+              <Check className="w-3.5 h-3.5" /> Our Unbreakable Guarantee:
             </span>
             <p className="text-xs text-[var(--text-primary)] font-bold">
               LuxeStay NEVER sells, rents, monetizes, or trades guest personal records or travel habits to commercial ad brokers, telemarketers, or third-party networks.

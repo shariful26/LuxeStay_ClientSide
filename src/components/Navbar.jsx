@@ -86,7 +86,7 @@ export const Navbar = () => {
         },
         {
           id: 'n_mgr_3',
-          title: 'New 5★ Guest Review',
+          title: 'New 5-Star Guest Review',
           desc: 'Lady Genevieve left a 5.0 star review for Grand Azure Resort',
           time: '3 hours ago',
           icon: Sparkles,

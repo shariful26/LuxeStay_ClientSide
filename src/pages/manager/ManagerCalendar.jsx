@@ -12,7 +12,7 @@ export const ManagerCalendar = () => {
   const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
   
   // Calendar Navigation states
-  const [currentDate, setCurrentDate] = useState(new Date(2028, 5, 1)); // Default to June 2028 matching DB mock entries
+  const [currentDate, setCurrentDate] = useState(new Date());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
@@ -203,7 +203,10 @@ export const ManagerCalendar = () => {
                             }`}
                             title={`${b.guestName} - ${b.roomName}`}
                           >
-                            👤 {b.guestName?.split(' ')[0]}
+                            <span className="inline-flex items-center gap-1">
+                              <User className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
+                              <span>{b.guestName?.split(' ')[0]}</span>
+                            </span>
                           </div>
                         );
                       })}

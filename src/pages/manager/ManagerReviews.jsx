@@ -387,8 +387,8 @@ export const ManagerReviews = () => {
                 className="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-900 text-xs font-black border-none outline-none cursor-pointer"
               >
                 <option value="All">All Feedback</option>
-                <option value="Positive">Positive (4+ ★)</option>
-                <option value="Negative">Negative (1-3 ★)</option>
+                <option value="Positive">Positive (4+ Stars)</option>
+                <option value="Negative">Negative (1-3 Stars)</option>
               </select>
             </div>
           </div>
@@ -449,7 +449,10 @@ export const ManagerReviews = () => {
                   <div className="pt-3 border-t border-slate-100 mt-auto">
                     {r.reply ? (
                       <div className="p-2.5 bg-emerald-50/50 border border-emerald-100 rounded-lg space-y-1">
-                        <span className="text-[8px] text-emerald-800 font-black block uppercase tracking-wider">✓ Your Reply:</span>
+                        <span className="text-[8px] text-emerald-800 font-black flex items-center gap-1 uppercase tracking-wider">
+                          <Check className="w-2.5 h-2.5 text-emerald-600" />
+                          <span>Your Reply:</span>
+                        </span>
                         <p className="text-[10px] text-emerald-700 font-bold leading-tight">{r.reply}</p>
                       </div>
                     ) : (

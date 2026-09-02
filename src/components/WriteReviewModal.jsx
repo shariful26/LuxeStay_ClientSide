@@ -81,7 +81,6 @@ export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubm
         setSubmitted(true);
       }
     } catch (err) {
-      console.error('Failed to submit review:', err);
       setSubmitted(true);
     } finally {
       setLoading(false);
@@ -117,8 +116,8 @@ export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubm
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {submitted ? (
             <div className="py-12 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 flex items-center justify-center mx-auto text-2xl font-black">
-                ✓
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
                 <h4 className="text-lg font-black text-[var(--text-primary)]">Thank You for Your Review!</h4>
@@ -148,8 +147,8 @@ export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubm
                       e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
                     }}
                   />
-                  <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 text-white rounded-full text-[8px] font-black">
-                    ✓
+                  <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 text-white rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5" />
                   </span>
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">

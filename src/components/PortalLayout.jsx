@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Menu, Bell, Heart, Search, MessageSquare, Globe, Home, User, LogOut, CheckCircle2, Building2, Calendar, ShieldCheck, ChevronDown, Check
+  Menu, Bell, Heart, Search, MessageSquare, Globe, Home, User, LogOut, CheckCircle2, Building2, Calendar, ShieldCheck, ChevronDown, Check, ArrowRight 
 } from 'lucide-react';
 import { CustomerSidebar } from './CustomerSidebar';
 import { AdminSidebar } from './AdminSidebar';
@@ -42,37 +42,54 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Mock Notifications Data State
-  const [notifications, setNotifications] = useState(() => {
-    const isAllRead = localStorage.getItem('luxestay_notifs_read') === 'true';
-    const readIds = JSON.parse(localStorage.getItem('luxestay_read_notif_ids') || '[]');
-    return [
-      {
-        id: 'n1',
-        title: 'New Booking Confirmed',
-        desc: 'Overwater Sunset Plunge Pool Villa (BK-88492) reserved',
-        time: '10 mins ago',
-        read: isAllRead || readIds.includes('n1'),
-        link: role === 'admin' ? '/admin/bookings' : role === 'manager' ? '/manager/bookings' : '/customer/bookings'
-      },
-      {
-        id: 'n2',
-        title: 'Payout Request Processed',
-        desc: '$500 transferred to SWIFT Bank Wire (PO-85552)',
-        time: '1 hour ago',
-        read: isAllRead || readIds.includes('n2'),
-        link: role === 'admin' ? '/admin/payouts' : role === 'manager' ? '/manager/wallet' : '/customer/bookings'
-      },
-      {
-        id: 'n3',
-        title: 'New 5★ Guest Review',
-        desc: 'Lady Genevieve left a 5.0 star review for Grand Azure Resort',
-        time: '3 hours ago',
-        read: true,
-        link: '/'
-      }
-    ];
-  });
+  // Real-Time Notifications State
+  const [notifications, setNotifications] = useState([]);
+
+  // Fetch live notifications from real server database
+  useEffect(() => {
+    const fetchLiveNotifications = async () => {
+      try {
+        const [bkRes, revRes] = await Promise.all([
+          fetch('/api/bookings'),
+          fetch('/api/reviews?role=admin&scope=all')
+        ]);
+        const bks = await bkRes.json();
+        const revs = await revRes.json();
+        const readIds = JSON.parse(localStorage.getItem('luxestay_read_notif_ids') || '[]');
+        const isAllRead = localStorage.getItem('luxestay_notifs_read') === 'true';
+
+        const liveNotifs = [];
+        if (Array.isArray(bks) && bks.length > 0) {
+          bks.slice(0, 3).forEach((b, idx) => {
+            const notifId = `bk_${b.id || idx}`;
+            liveNotifs.push({
+              id: notifId,
+              title: `Booking: ${b.guestName || 'VIP Guest'}`,
+              desc: `${b.roomName || 'Luxury Suite'} • ${b.hotelName || 'Resort'}`,
+              time: b.createdAt ? new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
+              read: isAllRead || readIds.includes(notifId),
+              link: role === 'admin' ? '/admin/bookings' : role === 'manager' ? '/manager/bookings' : '/customer/bookings'
+            });
+          });
+        }
+        if (Array.isArray(revs) && revs.length > 0) {
+          revs.slice(0, 2).forEach((r, idx) => {
+            const notifId = `rev_${r.id || idx}`;
+            liveNotifs.push({
+              id: notifId,
+              title: `New ${r.rating || 5}-Star Review`,
+              desc: `${r.guestName || 'Customer'} reviewed ${r.hotelName || 'Property'}`,
+              time: r.date || 'Recent',
+              read: isAllRead || readIds.includes(notifId),
+              link: role === 'admin' ? '/admin/dashboard' : role === 'manager' ? '/manager/reviews' : '/'
+            });
+          });
+        }
+        setNotifications(liveNotifs);
+      } catch (e) {}
+    };
+    fetchLiveNotifications();
+  }, [role]);
 
   // Hotel Search Preview Results
   const [matchingHotels, setMatchingHotels] = useState([]);
@@ -265,9 +282,10 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
                   )}
                   <button 
                     onClick={handleSearchSubmit} 
-                    className="w-full text-center py-2 text-[11px] font-bold text-amber-500 hover:underline border-t border-[var(--border-light)] pt-2 cursor-pointer"
+                    className="w-full text-center py-2 text-[11px] font-bold text-amber-500 hover:underline border-t border-[var(--border-light)] pt-2 cursor-pointer flex items-center justify-center gap-1"
                   >
-                    View All Search Results →
+                    <span>View All Search Results</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -339,9 +357,10 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
                       <Link 
                         to={role === 'admin' ? '/admin/bookings' : role === 'manager' ? '/manager/bookings' : '/customer/bookings'}
                         onClick={() => setIsNotificationsOpen(false)}
-                        className="text-[11px] font-bold text-amber-500 hover:underline"
+                        className="text-[11px] font-bold text-amber-500 hover:underline inline-flex items-center gap-1"
                       >
-                        View Full Reservations Activity →
+                        <span>View Full Reservations Activity</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
                   </div>

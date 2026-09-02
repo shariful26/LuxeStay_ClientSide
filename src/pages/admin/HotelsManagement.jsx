@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Sparkles, Search, Trash2, Edit3, Eye, Building2, MapPin, 
   CheckCircle, ShieldCheck, X, Save, ChevronLeft, ChevronRight, 
-  Clock, AlertCircle, Filter, CheckCircle2, Palmtree, Waves, Compass 
+  Clock, AlertCircle, Filter, CheckCircle2, Palmtree, Waves, Compass, Star 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PortalLayout } from '../../components/PortalLayout';
@@ -27,28 +27,32 @@ export const HotelsManagement = () => {
 
   const renderCategoryBadge = (category) => {
     const catLower = String(category).toLowerCase();
-    if (catLower.includes('resort')) {
+    if (catLower.includes('resort') || catLower.includes('spa') || catLower.includes('chalet')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-          <Palmtree className="w-3 h-3" /> Resorts
+        <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+          <Palmtree className="w-3 h-3 flex-shrink-0" />
+          <span>Resorts</span>
         </span>
       );
-    } else if (catLower.includes('villa')) {
+    } else if (catLower.includes('villa') || catLower.includes('bungalow') || catLower.includes('sanctuary')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-          <Waves className="w-3 h-3" /> Villa
+        <span className="px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+          <Waves className="w-3 h-3 flex-shrink-0" />
+          <span>Villa</span>
         </span>
       );
-    } else if (catLower.includes('ryokan')) {
+    } else if (catLower.includes('ryokan') || catLower.includes('bamboo')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-          <Compass className="w-3 h-3" /> Ryokan
+        <span className="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+          <Compass className="w-3 h-3 flex-shrink-0" />
+          <span>Ryokan</span>
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-        <Building2 className="w-3 h-3" /> {category}
+      <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+        <Building2 className="w-3 h-3 flex-shrink-0" />
+        <span>{category || 'City Luxury Hotel'}</span>
       </span>
     );
   };
@@ -386,8 +390,8 @@ export const HotelsManagement = () => {
               { id: 'pending', label: 'Pending', Icon: Clock },
               { id: 'approved', label: 'Approved', Icon: CheckCircle2 },
               { id: 'featured', label: 'Featured', Icon: Sparkles },
-              { id: 'Resort & Spa', label: 'Resort & Spa', Icon: null },
-              { id: 'Overwater Villa', label: 'Overwater Villa', Icon: null }
+              { id: 'Resort & Spa', label: 'Resort & Spa', Icon: Palmtree },
+              { id: 'Overwater Villa', label: 'Overwater Villa', Icon: Waves }
             ].map((f) => (
               <button
                 key={f.id}
@@ -437,7 +441,10 @@ export const HotelsManagement = () => {
                         <div className="min-w-0">
                           <span className="text-sm font-extrabold block text-[var(--text-primary)] truncate">{h.name}</span>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span className="text-[10px] text-amber-500 font-bold">★ {h.rating || 5.0}</span>
+                            <span className="text-[10px] text-amber-500 font-bold flex items-center gap-0.5">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span>{h.rating || 5.0}</span>
+                            </span>
                             <span className="text-[9px] text-[var(--text-muted)] font-semibold">({h.reviewCount || 0} reviews)</span>
                             <span className="text-[9px] text-[var(--text-muted)] font-semibold">• Partner: {h.partnerName || 'Aura'}</span>
                             {renderCategoryBadge(h.category)}

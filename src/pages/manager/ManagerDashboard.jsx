@@ -375,7 +375,7 @@ export const ManagerDashboard = () => {
               </div>
             </div>
 
-            {/* Daily Bar Chart SVG Mock */}
+            {/* Daily Bar Chart SVG Visualization */}
             <div className="h-44 w-full flex items-end justify-between gap-3 pt-6 px-2">
               {[
                 { day: 'Mon', booked: 70, canceled: 20 },

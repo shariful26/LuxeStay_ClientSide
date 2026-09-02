@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft } from 'lucide-react';
+import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft, ThumbsUp, Heart, Sparkles, Star, Check } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getInstantData } from '../../utils/instantCache';
@@ -40,7 +40,7 @@ export const CustomerMessages = () => {
 
   // Fetch real profile details dynamically from backend
   useEffect(() => {
-    const myId = user?.id ? String(user.id) : 'alice';
+    const myId = user?.id ? String(user.id) : 'customer';
     const partnerIds = [...new Set(messages.map(msg => {
       if (msg.senderRole === 'manager') return msg.senderId || 'manager';
       if (msg.recipientRole === 'manager') return msg.recipientId || 'manager';
@@ -58,7 +58,7 @@ export const CustomerMessages = () => {
                 [data.id]: {
                   name: data.name || 'Hotel Host',
                   avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-                  phone: data.phone || '+1 (555) 888-9999',
+                  phone: data.phone || '+1 (555) 000-1122',
                   email: data.email || 'manager@luxestay.com',
                   status: 'Property Host • Online'
                 }
@@ -84,7 +84,7 @@ export const CustomerMessages = () => {
   };
 
   messages.forEach(msg => {
-    const isCustomerMsg = msg.senderRole === 'customer' || msg.senderId === 'alice' || (user?.id && String(msg.senderId) === String(user.id));
+    const isCustomerMsg = msg.senderRole === 'customer' || (user?.id && String(msg.senderId) === String(user.id));
     const isManagerMsg = msg.senderRole === 'manager' || msg.recipientRole === 'customer' || (user?.id && String(msg.recipientId) === String(user.id));
 
     if (!isCustomerMsg && !isManagerMsg) return;
@@ -98,10 +98,17 @@ export const CustomerMessages = () => {
       senderName: msg.senderName,
       text: msg.text,
       time: msg.time,
-      read: msg.read,
-      senderAvatar: msg.senderAvatar
+      status: msg.status || 'read',
+      attachment: msg.attachment || null
     });
   });
+
+  const activeChatData = chatGroups[activeChatId] || Object.values(chatGroups)[0] || null;
+
+  const handleSelectQuickQuestion = (question) => {
+    setNewMessage(question);
+    setShowEmojiPicker(false);
+  };
 
   // Set first chat active if none is selected
   useEffect(() => {
@@ -118,7 +125,7 @@ export const CustomerMessages = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         senderId: partnerId,
-        recipientId: user.id || 'alice'
+        recipientId: user?.id || 'customer'
       })
     }).catch(() => {});
   };
@@ -128,8 +135,6 @@ export const CustomerMessages = () => {
       markMessagesAsRead(activeChatId);
     }
   }, [activeChatId, messages]);
-
-  const activeChatData = chatGroups[activeChatId] || Object.values(chatGroups)[0] || null;
 
   // Scroll to bottom on chat switch or actual new messages
   useEffect(() => {
@@ -164,8 +169,8 @@ export const CustomerMessages = () => {
     e.preventDefault();
     if (!newMessage.trim() && !attachment) return;
 
-    const myId = user?.id ? String(user.id) : 'alice';
-    const myName = user?.name || 'Alice Johnson';
+    const myId = user?.id ? String(user.id) : 'customer';
+    const myName = user?.name || 'Verified Customer';
     const myRole = 'customer';
     const myAvatar = user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
 
@@ -418,20 +423,28 @@ export const CustomerMessages = () => {
 
                 {/* Bottom Input Area (LOCKED & STICKY AT BOTTOM) */}
                 <div className="p-2 sm:p-3 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)]/20 space-y-2 relative shrink-0">
-                  {/* Emoji Picker Overlay */}
+                  {/* Emoji / Reaction Picker Overlay */}
                   {showEmojiPicker && (
-                    <div className="absolute bottom-16 left-4 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl p-3.5 shadow-2xl flex items-center gap-2.5 z-50 animate-fade-in text-sm select-none">
-                      {['😊', '👍', '❤️', '👏', '🔥', '🎉', '🌟', '😮', '🙌', '🙏'].map(emoji => (
+                    <div className="absolute bottom-16 left-4 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl p-2.5 shadow-2xl flex items-center gap-2 z-50 animate-fade-in text-xs select-none">
+                      {[
+                        { label: 'Thank You', icon: <Smile className="w-4 h-4 text-amber-500" />, text: 'Thank you!' },
+                        { label: 'Sounds Great', icon: <ThumbsUp className="w-4 h-4 text-blue-500" />, text: 'Sounds great!' },
+                        { label: 'Much Appreciated', icon: <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />, text: 'Much appreciated!' },
+                        { label: 'Looking Forward', icon: <Sparkles className="w-4 h-4 text-amber-400" />, text: 'Looking forward to our stay!' },
+                        { label: '5-Star Quality', icon: <Star className="w-4 h-4 text-amber-500 fill-amber-400" />, text: 'Excellent service!' },
+                        { label: 'Confirmed', icon: <Check className="w-4 h-4 text-emerald-500" />, text: 'Confirmed, thank you!' }
+                      ].map(item => (
                         <button
-                          key={emoji}
+                          key={item.label}
                           type="button"
                           onClick={() => {
-                            setNewMessage(prev => prev + emoji);
+                            setNewMessage(prev => (prev ? prev + ' ' : '') + item.text);
                             setShowEmojiPicker(false);
                           }}
-                          className="hover:scale-125 transition-transform cursor-pointer"
+                          className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer flex items-center justify-center"
+                          title={item.label}
                         >
-                          {emoji}
+                          {item.icon}
                         </button>
                       ))}
                     </div>
@@ -440,13 +453,14 @@ export const CustomerMessages = () => {
                   {/* Attachment Preview */}
                   {attachment && (
                     <div className="flex items-center gap-2 p-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 w-fit max-w-full animate-fade-in text-[10px] font-extrabold text-amber-600">
-                      <span>📎 Attachment: {attachment.name.substring(0, 15)}...</span>
+                      <span className="flex items-center gap-1"><Paperclip className="w-3.5 h-3.5 text-amber-500" /> Attachment: {attachment.name.substring(0, 15)}...</span>
                       <button
                         type="button"
                         onClick={() => setAttachment(null)}
-                        className="text-rose-500 hover:text-rose-700 cursor-pointer font-bold"
+                        className="text-rose-500 hover:text-rose-700 cursor-pointer p-0.5"
+                        title="Remove attachment"
                       >
-                        ✕
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}

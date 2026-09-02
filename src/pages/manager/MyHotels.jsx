@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Eye } from 'lucide-react';
+import { Plus, Edit, Eye, Star } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -69,7 +69,12 @@ export const MyHotels = () => {
                     <td className="text-xs">{h.destination}</td>
                     <td><span className="badge badge-navy">{h.category}</span></td>
                     <td className="font-extrabold text-amber-500">{formatPrice(h.pricePerNight)}</td>
-                    <td className="font-bold text-amber-500">★ {h.rating || 5.0}</td>
+                    <td className="font-bold text-amber-500">
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span>{h.rating || 5.0}</span>
+                      </span>
+                    </td>
                     <td>
                       {h.status === 'Approved' ? (
                         <span className="badge badge-emerald flex items-center gap-1 w-max">Approved & Active</span>

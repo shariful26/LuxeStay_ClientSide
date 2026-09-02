@@ -120,9 +120,9 @@ export const AdminPaymentSettings = () => {
               </span>
               <h3 className="text-lg font-extrabold text-[var(--text-primary)]">
                 Current Status: {settings.mode === 'live' ? (
-                  <span className="text-emerald-500 inline-flex items-center gap-1">🚀 LIVE PRODUCTION MODE</span>
+                  <span className="text-emerald-500 inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> LIVE PRODUCTION MODE</span>
                 ) : (
-                  <span className="text-amber-500 inline-flex items-center gap-1">🧪 SANDBOX TEST MODE</span>
+                  <span className="text-amber-500 inline-flex items-center gap-1.5"><Zap className="w-4 h-4" /> SANDBOX TEST MODE</span>
                 )}
               </h3>
             </div>

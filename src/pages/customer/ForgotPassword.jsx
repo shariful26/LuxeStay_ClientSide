@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, ArrowLeft, CheckCircle2, Lock, Eye, EyeOff, KeyRound, Loader2, ShieldCheck, User, Briefcase, Shield } from 'lucide-react';
 
 export const ForgotPassword = () => {
+  const [searchParams] = useSearchParams();
+  const isAdminSecret = searchParams.get('role') === 'admin';
+  const initialRole = isAdminSecret ? 'admin' : (searchParams.get('role') === 'manager' ? 'manager' : 'customer');
+
   const [step, setStep] = useState(1); // 1: Email, 2: OTP & New Password, 3: Success
-  const [role, setRole] = useState('customer'); // customer, partner, admin
+  const [role, setRole] = useState(initialRole); // customer, manager, admin (secret only)
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -60,7 +64,11 @@ export const ForgotPassword = () => {
       if (res.ok && data.success) {
         setStep(3);
         setTimeout(() => {
-          navigate('/login');
+          if (role === 'admin') {
+            navigate('/admin/login');
+          } else {
+            navigate('/login');
+          }
         }, 2200);
       } else {
         setErrorMsg(data.error || 'Failed to reset password');
@@ -74,40 +82,38 @@ export const ForgotPassword = () => {
   return (
     <div className="min-h-[75vh] flex items-center justify-center p-4">
       <div className="w-full max-w-md p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl space-y-6 animate-fade-in my-8">
-        <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline">
-          <ArrowLeft className="w-4 h-4" /> Back to Login
+        <Link to={isAdminSecret ? "/admin/login" : "/login"} className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline">
+          <ArrowLeft className="w-4 h-4" /> {isAdminSecret ? "Back to Admin Login" : "Back to Login"}
         </Link>
 
-        {/* Role Selector Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-tertiary)] text-[11px] font-extrabold">
-          <button 
-            type="button" 
-            onClick={() => handleRoleChange('customer')}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              role === 'customer' ? 'bg-amber-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" /> Customer
-          </button>
-          <button 
-            type="button" 
-            onClick={() => handleRoleChange('manager')}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              role === 'manager' ? 'bg-emerald-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5" /> Manager
-          </button>
-          <button 
-            type="button" 
-            onClick={() => handleRoleChange('admin')}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              role === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" /> Admin
-          </button>
-        </div>
+        {/* Role Selector Tabs (Admin is completely removed from public view) */}
+        {isAdminSecret ? (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center gap-2">
+            <Shield className="w-4 h-4 text-amber-500" />
+            <span>Super Admin Security Passkey Recovery</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[var(--bg-tertiary)] text-[11px] font-extrabold">
+            <button 
+              type="button" 
+              onClick={() => handleRoleChange('customer')}
+              className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                role === 'customer' ? 'bg-amber-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" /> Customer
+            </button>
+            <button 
+              type="button" 
+              onClick={() => handleRoleChange('manager')}
+              className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                role === 'manager' ? 'bg-emerald-500 text-white shadow-md' : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              <Briefcase className="w-3.5 h-3.5" /> Manager
+            </button>
+          </div>
+        )}
 
         {step === 3 ? (
           <div className="text-center space-y-4 py-6 animate-fade-in">
@@ -129,8 +135,9 @@ export const ForgotPassword = () => {
             </div>
 
             {receivedOtp && (
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs text-center font-extrabold">
-                🔑 Security Reset Code: <span className="font-mono text-sm tracking-widest bg-amber-500/20 px-2 py-0.5 rounded">{receivedOtp}</span>
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs text-center font-extrabold flex items-center justify-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-amber-500" />
+                <span>Security Reset Code: <strong className="font-mono text-sm tracking-widest bg-amber-500/20 px-2 py-0.5 rounded">{receivedOtp}</strong></span>
               </div>
             )}
 

@@ -84,7 +84,7 @@ export const AddEditHotel = () => {
         body: JSON.stringify(hotelPayload)
       });
     } catch (err) {
-      console.warn('Error saving partner hotel:', err.message);
+      // safe fallback on save
     }
 
     setLoading(false);
@@ -295,9 +295,9 @@ export const AddEditHotel = () => {
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })} 
                         className="w-full p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs font-bold outline-none cursor-pointer"
                       >
-                        <option value="Active / Available" className="bg-[var(--bg-card)] text-emerald-500 font-bold">🟢 Active / Instant Booking Enabled</option>
-                        <option value="Pending Approval" className="bg-[var(--bg-card)] text-amber-500 font-bold">🟡 Pending Approval</option>
-                        <option value="Booked / Maintenance" className="bg-[var(--bg-card)] text-rose-500 font-bold">🔴 Booked / Under Maintenance</option>
+                        <option value="Active / Available" className="bg-[var(--bg-card)] text-emerald-500 font-bold">Active / Instant Booking Enabled</option>
+                        <option value="Pending Approval" className="bg-[var(--bg-card)] text-amber-500 font-bold">Pending Approval</option>
+                        <option value="Booked / Maintenance" className="bg-[var(--bg-card)] text-rose-500 font-bold">Booked / Under Maintenance</option>
                       </select>
                     </div>
                   </div>

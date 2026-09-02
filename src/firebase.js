@@ -29,7 +29,6 @@ export const loginWithGoogleFirebase = async () => {
       }
     };
   } catch (error) {
-    console.error('Firebase Auth error details:', error.code, error.message);
     if (error.code === 'auth/operation-not-allowed') {
       return { 
         error: 'Google Sign-In is disabled in your Firebase Console. Please go to Firebase Console -> Build -> Authentication -> Sign-in method -> Enable Google.' 

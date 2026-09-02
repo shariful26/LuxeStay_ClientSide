@@ -109,13 +109,14 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
                         key={idx}
                         to={item.path}
                         onClick={() => onClose && onClose()}
-                        className={`block py-2 px-3 rounded-lg transition-colors font-semibold ${
+                        className={`flex items-center py-2 px-3 rounded-lg transition-colors font-semibold ${
                           isActive 
                             ? 'bg-amber-500/10 text-amber-500 font-extrabold' 
                             : 'text-[var(--text-secondary)] hover:text-amber-500 hover:bg-[var(--bg-tertiary)]'
                         }`}
                       >
-                        • {item.label}
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 flex-shrink-0"></span>
+                        <span>{item.label}</span>
                       </Link>
                     );
                   })}

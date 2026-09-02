@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, KeyRound, Building2, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, KeyRound, Building2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLogin = () => {
@@ -133,6 +133,15 @@ export const AdminLogin = () => {
             <span>Authorize Admin Session</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <Link 
+              to="/forgot-password?role=admin"
+              className="text-slate-400 hover:text-amber-400 transition-colors font-bold text-[11px] flex items-center gap-1"
+            >
+              <KeyRound className="w-3.5 h-3.5" /> Forgot Admin Security Passkey?
+            </Link>
+          </div>
         </form>
 
         {/* Real Admin Credentials Helper */}
@@ -149,8 +158,9 @@ export const AdminLogin = () => {
 
         {/* Back Link */}
         <div className="text-center pt-2">
-          <Link to="/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors">
-            ← Return to Standard Public Login
+          <Link to="/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1.5">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Standard Public Login</span>
           </Link>
         </div>
 

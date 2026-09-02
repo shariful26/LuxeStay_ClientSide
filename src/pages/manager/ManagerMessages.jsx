@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft, ThumbsUp, Heart, Star } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getInstantData } from '../../utils/instantCache';
@@ -41,8 +41,8 @@ export const ManagerMessages = () => {
   // Fetch real profile details dynamically from backend
   useEffect(() => {
     const customerIds = [...new Set(messages.map(msg => {
-      if (msg.senderRole === 'customer') return msg.senderId || 'alice';
-      if (msg.recipientRole === 'customer') return msg.recipientId || 'alice';
+      if (msg.senderRole === 'customer') return msg.senderId || 'customer';
+      if (msg.recipientRole === 'customer') return msg.recipientId || 'customer';
       return null;
     }).filter(Boolean))];
 
@@ -60,7 +60,7 @@ export const ManagerMessages = () => {
                   phone: data.phone || '+1 (555) 000-0000',
                   email: data.email || `${data.id}@example.com`,
                   status: 'Guest • Online',
-                  country: data.country || 'United Kingdom'
+                  country: data.country || 'United States'
                 }
               }));
             }
@@ -71,33 +71,22 @@ export const ManagerMessages = () => {
   }, [messages, user?.id]);
 
   // Group messages by customer
-  const chatGroups = {
-    alice: {
-      id: 'alice',
-      name: 'Alice Johnson',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-      phone: '+1 (555) 234-5678',
-      email: 'alice@example.com',
-      status: 'Guest • Room 101',
-      country: 'United Kingdom',
-      messages: []
-    }
-  };
+  const chatGroups = {};
 
   messages.forEach(msg => {
     const customerId = msg.senderRole === 'customer' 
-      ? (msg.senderId || 'alice') 
-      : (msg.recipientRole === 'customer' ? (msg.recipientId || 'alice') : 'alice');
+      ? (msg.senderId || 'customer') 
+      : (msg.recipientRole === 'customer' ? (msg.recipientId || 'customer') : 'customer');
     const customerName = msg.senderRole === 'customer' ? msg.senderName : msg.recipientName;
     const customerAvatar = msg.senderRole === 'customer' ? msg.senderAvatar : null;
 
     const resolvedProfile = fetchedProfiles[customerId] || {
-      name: customerName || (customerId === 'alice' ? 'Alice Johnson' : 'Guest Customer'),
+      name: customerName || 'Verified Guest',
       avatar: customerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       phone: '+1 (555) 000-0000',
       email: `${customerId}@example.com`,
       status: 'Guest • Online',
-      country: 'United Kingdom'
+      country: 'United States'
     };
 
     if (!chatGroups[customerId]) {
@@ -200,7 +189,7 @@ export const ManagerMessages = () => {
         senderName: myName,
         senderRole: myRole,
         senderAvatar: myAvatar,
-        recipientId: activeChatId || 'alice',
+        recipientId: activeChatId || 'customer',
         recipientName: activeChatData ? activeChatData.name : 'Guest Customer',
         recipientRole: 'customer',
         text: textValue,
@@ -373,7 +362,7 @@ export const ManagerMessages = () => {
                 {/* Message History */}
                 <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 min-h-0">
                   {activeChatData.messages.map((msg, idx) => {
-                    const isGuest = msg.sender === activeChatData.id || msg.sender === 'customer' || msg.sender === 'alice';
+                    const isGuest = msg.sender === activeChatData.id || msg.sender === 'customer';
                     const isImage = msg.text && msg.text.startsWith('data:image/');
                     return (
                       <div key={idx} className={`flex items-end gap-2 ${isGuest ? 'justify-start' : 'justify-end'}`}>
@@ -443,17 +432,25 @@ export const ManagerMessages = () => {
 
                 {/* Input Controls Panel (ALWAYS VISIBLE & LOCKED AT BOTTOM) */}
                 <div className="pt-2 border-t border-slate-100 bg-slate-50/80 p-2 sm:p-2.5 rounded-2xl relative shrink-0 space-y-2">
-                  {/* Emoji Picker Box */}
+                  {/* Emoji / Reaction Picker Box */}
                   {showEmojiPicker && (
-                    <div className="absolute bottom-16 left-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-lg flex items-center gap-1.5 z-20 animate-fade-in text-sm select-none">
-                      {['😊', '👍', '❤️', '👏', '🔥', '🎉', '🌟', '😮', '🙌', '🙏'].map(emoji => (
+                    <div className="absolute bottom-16 left-2 bg-white border border-slate-200 rounded-2xl p-2 shadow-lg flex items-center gap-1.5 z-20 animate-fade-in text-xs select-none">
+                      {[
+                        { label: 'Thank You', icon: <Smile className="w-4 h-4 text-amber-500" />, text: 'Thank you!' },
+                        { label: 'Sounds Great', icon: <ThumbsUp className="w-4 h-4 text-blue-500" />, text: 'Sounds great!' },
+                        { label: 'Much Appreciated', icon: <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />, text: 'Much appreciated!' },
+                        { label: 'Looking Forward', icon: <Sparkles className="w-4 h-4 text-amber-400" />, text: 'Looking forward to hosting you!' },
+                        { label: '5-Star Quality', icon: <Star className="w-4 h-4 text-amber-500 fill-amber-400" />, text: '5-Star Hospitality guaranteed!' },
+                        { label: 'Confirmed', icon: <Check className="w-4 h-4 text-emerald-500" />, text: 'Reservation verified and confirmed!' }
+                      ].map(item => (
                         <button
-                          key={emoji}
+                          key={item.label}
                           type="button"
-                          onClick={() => handleEmojiSelect(emoji)}
-                          className="hover:scale-125 transition-transform cursor-pointer"
+                          onClick={() => handleEmojiSelect(item.text)}
+                          className="p-1.5 rounded-xl hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
+                          title={item.label}
                         >
-                          {emoji}
+                          {item.icon}
                         </button>
                       ))}
                     </div>
@@ -462,13 +459,14 @@ export const ManagerMessages = () => {
                   {/* Attachment indicator banner */}
                   {attachment && (
                     <div className="flex items-center gap-2 p-1.5 rounded-lg bg-[#e2f896]/30 border border-[#e2f896]/60 w-fit max-w-full text-[10px] font-extrabold text-slate-800">
-                      <span>📎 Attachment: {attachment.name.substring(0, 15)}...</span>
+                      <span className="flex items-center gap-1"><Paperclip className="w-3.5 h-3.5 text-slate-600" /> Attachment: {attachment.name.substring(0, 15)}...</span>
                       <button
                         type="button"
                         onClick={() => setAttachment(null)}
-                        className="text-rose-600 hover:text-rose-800 font-bold"
+                        className="text-rose-600 hover:text-rose-800 p-0.5 cursor-pointer"
+                        title="Remove attachment"
                       >
-                        ✕
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}

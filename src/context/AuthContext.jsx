@@ -32,22 +32,19 @@ export const AuthProvider = ({ children }) => {
         return { status: res.status, data };
       }
     } catch (err) {
-      console.warn(`Auth fetch error for ${endpoint}:`, err.message);
+      // safe fallback on network disconnect
     }
     return { status: 500, data: { error: 'Unable to connect to authentication server' } };
   };
 
   // Real HTTP Login API (saves & verifies with MongoDB Atlas)
   const login = async (email, password, role = 'customer') => {
-    console.log('🚀 Sending Login Request to MongoDB Atlas backend:', { email, role });
     const { data } = await safeAuthFetch('/api/auth/login', { email, password, role });
     
     if (data?.user) {
-      console.log('✅ Login SUCCESS! User verified in MongoDB Atlas database:', data.user);
       setUser(data.user);
       return data;
     } else if (data?.error) {
-      console.warn('⚠️ Login Error from MongoDB Atlas:', data.error);
       return { error: data.error };
     }
     return { error: 'Unable to connect to authentication server' };
@@ -55,34 +52,28 @@ export const AuthProvider = ({ children }) => {
 
   // Real HTTP Register API (saves directly to MongoDB Atlas)
   const register = async (name, email, password, role = 'customer', avatar = null) => {
-    console.log('🚀 Sending Registration Request to MongoDB Atlas backend:', { name, email, role });
     const { data } = await safeAuthFetch('/api/auth/register', { name, email, password, role, avatar });
 
     if (data?.user) {
-      console.log('✅ Registration SUCCESS! User saved in MongoDB Atlas database:', data.user);
       setUser(data.user);
       return data;
     } else if (data?.error) {
-      console.warn('⚠️ Registration Error from MongoDB Atlas:', data.error);
       return { error: data.error };
     }
     return { error: 'Unable to connect to registration server' };
   };
 
   const loginWithGoogle = async (role = 'customer') => {
-    console.log('🚀 Initiating Google Auth popup & MongoDB Atlas saving...');
     try {
       const { loginWithGoogleFirebase } = await import('../firebase');
       const googleRes = await loginWithGoogleFirebase();
       
       if (googleRes?.error) {
-        console.warn('⚠️ Google Auth Firebase Error:', googleRes.error);
         return { error: googleRes.error };
       }
 
       if (googleRes?.user) {
         const { name, email, avatar, uid } = googleRes.user;
-        console.log('📥 Firebase Google user received:', email);
         
         let googleUserPayload = {
           id: `u_google_${uid || Date.now()}`,
@@ -96,7 +87,6 @@ export const AuthProvider = ({ children }) => {
 
         const { data } = await safeAuthFetch('/api/auth/google', { name, email, avatar, role, uid });
         if (data?.user) {
-          console.log('✅ Google Auth SUCCESS! Saved to MongoDB Atlas:', data.user);
           setUser(data.user);
           return data;
         } else {
@@ -105,7 +95,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (e) {
-      console.warn('Google Sign-In Exception:', e);
+      // Google sign-in fallback handler
     }
     return { error: 'Google sign-in failed' };
   };
@@ -129,7 +119,7 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: data.user, message: data.message };
       }
     } catch (e) {
-      console.warn('API profile update warning:', e);
+      // Local fallback on network disconnect
     }
     const newUserState = { ...user, ...updatedData };
     setUser(newUserState);
@@ -142,24 +132,25 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('luxestay_user');
   };
 
-  const switchRole = (role) => {
+  const switchRole = async (role) => {
     if (role === 'guest') {
       setUser(null);
       localStorage.removeItem('luxestay_user');
       return;
     }
     const effectiveRole = role === 'manager' ? 'manager' : role;
-    const switchedUser = {
-      id: `u_${effectiveRole}_demo`,
-      name: role === 'admin' ? 'Platform Administrator' : role === 'manager' ? 'Hotel Manager' : 'Luxe Guest',
-      email: `${effectiveRole}@luxestay.com`,
-      role: effectiveRole,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      phone: '+1 (555) 000-9988',
-      country: 'United States'
-    };
-    setUser(switchedUser);
-    localStorage.setItem('luxestay_user', JSON.stringify(switchedUser));
+    try {
+      const res = await fetch('/api/users');
+      const allUsers = await res.json();
+      if (Array.isArray(allUsers) && allUsers.length > 0) {
+        const found = allUsers.find(u => u.role === effectiveRole);
+        if (found) {
+          setUser(found);
+          localStorage.setItem('luxestay_user', JSON.stringify(found));
+          return found;
+        }
+      }
+    } catch (e) {}
   };
 
   return (

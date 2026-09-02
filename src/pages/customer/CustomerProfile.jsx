@@ -317,7 +317,7 @@ const PasswordSecuritySection = ({ user }) => {
       const data = await res.json();
       setLoading(false);
       if (res.ok && data.success) {
-        setMsg({ text: '🔒 Password updated and encrypted with bcrypt successfully!', isError: false });
+        setMsg({ text: 'Password updated and encrypted with bcrypt successfully!', isError: false });
         setCurrentPassword('');
         setNewPassword('');
         setTimeout(() => setMsg({ text: '', isError: false }), 5000);

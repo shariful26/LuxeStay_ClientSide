@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBooking } from '../context/BookingContext';
 import { useCurrency } from '../context/CurrencyContext';
 
-const MOCK_ADDONS = [
+const EXCLUSIVE_RESORT_ADDONS = [
   { id: 'a1', name: 'Airport VIP Shuttle Transfer', price: 80, desc: 'Luxury private chauffeur from/to airport' },
   { id: 'a2', name: 'Gourmet Breakfast Buffet Daily', price: 120, desc: 'Organic farm-to-table breakfast served daily' },
   { id: 'a3', name: 'Couples Sunset Spa Session', price: 180, desc: '60 min hot stone oil massage with champagne' },
@@ -312,7 +312,7 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
     
     // Strict Customer Authentication Guard
     if (!user) {
-      setBookingErrorMsg('🔒 Customer Account Required: Please log in or register to complete your suite reservation.');
+      setBookingErrorMsg('Customer Account Required: Please log in or register to complete your suite reservation.');
       setTimeout(() => {
         onClose();
         navigate('/login', { state: { from: location.pathname + location.search } });
@@ -600,7 +600,7 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
             <div className="space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">Curated Luxury Add-Ons</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {MOCK_ADDONS.map(addon => {
+                {EXCLUSIVE_RESORT_ADDONS.map(addon => {
                   const isChecked = bookingDraft.selectedAddOns.some(a => a.id === addon.id);
                   return (
                     <div
@@ -1085,9 +1085,24 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
                             type="button"
                             onClick={handleSimulateQrScan}
                             disabled={isScanningQr || qrScanned}
-                            className="btn btn-outline text-[10px] py-1 px-3 border-emerald-500 text-emerald-500 cursor-pointer"
+                            className="btn btn-outline text-[10px] py-1 px-3 border-emerald-500 text-emerald-500 cursor-pointer flex items-center gap-1"
                           >
-                            {isScanningQr ? 'Scanning...' : qrScanned ? '✅ QR Authorized' : '⚡ Simulate App Approval'}
+                            {isScanningQr ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Scanning...</span>
+                              </>
+                            ) : qrScanned ? (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>QR Authorized</span>
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                <span>Simulate App Approval</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
