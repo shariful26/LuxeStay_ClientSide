@@ -24,8 +24,13 @@ export const CustomerMessages = () => {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setMessages(data);
-          try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(data)); } catch (e) {}
+          setMessages(prev => {
+            const serverIds = new Set(data.map(m => m.id));
+            const pending = prev.filter(m => !serverIds.has(m.id));
+            const merged = [...data, ...pending];
+            try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
+            return merged;
+          });
         }
       })
       .catch(() => {});
