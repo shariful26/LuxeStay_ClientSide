@@ -109,7 +109,10 @@ export const AuthProvider = ({ children }) => {
 
     // 2. Intelligent offline / network fallback for demo users if backend server unreachable
     if (CLIENT_DEMO_USERS[cleanEmail] && (password === '123456' || password.length >= 4)) {
-      const demoUser = CLIENT_DEMO_USERS[cleanEmail];
+      const saved = localStorage.getItem('luxestay_user');
+      let parsed = null;
+      try { parsed = saved ? JSON.parse(saved) : null; } catch (e) {}
+      const demoUser = (parsed && parsed.email?.toLowerCase() === cleanEmail) ? parsed : CLIENT_DEMO_USERS[cleanEmail];
       const effectiveRole = demoUser.role || role;
       const userPayload = { ...demoUser, role: effectiveRole };
       
