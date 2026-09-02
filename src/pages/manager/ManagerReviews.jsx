@@ -396,7 +396,7 @@ export const ManagerReviews = () => {
           {/* 4-column Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {currentReviews.map((r) => {
-              const formattedDate = formatDate(r.createdAt);
+              const formattedDate = r.date || (r.createdAt ? formatDate(r.createdAt) : 'Recent Stay');
               // Get initials for avatar
               const initials = r.guestName ? r.guestName.split(' ').map(n => n[0]).join('') : 'G';
               
@@ -406,12 +406,24 @@ export const ManagerReviews = () => {
                     
                     {/* Header: Avatar, Name, Date */}
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#e2f896] text-slate-950 flex items-center justify-center font-black text-xs">
-                        {initials}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-extrabold text-slate-900 leading-none">{r.guestName}</h4>
-                        <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{formattedDate}</span>
+                      {r.guestAvatar || r.avatar ? (
+                        <img 
+                          src={r.guestAvatar || r.avatar} 
+                          alt={r.guestName} 
+                          className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/30 shadow-xs flex-shrink-0"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black text-xs shadow-xs flex-shrink-0">
+                          {initials}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-extrabold text-slate-900 leading-tight truncate">{r.guestName || 'Verified Guest'}</h4>
+                        <span className="text-[9px] text-slate-400 font-semibold mt-0.5 block">{formattedDate}</span>
                       </div>
                     </div>
 

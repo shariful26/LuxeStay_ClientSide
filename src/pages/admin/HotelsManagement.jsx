@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Sparkles, Search, Trash2, Edit3, Eye, Building2, MapPin, CheckCircle, ShieldCheck, X, Save, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  Plus, Sparkles, Search, Trash2, Edit3, Eye, Building2, MapPin, 
+  CheckCircle, ShieldCheck, X, Save, ChevronLeft, ChevronRight, 
+  Clock, AlertCircle, Filter, CheckCircle2, Palmtree, Waves, Compass 
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -25,26 +29,26 @@ export const HotelsManagement = () => {
     const catLower = String(category).toLowerCase();
     if (catLower.includes('resort')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider">
-          🌴 Resorts
+        <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
+          <Palmtree className="w-3 h-3" /> Resorts
         </span>
       );
     } else if (catLower.includes('villa')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[9px] font-black uppercase tracking-wider">
-          🌊 Villa
+        <span className="px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
+          <Waves className="w-3 h-3" /> Villa
         </span>
       );
     } else if (catLower.includes('ryokan')) {
       return (
-        <span className="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider">
-          ⛩️ Ryokan
+        <span className="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
+          <Compass className="w-3 h-3" /> Ryokan
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-wider">
-        🏛️ {category}
+      <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
+        <Building2 className="w-3 h-3" /> {category}
       </span>
     );
   };
@@ -225,13 +229,27 @@ export const HotelsManagement = () => {
     setHotels(prev => prev.filter(h => h.id !== id));
   };
 
+  const pendingCount = hotels.filter(h => getNormalizedStatus(h.status) === 'Pending').length;
+  const approvedCount = hotels.filter(h => getNormalizedStatus(h.status) === 'Approved').length;
+  const featuredCount = hotels.filter(h => h.featured).length;
+
   const filteredHotels = hotels.filter(h => {
     const matchesSearch = 
       h.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       h.destination?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      h.category?.toLowerCase().includes(searchQuery.toLowerCase());
+      h.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      h.partnerName?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = categoryFilter === 'all' || h.category?.toLowerCase() === categoryFilter.toLowerCase();
+    let matchesCategory = true;
+    if (categoryFilter === 'pending') {
+      matchesCategory = getNormalizedStatus(h.status) === 'Pending';
+    } else if (categoryFilter === 'approved') {
+      matchesCategory = getNormalizedStatus(h.status) === 'Approved';
+    } else if (categoryFilter === 'featured') {
+      matchesCategory = !!h.featured;
+    } else if (categoryFilter !== 'all') {
+      matchesCategory = h.category?.toLowerCase() === categoryFilter.toLowerCase();
+    }
 
     return matchesSearch && matchesCategory;
   });
@@ -240,8 +258,6 @@ export const HotelsManagement = () => {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentHotels = filteredHotels.slice(indexOfFirstItem, indexOfLastItem);
-
-  const featuredCount = hotels.filter(h => h.featured).length;
 
   return (
     <PortalLayout role="admin" title="Hotels Management">
@@ -259,81 +275,138 @@ export const HotelsManagement = () => {
         </button>
       </div>
 
-      {/* KPI Property Stats Badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs font-bold">
+      {/* KPI Property Stats & Instant Filter Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs font-bold">
+        
+        {/* Total Properties Box */}
         <div 
           onClick={() => setCategoryFilter('all')} 
-          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-4 rounded-2xl border transition-all cursor-pointer select-none group ${
             categoryFilter === 'all' 
-              ? 'bg-amber-500/15 border-amber-500 text-amber-500 shadow-sm' 
-              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/40'
+              ? 'bg-amber-500/15 border-amber-500 text-amber-500 shadow-md ring-2 ring-amber-500/20' 
+              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/40 hover:shadow-xs'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span>Total Properties</span>
+            <span className="group-hover:text-amber-500 transition-colors">Total Properties</span>
             <Building2 className="w-4 h-4 text-amber-500" />
           </div>
-          <span className="text-xl font-extrabold text-[var(--text-primary)] block mt-1">{hotels.length}</span>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-extrabold text-[var(--text-primary)]">{hotels.length}</span>
+            <span className="text-[10px] text-[var(--text-muted)] font-medium">All listings</span>
+          </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-secondary)]">
+        {/* Pending Approval Box (Action Required) */}
+        <div 
+          onClick={() => setCategoryFilter('pending')} 
+          className={`p-4 rounded-2xl border transition-all cursor-pointer select-none relative overflow-hidden group ${
+            categoryFilter === 'pending' 
+              ? 'bg-amber-500/20 border-amber-500 text-amber-500 shadow-md ring-2 ring-amber-500/30' 
+              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/50 hover:shadow-xs'
+          }`}
+        >
+          {pendingCount > 0 && (
+            <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider animate-pulse">
+              Needs Review
+            </span>
+          )}
           <div className="flex items-center justify-between">
-            <span>Featured Listings</span>
+            <span className="group-hover:text-amber-500 transition-colors">Pending Approval</span>
+            <Clock className={`w-4 h-4 ${pendingCount > 0 ? 'text-amber-500' : 'text-slate-400'}`} />
+          </div>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className={`text-2xl font-extrabold ${pendingCount > 0 ? 'text-amber-500' : 'text-[var(--text-primary)]'}`}>
+              {pendingCount}
+            </span>
+            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+              {pendingCount === 1 ? '1 awaiting review' : `${pendingCount} awaiting review`}
+            </span>
+          </div>
+        </div>
+
+        {/* Approved & Active Box */}
+        <div 
+          onClick={() => setCategoryFilter('approved')} 
+          className={`p-4 rounded-2xl border transition-all cursor-pointer select-none group ${
+            categoryFilter === 'approved' 
+              ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500 shadow-md ring-2 ring-emerald-500/20' 
+              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-emerald-500/40 hover:shadow-xs'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="group-hover:text-emerald-500 transition-colors">Approved & Active</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-extrabold text-[var(--text-primary)]">{approvedCount}</span>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Live on marketplace</span>
+          </div>
+        </div>
+
+        {/* Featured Listings Box */}
+        <div 
+          onClick={() => setCategoryFilter('featured')} 
+          className={`p-4 rounded-2xl border transition-all cursor-pointer select-none group ${
+            categoryFilter === 'featured' 
+              ? 'bg-amber-500/15 border-amber-500 text-amber-500 shadow-md ring-2 ring-amber-500/20' 
+              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/40 hover:shadow-xs'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="group-hover:text-amber-500 transition-colors">Featured Listings</span>
             <Sparkles className="w-4 h-4 text-amber-500" />
           </div>
-          <span className="text-xl font-extrabold text-amber-500 block mt-1">{featuredCount}</span>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-extrabold text-amber-500">{featuredCount}</span>
+            <span className="text-[10px] text-[var(--text-muted)] font-medium">Homepage spotlight</span>
+          </div>
         </div>
 
-        <div 
-          onClick={() => setCategoryFilter('Resort & Spa')} 
-          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-            categoryFilter === 'Resort & Spa' 
-              ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500 shadow-sm' 
-              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-emerald-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span>Resorts & Spas</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          </div>
-          <span className="text-xl font-extrabold text-[var(--text-primary)] block mt-1">
-            {hotels.filter(h => h.category === 'Resort & Spa').length}
-          </span>
-        </div>
-
-        <div 
-          onClick={() => setCategoryFilter('Overwater Villa')} 
-          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-            categoryFilter === 'Overwater Villa' 
-              ? 'bg-indigo-500/15 border-indigo-500 text-indigo-500 shadow-sm' 
-              : 'bg-[var(--bg-card)] border-[var(--border-light)] text-[var(--text-secondary)] hover:border-indigo-500/40'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span>Overwater Villas</span>
-            <MapPin className="w-4 h-4 text-indigo-500" />
-          </div>
-          <span className="text-xl font-extrabold text-[var(--text-primary)] block mt-1">
-            {hotels.filter(h => h.category === 'Overwater Villa').length}
-          </span>
-        </div>
       </div>
 
-      {/* Search Bar & Category Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <input 
-            type="text" 
-            placeholder="Search hotel name, destination or category..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] text-xs font-semibold text-[var(--text-primary)] outline-none focus:border-amber-500 transition-colors shadow-xs"
-          />
-          <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-3" />
+      {/* Search Bar & Category Filter Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
+          <div className="relative w-full sm:w-80">
+            <input 
+              type="text" 
+              placeholder="Search hotel name, partner, destination..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] text-xs font-semibold text-[var(--text-primary)] outline-none focus:border-amber-500 transition-colors shadow-xs"
+            />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-3" />
+          </div>
+
+          {/* Quick Category Filter Selector */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { id: 'all', label: 'All', Icon: Building2 },
+              { id: 'pending', label: 'Pending', Icon: Clock },
+              { id: 'approved', label: 'Approved', Icon: CheckCircle2 },
+              { id: 'featured', label: 'Featured', Icon: Sparkles },
+              { id: 'Resort & Spa', label: 'Resort & Spa', Icon: null },
+              { id: 'Overwater Villa', label: 'Overwater Villa', Icon: null }
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setCategoryFilter(f.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  categoryFilter === f.id
+                    ? 'bg-slate-900 text-amber-400 shadow-xs border border-slate-800'
+                    : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-secondary)] hover:border-amber-500/40'
+                }`}
+              >
+                {f.Icon && <f.Icon className="w-3.5 h-3.5" />}
+                <span>{f.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="text-xs font-bold text-[var(--text-muted)]">
-          Showing {filteredHotels.length} listed properties
+        <div className="text-xs font-bold text-[var(--text-muted)] whitespace-nowrap self-end md:self-auto">
+          Showing {filteredHotels.length} of {hotels.length} properties
         </div>
       </div>
 

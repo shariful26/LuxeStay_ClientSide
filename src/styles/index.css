@@ -68,6 +68,9 @@
   --shadow-md: 0 2px 8px 0 rgb(0 0 0 / 0.4);
   --shadow-lg: 0 6px 16px 0 rgb(0 0 0 / 0.45);
   --shadow-xl: 0 10px 24px 0 rgb(0 0 0 / 0.5);
+  --font-heading: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-luxury: 'Playfair Display', serif;
 }
 
 * {
@@ -77,7 +80,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -85,17 +88,38 @@ body {
   overflow-x: hidden;
 }
 
-/* Luxury Headings & Gradient Texts */
+/* Luxury Headings & Editorial Typography (Envato / ThemeForest Bespoke Standard) */
 h1,
 h2,
-h3,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
 h4,
 h5,
 h6 {
-  font-weight: 800;
+  font-family: var(--font-body);
+  font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+}
+
+/* Editorial Serif & Sans Classes */
+.font-serif,
+.font-luxury,
+.hero-title,
+.luxury-heading,
+.hotel-title,
+.luxury-serif {
+  font-family: var(--font-heading);
+}
+
+.font-sans,
+.portal-heading {
+  font-family: var(--font-body);
 }
 
 .text-gradient-gold {

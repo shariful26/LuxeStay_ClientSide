@@ -98,7 +98,7 @@ export const Navbar = () => {
       base = [
         {
           id: 'n_cust_1',
-          title: 'Booking Confirmed 🎉',
+          title: 'Booking Confirmed',
           desc: 'Your stay at Grand Azure Resort is confirmed!',
           time: '15 mins ago',
           icon: Calendar,
@@ -129,7 +129,7 @@ export const Navbar = () => {
       base = [
         {
           id: 'n_gst_1',
-          title: 'Welcome to LuxeStay ✨',
+          title: 'Welcome to LuxeStay',
           desc: 'Enjoy up to 25% off on your first luxury sanctuary booking',
           time: 'Just now',
           icon: Gift,

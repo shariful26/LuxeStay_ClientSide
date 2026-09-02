@@ -178,11 +178,32 @@ export const RoomManagement = () => {
       .catch(() => setLoading(false));
   };
 
-  const filteredRooms = rooms.filter(r => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+
+  const safeRooms = Array.isArray(rooms) ? rooms : [];
+  let filteredRooms = safeRooms.filter(r => {
     const matchesSearch = r.name?.toLowerCase().includes(searchQuery.toLowerCase()) || r.type?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'All Type' || r.type?.toLowerCase() === typeFilter.toLowerCase();
     return matchesSearch && matchesType;
   });
+
+  if (sortBy === 'Price') {
+    filteredRooms.sort((a, b) => (a.price || 0) - (b.price || 0));
+  }
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy, typeFilter]);
+
+  const totalPages = Math.ceil(filteredRooms.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRooms = filteredRooms.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNum) => {
+    setCurrentPage(pageNum);
+  };
 
   // Dynamic gallery images setup for preview
   const roomGallery = selectedRoom ? [
@@ -254,7 +275,7 @@ export const RoomManagement = () => {
 
             {/* Room List Cards */}
             <div className="space-y-4">
-              {filteredRooms.map((room) => {
+              {currentRooms.map((room) => {
                 const isSelected = selectedRoom?.id === room.id;
                 return (
                   <div 
@@ -321,6 +342,47 @@ export const RoomManagement = () => {
                 </div>
               )}
             </div>
+
+            {/* Pagination Controls (Prev, 1, 2, 3, 4..., Next) */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/70 mt-4 text-xs font-bold text-slate-600">
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Showing <strong className="text-slate-700">{indexOfFirstItem + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastItem, filteredRooms.length)}</strong> of <strong className="text-slate-700">{filteredRooms.length}</strong> Rooms
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all text-xs font-bold"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                        currentPage === pageNum
+                          ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all text-xs font-bold"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
 

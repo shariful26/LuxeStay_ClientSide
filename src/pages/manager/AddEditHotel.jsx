@@ -222,9 +222,9 @@ export const AddEditHotel = () => {
                         onChange={(e) => setFormData({ ...formData, starRating: Number(e.target.value) })} 
                         className="w-full p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs font-bold outline-none cursor-pointer"
                       >
-                        <option value={5} className="bg-[var(--bg-card)]">⭐⭐⭐⭐⭐ 5-Star Ultra Luxury</option>
-                        <option value={4} className="bg-[var(--bg-card)]">⭐⭐⭐⭐ 4-Star Premium Hotel</option>
-                        <option value={3} className="bg-[var(--bg-card)]">⭐⭐⭐ 3-Star Comfort Hotel</option>
+                        <option value={5} className="bg-[var(--bg-card)]">5-Star Ultra Luxury Standard</option>
+                        <option value={4} className="bg-[var(--bg-card)]">4-Star Premium Hotel Standard</option>
+                        <option value={3} className="bg-[var(--bg-card)]">3-Star Comfort Hotel Standard</option>
                       </select>
                     </div>
                   </div>

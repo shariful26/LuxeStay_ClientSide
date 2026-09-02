@@ -55,13 +55,13 @@ export const RoomDetail = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <div className="h-96 rounded-2xl overflow-hidden shadow-lg">
-            <img src={room.images[0]} alt={room.name} className="w-full h-full object-cover" />
+            <img src={(room.images && room.images[0]) || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80'} alt={room.name} className="w-full h-full object-cover" />
           </div>
 
           <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] space-y-4">
             <h3 className="text-lg font-bold text-[var(--text-primary)]">Suite Features & Amenities</h3>
             <div className="grid grid-cols-2 gap-3 text-xs font-semibold text-[var(--text-secondary)]">
-              {room.amenities.map((item, idx) => (
+              {(room.amenities || []).map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-500" /> {item}
                 </div>

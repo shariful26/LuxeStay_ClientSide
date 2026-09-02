@@ -378,19 +378,19 @@ export const AdminDashboard = () => {
             </div>
 
             <div className="space-y-6">
-              {reviews.map(rev => (
+              {(Array.isArray(reviews) ? reviews : []).map(rev => (
                 <div key={rev.id} className="space-y-3 pb-4 border-b border-[var(--border-light)] last:border-0 last:pb-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
-                      <img src={rev.avatar} alt={rev.name} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" />
+                      <img src={rev.avatar || rev.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} alt={rev.name || rev.guestName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" />
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{rev.name}</h4>
-                        <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] block truncate">{rev.date}</span>
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{rev.name || rev.guestName}</h4>
+                        <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] block truncate">{rev.date || rev.createdAt?.substring(0, 10)}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center text-amber-400 flex-shrink-0">
-                      {[...Array(rev.rating)].map((_, i) => (
+                      {[...Array(Math.min(5, Math.max(1, Math.round(rev.rating || 5))))].map((_, i) => (
                         <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
                       ))}
                     </div>

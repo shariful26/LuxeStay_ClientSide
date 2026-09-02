@@ -76,47 +76,83 @@ export const ManagerConcierge = () => {
   };
 
   const handleStatusChange = (staffId, newStatus) => {
+    setStaff(prev => {
+      const updated = prev.map(s => s.id === staffId ? { ...s, status: newStatus } : s);
+      try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
     fetch(`/api/concierge/${staffId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
-    })
-      .then(res => res.json())
-      .then(() => fetchStaff());
+    }).catch(() => {});
   };
 
   const handleRequestStatusChange = (requestId, newStatus) => {
+    setRequests(prev => {
+      const updated = prev.map(r => r.id === requestId ? { ...r, status: newStatus } : r);
+      try { localStorage.setItem('luxestay_cache_concierge_requests', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
     fetch(`/api/concierge-requests/${requestId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
-    })
-      .then(res => res.json())
-      .then(() => fetchRequests());
+    }).catch(() => {});
   };
 
   // Staff Filters
-  const filteredStaff = staff.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(staffSearch.toLowerCase()) || s.id.toLowerCase().includes(staffSearch.toLowerCase());
+  const safeStaff = Array.isArray(staff) ? staff : [];
+  const filteredStaff = safeStaff.filter(s => {
+    const matchesSearch = s.name?.toLowerCase().includes(staffSearch.toLowerCase()) || s.id?.toLowerCase().includes(staffSearch.toLowerCase());
     const matchesPos = positionFilter === 'All' || s.position === positionFilter;
     const matchesStatus = statusFilter === 'All' || s.status === statusFilter;
     
     // Simple matches schedule
     let matchesSched = true;
     if (scheduleFilter !== 'All') {
-      if (scheduleFilter === 'Weekday') matchesSched = s.schedule.includes('Monday');
-      if (scheduleFilter === 'Weekend') matchesSched = s.schedule.includes('Saturday');
+      if (scheduleFilter === 'Weekday') matchesSched = s.schedule?.includes('Monday');
+      if (scheduleFilter === 'Weekend') matchesSched = s.schedule?.includes('Saturday');
     }
 
     return matchesSearch && matchesPos && matchesStatus && matchesSched;
   });
 
+  // Pagination for Staff
+  const [staffPage, setStaffPage] = useState(1);
+  const staffItemsPerPage = 5;
+
+  const totalStaffPages = Math.ceil(filteredStaff.length / staffItemsPerPage);
+  const indexOfLastStaff = staffPage * staffItemsPerPage;
+  const indexOfFirstStaff = indexOfLastStaff - staffItemsPerPage;
+  const currentStaff = filteredStaff.slice(indexOfFirstStaff, indexOfLastStaff);
+
+  useEffect(() => {
+    setStaffPage(1);
+  }, [positionFilter, statusFilter, scheduleFilter, staffSearch]);
+
   // Requests Filters
-  const filteredRequests = requests.filter(r => {
-    return r.guestName.toLowerCase().includes(requestSearch.toLowerCase()) || 
-      r.requestType.toLowerCase().includes(requestSearch.toLowerCase()) || 
-      r.roomNumber.toLowerCase().includes(requestSearch.toLowerCase());
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const filteredRequests = safeRequests.filter(r => {
+    return r.guestName?.toLowerCase().includes(requestSearch.toLowerCase()) || 
+      r.requestType?.toLowerCase().includes(requestSearch.toLowerCase()) || 
+      r.roomNumber?.toLowerCase().includes(requestSearch.toLowerCase());
   });
+
+  // Pagination for Requests
+  const [reqPage, setReqPage] = useState(1);
+  const reqItemsPerPage = 5;
+
+  const totalReqPages = Math.ceil(filteredRequests.length / reqItemsPerPage);
+  const indexOfLastReq = reqPage * reqItemsPerPage;
+  const indexOfFirstReq = indexOfLastReq - reqItemsPerPage;
+  const currentRequests = filteredRequests.slice(indexOfFirstReq, indexOfLastReq);
+
+  useEffect(() => {
+    setReqPage(1);
+  }, [requestSearch]);
 
   return (
     <PortalLayout role="manager" title="Concierge Desk Operations">
@@ -232,7 +268,7 @@ export const ManagerConcierge = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredStaff.map((s) => {
+                    {currentStaff.map((s) => {
                       const initials = s.name ? s.name.split(' ').map(n => n[0]).join('') : 'C';
                       return (
                         <tr key={s.id} className="hover:bg-slate-50/30">
@@ -297,6 +333,47 @@ export const ManagerConcierge = () => {
               </div>
             </div>
 
+            {/* Staff Pagination */}
+            {totalStaffPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs font-bold text-slate-600">
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Showing <strong className="text-slate-700">{indexOfFirstStaff + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastStaff, filteredStaff.length)}</strong> of <strong className="text-slate-700">{filteredStaff.length}</strong> Staff Members
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setStaffPage(prev => Math.max(1, prev - 1))}
+                    disabled={staffPage === 1}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: totalStaffPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setStaffPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                        staffPage === pageNum
+                          ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setStaffPage(prev => Math.min(totalStaffPages, prev + 1))}
+                    disabled={staffPage === totalStaffPages}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 
@@ -337,7 +414,7 @@ export const ManagerConcierge = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredRequests.map((r) => (
+                    {currentRequests.map((r) => (
                       <tr key={r.id} className="hover:bg-slate-50/30">
                         <td className="py-4 px-5 text-slate-900 font-extrabold">{r.id}</td>
                         <td className="py-4 px-4 text-slate-900 font-extrabold">{r.guestName}</td>
@@ -378,6 +455,47 @@ export const ManagerConcierge = () => {
                 </table>
               </div>
             </div>
+
+            {/* Requests Pagination */}
+            {totalReqPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs font-bold text-slate-600">
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Showing <strong className="text-slate-700">{indexOfFirstReq + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastReq, filteredRequests.length)}</strong> of <strong className="text-slate-700">{filteredRequests.length}</strong> Service Requests
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setReqPage(prev => Math.max(1, prev - 1))}
+                    disabled={reqPage === 1}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: totalReqPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setReqPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                        reqPage === pageNum
+                          ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setReqPage(prev => Math.min(totalReqPages, prev + 1))}
+                    disabled={reqPage === totalReqPages}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
         )}

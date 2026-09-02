@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { getInstantData, fetchInstantData } from '../../utils/instantCache';
 
@@ -11,6 +12,15 @@ export const BlogList = () => {
     fetchInstantData('/api/blogs', 'blogs', setBlogs);
   }, []);
 
+  const safeBlogs = Array.isArray(blogs) ? blogs : [];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const totalPages = Math.ceil(safeBlogs.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBlogs = safeBlogs.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
     <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
       <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -19,29 +29,72 @@ export const BlogList = () => {
         <p className="text-sm text-[var(--text-secondary)]">Insiders' guides to world-class resorts, hidden suites, and luxury culture.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogs.map(blog => (
-          <div key={blog.id} className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg space-y-4 flex flex-col justify-between p-6">
-            <div className="space-y-3">
-              <div className="relative h-48 rounded-2xl overflow-hidden">
-                <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
-                <span className="absolute top-3 left-3 badge badge-gold">{blog.category}</span>
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {currentBlogs.map(blog => (
+            <div key={blog.id} className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg space-y-4 flex flex-col justify-between p-6">
+              <div className="space-y-3">
+                <div className="relative h-48 rounded-2xl overflow-hidden">
+                  <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
+                  <span className="absolute top-3 left-3 badge badge-gold">{blog.category}</span>
+                </div>
+                <div className="flex items-center gap-3 text-[11px] font-semibold text-[var(--text-muted)]">
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {blog.date}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {blog.readTime}</span>
+                </div>
+                <Link to={`/blog/${blog.slug || blog.id}`}>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)] hover:text-amber-500 transition-colors">{blog.title}</h3>
+                </Link>
+                <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">{blog.summary}</p>
               </div>
-              <div className="flex items-center gap-3 text-[11px] font-semibold text-[var(--text-muted)]">
-                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {blog.date}</span>
-                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {blog.readTime}</span>
-              </div>
-              <Link to={`/blog/${blog.slug || blog.id}`}>
-                <h3 className="text-lg font-bold text-[var(--text-primary)] hover:text-amber-500 transition-colors">{blog.title}</h3>
-              </Link>
-              <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">{blog.summary}</p>
-            </div>
 
-            <Link to={`/blog/${blog.slug || blog.id}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline pt-3 border-t border-[var(--border-light)]">
-              <span>{t('viewSuite') || 'Read Full Article'}</span> <ArrowRight className="w-4 h-4" />
-            </Link>
+              <Link to={`/blog/${blog.slug || blog.id}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:underline pt-3 border-t border-[var(--border-light)]">
+                <span>{t('viewSuite') || 'Read Full Article'}</span> <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-[var(--border-light)] text-xs font-bold text-[var(--text-secondary)]">
+            <span>
+              Showing <strong className="text-[var(--text-primary)]">{indexOfFirstItem + 1}</strong>–<strong className="text-[var(--text-primary)]">{Math.min(indexOfLastItem, safeBlogs.length)}</strong> of <strong className="text-[var(--text-primary)]">{safeBlogs.length}</strong> Articles
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-amber-500 text-white shadow-xs scale-105'
+                      : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Next
+              </button>
+            </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

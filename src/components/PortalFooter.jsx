@@ -118,7 +118,7 @@ export const PortalFooter = ({ role = 'customer' }) => {
         </div>
 
         {/* 3. Right: Dark Glass Currency & Language Switchers + Gold Scroll Top */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           
           {/* Eye-catching Currency Selector */}
           <div className="relative">

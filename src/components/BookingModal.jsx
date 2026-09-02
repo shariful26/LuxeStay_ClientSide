@@ -892,7 +892,8 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
                         Stripe Credit / Debit Card Details
                       </label>
                       <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
-                        💳 Brand: <strong className="text-[var(--text-primary)]">{cardBrand}</strong>
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Brand: <strong className="text-[var(--text-primary)]">{cardBrand}</strong></span>
                       </span>
                     </div>
 
@@ -1106,8 +1107,9 @@ export const BookingModal = ({ isOpen, onClose, room, hotel }) => {
                           <option value="Citibank International">Citibank International</option>
                           <option value="Standard Chartered">Standard Chartered</option>
                         </select>
-                        <span className="text-[10px] text-emerald-500 block font-semibold">
-                          🛡️ Secure Bank Redirection via Razorpay 256-bit Portal
+                        <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-semibold">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Secure Bank Redirection via Razorpay 256-bit Portal</span>
                         </span>
                       </div>
                     )}

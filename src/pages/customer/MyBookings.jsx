@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Calendar, Clock, AlertCircle, Loader2, X, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
+import { QrCode, Calendar, Clock, AlertCircle, Loader2, X, ArrowRight, ShieldCheck, MapPin, Star, CreditCard, Check } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
+import { WriteReviewModal } from '../../components/WriteReviewModal';
 import { useAuth } from '../../context/AuthContext';
 import { useBooking } from '../../context/BookingContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -11,6 +12,8 @@ export const MyBookings = () => {
   const [bookings, setBookings] = useState(() => getInstantData('customer_bookings', []));
   const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [selectedExtendBooking, setSelectedExtendBooking] = useState(null);
+  const [selectedReviewBooking, setSelectedReviewBooking] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [extraNights, setExtraNights] = useState(1);
   const [extending, setExtending] = useState(false);
   const [extendErrorMsg, setExtendErrorMsg] = useState('');
@@ -116,6 +119,15 @@ export const MyBookings = () => {
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  const totalPages = Math.ceil(safeBookings.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = safeBookings.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
     <PortalLayout role="customer" title="My Reservations">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -123,7 +135,7 @@ export const MyBookings = () => {
           <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)]">My Reservations Ledger</h1>
           <p className="text-xs text-[var(--text-secondary)]">View, extend stay and manage your confirmed luxury stay vouchers</p>
         </div>
-        <span className="badge badge-gold self-start sm:self-auto">{bookings.length} Total Bookings</span>
+        <span className="badge badge-gold self-start sm:self-auto">{safeBookings.length} Total Bookings</span>
       </div>
 
       <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-lg overflow-hidden p-6 sm:p-8 space-y-6">
@@ -135,14 +147,14 @@ export const MyBookings = () => {
         </div>
 
         <div className="divide-y divide-[var(--border-light)]">
-          {bookings.length === 0 ? (
+          {safeBookings.length === 0 ? (
             <div className="py-12 text-center space-y-4">
               <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
               <h3 className="text-lg font-bold text-[var(--text-primary)]">No Reservations Found</h3>
               <p className="text-xs text-[var(--text-secondary)]">You don't have any confirmed bookings under your account yet.</p>
             </div>
           ) : (
-            bookings.map(bk => {
+            currentBookings.map(bk => {
               const hotel = hotels.find(h => h.id === bk.hotelId);
               const imageUrl = hotel?.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
               
@@ -197,7 +209,7 @@ export const MyBookings = () => {
                     </div>
                     <p className="text-[11px] text-[var(--text-muted)] font-bold flex items-center gap-1">
                       <span>• {bk.nights || 1} Nights Stay</span>
-                      {hotel && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded ml-1">✓ Verified</span>}
+                      {hotel && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded ml-1 flex items-center gap-0.5"><Check className="w-3 h-3" /> Verified</span>}
                     </p>
                   </div>
 
@@ -206,47 +218,100 @@ export const MyBookings = () => {
                     <div className="text-base font-black text-amber-500">
                       {formatPrice(bk.total)}
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wide">
-                      💳 {bk.paymentMethod?.split(' ')[0] || 'Credit Card'}
+                    <div className="text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wide flex items-center gap-1">
+                      <CreditCard className="w-3 h-3 text-amber-500" />
+                      <span>{bk.paymentMethod?.split(' ')[0] || 'Credit Card'}</span>
                     </div>
                   </div>
 
                   {/* Column 4: Actions */}
-                  <div className="col-span-1 lg:col-span-2 flex lg:justify-end items-center gap-2">
+                  <div className="col-span-1 lg:col-span-2 flex flex-wrap lg:justify-end items-center gap-1.5">
                     <button 
                       onClick={() => {
                         setActiveVoucher(bk);
                         setIsVoucherModalOpen(true);
                       }}
-                      className="btn btn-outline text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer h-9 shadow-xs"
+                      className="btn btn-primary bg-amber-500 hover:bg-amber-600 text-xs px-3 py-1.5 font-black flex items-center gap-1 shadow-md shadow-amber-500/20 cursor-pointer"
                       title="View Stay Voucher"
                     >
-                      <QrCode className="w-3.5 h-3.5 text-amber-500" />
+                      <QrCode className="w-3.5 h-3.5" />
                       <span>Voucher</span>
                     </button>
 
+                    <button
+                      onClick={() => {
+                        setSelectedReviewBooking(bk);
+                        setIsReviewModalOpen(true);
+                      }}
+                      className="btn bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 text-amber-500 text-xs px-2.5 py-1.5 font-bold flex items-center gap-1 border border-amber-500/30 transition-all cursor-pointer"
+                      title="Rate & Review Stay"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-amber-500" />
+                      <span>Review</span>
+                    </button>
+
                     {bk.status !== 'Cancelled' && bk.status !== 'Checked-Out' && (
-                      <button
+                      <button 
                         onClick={() => {
                           setSelectedExtendBooking(bk);
                           setExtraNights(1);
                           setExtendErrorMsg('');
                           setExtendSuccessMsg('');
                         }}
-                        className="btn btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1.5 cursor-pointer h-9 shadow-sm"
-                        title="Extend Stay Duration"
+                        className="btn bg-[var(--bg-tertiary)] hover:bg-[var(--border-light)] text-[var(--text-primary)] text-xs px-2.5 py-1.5 font-bold flex items-center gap-1 border border-[var(--border-light)] cursor-pointer"
+                        title="Extend Stay"
                       >
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3.5 h-3.5 text-amber-500" />
                         <span>Extend</span>
                       </button>
                     )}
                   </div>
-
                 </div>
               );
             })
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-[var(--border-light)] text-xs font-bold text-[var(--text-secondary)]">
+            <span>
+              Showing <strong className="text-[var(--text-primary)]">{indexOfFirstItem + 1}</strong>–<strong className="text-[var(--text-primary)]">{Math.min(indexOfLastItem, safeBookings.length)}</strong> of <strong className="text-[var(--text-primary)]">{safeBookings.length}</strong> Reservations
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-amber-500 text-white shadow-xs scale-105'
+                      : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* EXTEND STAY MODAL DIALOG */}
@@ -313,8 +378,9 @@ export const MyBookings = () => {
               </div>
               <div className="flex justify-between items-center text-[11px] text-[var(--text-secondary)] font-medium pt-1.5 border-t border-amber-500/20">
                 <span>Payment Source:</span>
-                <span className="font-semibold text-amber-500 flex items-center gap-1">
-                  💳 {selectedExtendBooking.paymentMethod || 'Stripe / Saved Express Card'}
+                <span className="font-semibold text-amber-500 flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>{selectedExtendBooking.paymentMethod || 'Stripe / Saved Express Card'}</span>
                 </span>
               </div>
             </div>
@@ -332,8 +398,9 @@ export const MyBookings = () => {
 
             {/* Success Message */}
             {extendSuccessMsg && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold text-center animate-fade-in">
-                ✓ {extendSuccessMsg}
+              <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-fade-in">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>{extendSuccessMsg}</span>
               </div>
             )}
 
@@ -363,6 +430,17 @@ export const MyBookings = () => {
           </div>
         </div>
       )}
+
+      {/* Verified Stay Review Modal */}
+      <WriteReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => {
+          setIsReviewModalOpen(false);
+          setSelectedReviewBooking(null);
+        }}
+        booking={selectedReviewBooking}
+        hotel={hotels.find(h => h.id === selectedReviewBooking?.hotelId)}
+      />
 
     </PortalLayout>
   );

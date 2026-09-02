@@ -125,6 +125,7 @@ function AppContent() {
           <Route path="/manager/inventory" element={<ManagerInventory />} />
           <Route path="/manager/calendar" element={<ManagerCalendar />} />
           <Route path="/manager/concierge" element={<ManagerConcierge />} />
+          <Route path="/manager/wishlist" element={<WishlistPage />} />
           <Route path="/manager/settings" element={<CustomerProfile role="manager" mode="profile" />} />
           <Route path="/manager/password" element={<CustomerProfile role="manager" mode="password" />} />
 
@@ -142,6 +143,7 @@ function AppContent() {
           <Route path="/partner/inventory" element={<ManagerInventory />} />
           <Route path="/partner/calendar" element={<ManagerCalendar />} />
           <Route path="/partner/concierge" element={<ManagerConcierge />} />
+          <Route path="/partner/wishlist" element={<WishlistPage />} />
           <Route path="/partner/settings" element={<CustomerProfile role="manager" mode="profile" />} />
           <Route path="/partner/password" element={<CustomerProfile role="manager" mode="password" />} />
 
@@ -154,6 +156,7 @@ function AppContent() {
           <Route path="/admin/users" element={<UsersManagement />} />
           <Route path="/admin/payouts" element={<AdminPayouts />} />
           <Route path="/admin/payment-settings" element={<AdminPaymentSettings />} />
+          <Route path="/admin/wishlist" element={<WishlistPage />} />
           <Route path="/admin/settings" element={<CustomerProfile role="admin" mode="profile" />} />
           <Route path="/admin/password" element={<CustomerProfile role="admin" mode="password" />} />
           <Route path="*" element={<NotFound />} />

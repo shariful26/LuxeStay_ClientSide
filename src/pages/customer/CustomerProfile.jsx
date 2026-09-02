@@ -145,8 +145,9 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
               </div>
 
               {uploadNotice && (
-                <span className="text-[11px] font-extrabold text-amber-500 block animate-fade-in">
-                  ✨ {uploadNotice}
+                <span className="text-[11px] font-extrabold text-amber-500 flex items-center gap-1 animate-fade-in">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{uploadNotice}</span>
                 </span>
               )}
             </div>

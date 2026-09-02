@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Users, SlidersHorizontal, Bed, ChevronDown, Check } from 'lucide-react';
+import { Search, MapPin, Calendar, Users, SlidersHorizontal, Bed, ChevronDown, Check, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const DESTINATION_OPTIONS = [
@@ -166,8 +166,9 @@ export const SearchBar = ({ onFilterClick, defaultDestination = '', defaultCateg
       <div className="lg:col-span-4 flex items-center gap-2.5 p-3 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] hover:border-amber-500/60 transition-all shadow-xs h-full min-w-0 relative">
         
         {/* Small Corner Stay Night Badge */}
-        <span className="absolute -top-2 right-3 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-md pointer-events-none border border-amber-300 z-10 flex items-center gap-0.5">
-          ✨ {nightsCount} {nightsCount === 1 ? t('perNight') : `${nightsCount} ${t('perNight')}s`}
+        <span className="absolute -top-2 right-3 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-md pointer-events-none border border-amber-300 z-10 flex items-center gap-1">
+          <Sparkles className="w-2.5 h-2.5" />
+          <span>{nightsCount} {nightsCount === 1 ? t('perNight') : `${nightsCount} ${t('perNight')}s`}</span>
         </span>
 
         <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">

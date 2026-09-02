@@ -250,15 +250,19 @@ export const Home = () => {
     setCurrentSlideIndex((currentSlideIndex - 1 + CAROUSEL_SLIDES.length) % CAROUSEL_SLIDES.length);
   };
 
+  const safeHotels = Array.isArray(hotels) ? hotels : [];
+  const safeDestinations = Array.isArray(destinations) ? destinations : [];
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+
   const filteredHotels = activeCategory
-    ? hotels.filter(h => h.category === activeCategory)
-    : hotels;
+    ? safeHotels.filter(h => h && h.category === activeCategory)
+    : safeHotels;
 
   const filteredGalleryPhotos = galleryCategory === 'ALL PHOTOS'
     ? GALLERY_PHOTOS
-    : GALLERY_PHOTOS.filter(p => p.category === galleryCategory);
+    : GALLERY_PHOTOS.filter(p => p && p.category === galleryCategory);
 
-  const activeSlide = CAROUSEL_SLIDES[currentSlideIndex];
+  const activeSlide = (CAROUSEL_SLIDES && CAROUSEL_SLIDES[currentSlideIndex]) || CAROUSEL_SLIDES[0];
 
   const categoryTabs = [
     { label: t('allSuites'), category: '' },
@@ -631,7 +635,7 @@ export const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {destinations.map(dest => (
+          {safeDestinations.map(dest => (
             <Link
               key={dest.id}
               to={`/destinations/${dest.slug}`}

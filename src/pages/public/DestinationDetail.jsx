@@ -42,7 +42,7 @@ export const DestinationDetail = () => {
         <h2 className="text-2xl font-bold text-[var(--text-primary)]">Luxury Resorts & Suites in {dest.name}</h2>
         {dest.hotels && dest.hotels.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {dest.hotels.map(h => (
+            {(dest.hotels || []).map(h => (
               <HotelCard key={h.id} hotel={h} />
             ))}
           </div>

@@ -13,7 +13,7 @@ export const Footer = () => {
   if (isPortal) return null;
 
   return (
-    <footer className="bg-slate-950 text-slate-400 pt-16 pb-12 border-t border-slate-800">
+    <footer className="bg-slate-950 text-slate-400 pt-16 pb-16 sm:pb-12 border-t border-slate-800">
       <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
         
         {/* Brand & Intro */}
@@ -81,37 +81,49 @@ export const Footer = () => {
 
       </div>
 
-      <div className="container mt-12 pt-6 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-        <p>{t('allRightsReserved')}</p>
-        <div className="flex items-center gap-6 mt-4 md:mt-0 font-semibold text-slate-400">
+      <div className="container mt-12 pt-6 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <p className="text-center md:text-left text-[11px] sm:text-xs text-slate-500">
+          {t('allRightsReserved')}
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 sm:gap-5 font-semibold text-slate-400 w-full md:w-auto">
           {/* Footer Currency Selector */}
-          <select 
-            value={currency} 
-            onChange={(e) => setCurrency(e.target.value)}
-            className="bg-transparent text-slate-400 hover:text-white cursor-pointer outline-none transition-colors py-1"
-          >
-            {Object.keys(currencies).map(code => (
-              <option key={code} value={code} className="bg-slate-900 text-slate-200">
-                {code} ({currencies[code].symbol})
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select 
+              value={currency} 
+              onChange={(e) => setCurrency(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 text-amber-400 font-extrabold text-xs cursor-pointer outline-none transition-all shadow-xs"
+              aria-label="Select Currency"
+            >
+              {Object.keys(currencies).map(code => (
+                <option key={code} value={code} className="bg-slate-950 text-slate-200">
+                  {code} ({currencies[code].symbol})
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Footer Language Selector */}
-          <select 
-            value={language} 
-            onChange={(e) => setLanguage(e.target.value)}
-            className="bg-transparent text-slate-400 hover:text-white cursor-pointer outline-none transition-colors py-1"
-          >
-            {Object.values(languages).map((lang) => (
-              <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200">
-                {lang.flag} {lang.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select 
+              value={language} 
+              onChange={(e) => setLanguage(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 text-slate-200 font-bold text-xs cursor-pointer outline-none transition-all shadow-xs"
+              aria-label="Select Language"
+            >
+              {Object.values(languages).map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-slate-950 text-slate-200">
+                  {lang.label || lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Link to="/terms" className="hover:underline hover:text-white">{t('terms')}</Link>
-          <Link to="/privacy" className="hover:underline hover:text-white">{t('privacyPolicy')}</Link>
+          <div className="flex items-center gap-3 text-xs pt-1 sm:pt-0">
+            <Link to="/terms" className="hover:underline hover:text-amber-400 transition-colors">{t('terms')}</Link>
+            <span className="text-slate-700">•</span>
+            <Link to="/privacy" className="hover:underline hover:text-amber-400 transition-colors">{t('privacyPolicy')}</Link>
+          </div>
         </div>
       </div>
     </footer>

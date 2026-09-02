@@ -455,7 +455,7 @@ export const ManagerDashboard = () => {
 
             {/* Task Checklist Items */}
             <div className="space-y-3">
-              {bookings.length > 0 ? (
+              {Array.isArray(bookings) && bookings.length > 0 ? (
                 bookings.slice(0, 3).map((b, idx) => {
                   const colors = [
                     { bg: 'bg-[#dcfce7]', border: 'border-emerald-200/60', text: 'text-emerald-800' },

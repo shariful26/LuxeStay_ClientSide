@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Phone, MapPin, Send, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const ContactUs = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e) => {
@@ -12,10 +14,18 @@ export const ContactUs = () => {
   };
 
   return (
-    <div className="container pt-16 pb-12 space-y-10 animate-fade-in">
+    <div className="container pt-16 pb-12 space-y-10 animate-fade-in font-sans">
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer shadow-xs hover:border-amber-500/40"
+      >
+        <ArrowLeft className="w-4 h-4 text-amber-500" />
+        <span>Back to Previous Page</span>
+      </button>
+
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('contact')}</span>
-        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">24/7 {t('concierge')}</h1>
+        <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">{t('concierge')}</h1>
         <p className="text-sm text-[var(--text-secondary)]">{t('conciergeSub')}</p>
       </div>
 

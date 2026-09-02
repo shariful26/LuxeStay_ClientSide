@@ -111,11 +111,25 @@ export const ManagerInventory = () => {
       });
   };
 
-  const filteredInventory = inventory.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const safeInventory = Array.isArray(inventory) ? inventory : [];
+  const filteredInventory = safeInventory.filter(item => {
+    const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase()) || item.category?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'All' || item.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  // Inventory Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentInventory = filteredInventory.slice(indexOfFirstItem, indexOfLastItem);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter]);
 
   return (
     <PortalLayout role="manager" title="Supply Inventory Manager">
@@ -177,7 +191,7 @@ export const ManagerInventory = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredInventory.map((item) => {
+                {currentInventory.map((item) => {
                   const avail = item.availability || 'Available';
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/30">
@@ -241,6 +255,47 @@ export const ManagerInventory = () => {
             </table>
           </div>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs font-bold text-slate-600">
+            <span className="text-[11px] text-slate-400 font-semibold">
+              Showing <strong className="text-slate-700">{indexOfFirstItem + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastItem, filteredInventory.length)}</strong> of <strong className="text-slate-700">{filteredInventory.length}</strong> Items
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 

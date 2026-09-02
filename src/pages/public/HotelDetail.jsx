@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Star, MapPin, Check, ShieldCheck, Heart, Sparkles, Phone, Mail, Building2, X, ChevronLeft, ChevronRight, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Star, MapPin, Check, ShieldCheck, Heart, Sparkles, Phone, Mail, Building2, X, ChevronLeft, ChevronRight, Image as ImageIcon, MessageSquare, ThumbsUp, Award, Quote } from 'lucide-react';
 import { RoomCard } from '../../components/RoomCard';
 import { BookingModal } from '../../components/BookingModal';
+import { WriteReviewModal } from '../../components/WriteReviewModal';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -33,6 +34,17 @@ export const HotelDetail = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactMessage, setContactMessage] = useState('');
   const [contactSuccess, setContactSuccess] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const fetchHotelReviews = () => {
+    fetch(`/api/reviews?hotelId=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setReviews(data);
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetchInstantData(`/api/hotels/${id}`, `hotel_${id}`, (data) => {
@@ -40,6 +52,7 @@ export const HotelDetail = () => {
         setHotel(data);
       }
     });
+    fetchHotelReviews();
   }, [id]);
 
   if (!hotel) return <div className="py-20 text-center text-slate-500 font-bold animate-pulse">Loading verified property details...</div>;
@@ -152,7 +165,7 @@ export const HotelDetail = () => {
           <div className="space-y-4 pt-6 border-t border-[var(--border-light)]">
             <h3 className="text-lg font-bold text-[var(--text-primary)]">Signature Amenities & Inclusions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {hotel.amenities.map((item, idx) => (
+              {(hotel.amenities || []).map((item, idx) => (
                 <div key={idx} className="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] text-xs font-bold text-[var(--text-primary)] flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-500" />
                   <span>{item}</span>
@@ -165,11 +178,11 @@ export const HotelDetail = () => {
           <div className="space-y-6 pt-8 border-t border-[var(--border-light)]">
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-extrabold text-[var(--text-primary)]">Select Room / Suite</h3>
-              <span className="text-xs font-semibold text-[var(--text-muted)]">{hotel.rooms?.length || 0} Suites Available</span>
+              <span className="text-xs font-semibold text-[var(--text-muted)]">{(hotel.rooms || []).length} Suites Available</span>
             </div>
 
             <div className="space-y-6">
-              {hotel.rooms?.map(room => (
+              {(hotel.rooms || []).map(room => (
                 <RoomCard 
                   key={room.id} 
                   room={room} 
@@ -183,6 +196,142 @@ export const HotelDetail = () => {
                   }}
                 />
               ))}
+            </div>
+          </div>
+
+          {/* 4. Verified Guest Reviews & Ratings Section */}
+          <div className="space-y-6 pt-10 border-t border-[var(--border-light)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-extrabold text-[var(--text-primary)]">Verified Guest Reviews</h3>
+                  <span className="badge badge-gold font-extrabold text-xs">★ {hotel.rating || 4.9}</span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] font-medium">
+                  Based on {reviews.length > 0 ? reviews.length : (hotel.reviews || 128)} verified luxury traveler stays
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!user) {
+                    navigate('/login', { state: { from: location.pathname + location.search } });
+                    return;
+                  }
+                  setIsReviewModalOpen(true);
+                }}
+                className="btn btn-primary text-xs py-2.5 px-5 flex items-center gap-2 shadow-lg shadow-amber-500/25 font-black hover:scale-105 transition-all cursor-pointer self-start sm:self-auto"
+              >
+                <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                <span>Write a Review</span>
+              </button>
+            </div>
+
+            {/* Score Breakdown Overview */}
+            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-[var(--text-muted)] block">Cleanliness</span>
+                <span className="text-base font-black text-emerald-500">4.9 / 5.0</span>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full w-[98%]"></div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-[var(--text-muted)] block">Comfort</span>
+                <span className="text-base font-black text-amber-500">5.0 / 5.0</span>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="bg-amber-500 h-full rounded-full w-[100%]"></div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-[var(--text-muted)] block">Service & Butler</span>
+                <span className="text-base font-black text-indigo-500">4.9 / 5.0</span>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-full rounded-full w-[98%]"></div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-[var(--text-muted)] block">Facilities & Spa</span>
+                <span className="text-base font-black text-sky-500">4.8 / 5.0</span>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="bg-sky-500 h-full rounded-full w-[96%]"></div>
+                </div>
+              </div>
+
+              <div className="space-y-1 col-span-2 sm:col-span-1">
+                <span className="text-[11px] font-bold text-[var(--text-muted)] block">Gastronomy</span>
+                <span className="text-base font-black text-amber-500">4.9 / 5.0</span>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="bg-amber-500 h-full rounded-full w-[98%]"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Reviews Cards List */}
+            <div className="space-y-4">
+              {reviews.map((rev) => (
+                <div key={rev.id} className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={rev.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'} 
+                        alt={rev.guestName} 
+                        className="w-10 h-10 rounded-2xl object-cover border border-amber-500/20 shadow-xs"
+                      />
+                      <div>
+                        <span className="text-sm font-black text-[var(--text-primary)] block leading-tight">{rev.guestName}</span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+                          <span>{rev.guestCountry || 'Verified Stay'}</span>
+                          <span>•</span>
+                          <span>{rev.date || 'Recent Stay'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {Array.from({ length: Number(rev.rating) || 5 }).map((_, idx) => (
+                        <Star key={idx} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+                  </div>
+
+                  <h4 className="text-sm font-extrabold text-[var(--text-primary)] pt-1">{rev.title}</h4>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{rev.comment}</p>
+
+                  {/* Partner / Manager Reply if available */}
+                  {(rev.reply || rev.partnerReply) && (
+                    <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs space-y-1 mt-2">
+                      <span className="text-[10px] font-black uppercase text-amber-600 block">Response from Property Manager:</span>
+                      <p className="text-slate-600 dark:text-slate-300 font-medium italic">"{rev.reply || rev.partnerReply}"</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {reviews.length === 0 && (
+                <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] text-center space-y-3">
+                  <Award className="w-10 h-10 text-amber-500 mx-auto" />
+                  <h4 className="text-sm font-bold text-[var(--text-primary)]">Be the First to Review this Luxury Property</h4>
+                  <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto">
+                    Share your experience to help future travelers discover this extraordinary sanctuary.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        navigate('/login', { state: { from: location.pathname + location.search } });
+                        return;
+                      }
+                      setIsReviewModalOpen(true);
+                    }}
+                    className="btn btn-primary text-xs py-2 px-5 font-black"
+                  >
+                    Write First Review
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -444,6 +593,16 @@ export const HotelDetail = () => {
           </div>
         </div>
       )}
+
+      {/* Write Review Modal */}
+      <WriteReviewModal 
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        hotel={hotel}
+        onReviewSubmitted={(newRev) => {
+          setReviews(prev => [newRev, ...prev]);
+        }}
+      />
 
     </div>
   );

@@ -46,6 +46,15 @@ export const AdminPayouts = () => {
   const totalPaidOut = payouts.filter(p => p.status === 'Completed').reduce((sum, p) => sum + p.amount, 0);
   const totalPendingPayouts = payouts.filter(p => p.status === 'Pending').reduce((sum, p) => sum + p.amount, 0);
 
+  const safePayouts = Array.isArray(payouts) ? payouts : [];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(safePayouts.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayouts = safePayouts.slice(indexOfFirstItem, indexOfLastItem);
+
   const renderStatusBadge = (status) => {
     switch (status) {
       case 'Completed':
@@ -130,13 +139,13 @@ export const AdminPayouts = () => {
       </div>
 
       {/* Payout Requests Data Table */}
-      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg space-y-4">
-        <div className="p-6 border-b border-[var(--border-light)] flex items-center justify-between">
+      <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-lg space-y-4 p-6">
+        <div className="flex items-center justify-between pb-4 border-b border-[var(--border-light)]">
           <div>
             <h3 className="text-base font-extrabold text-[var(--text-primary)]">Partner Cashout Requests Ledger</h3>
             <p className="text-xs text-[var(--text-secondary)]">Review banking details and confirm payout transfers</p>
           </div>
-          <span className="badge badge-navy">{payouts.length} Requests</span>
+          <span className="badge badge-navy">{safePayouts.length} Requests</span>
         </div>
 
         <div className="table-responsive">
@@ -153,7 +162,7 @@ export const AdminPayouts = () => {
               </tr>
             </thead>
             <tbody>
-              {payouts.map(po => (
+              {currentPayouts.map(po => (
                 <tr key={po.id}>
                   <td className="font-mono font-bold text-amber-500">{po.id}</td>
                   <td className="font-bold text-[var(--text-primary)]">{po.partnerName}</td>
@@ -189,9 +198,58 @@ export const AdminPayouts = () => {
                   </td>
                 </tr>
               ))}
+
+              {safePayouts.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="py-12 text-center text-xs text-[var(--text-muted)]">
+                    No partner cashout requests found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[var(--border-light)] text-xs font-bold text-[var(--text-secondary)]">
+            <span>
+              Showing <strong className="text-[var(--text-primary)]">{indexOfFirstItem + 1}</strong>–<strong className="text-[var(--text-primary)]">{Math.min(indexOfLastItem, safePayouts.length)}</strong> of <strong className="text-[var(--text-primary)]">{safePayouts.length}</strong> Payout Requests
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-amber-500 text-white shadow-xs scale-105'
+                      : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </PortalLayout>
   );

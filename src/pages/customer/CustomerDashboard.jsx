@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Calendar, Heart, QrCode, CreditCard, Award 
+  Calendar, Heart, QrCode, CreditCard, Award, ChevronDown, ChevronUp 
 } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,7 @@ export const CustomerDashboard = () => {
   const { activeVoucher, setActiveVoucher, setIsVoucherModalOpen } = useBooking();
   const { formatPrice } = useCurrency();
   const [bookings, setBookings] = useState(() => getInstantData('customer_bookings', []));
+  const [showAllVouchers, setShowAllVouchers] = useState(false);
 
   useEffect(() => {
     fetch('/api/bookings')
@@ -128,38 +129,73 @@ export const CustomerDashboard = () => {
           <Link to="/customer/bookings" className="text-xs font-bold text-amber-500 hover:underline">View All</Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          {bookings.map(bk => (
-            <div key={bk.id} className="p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-md space-y-4 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="badge badge-emerald">{bk.status}</span>
-                  <span className="font-mono text-xs font-bold text-amber-500">{bk.id}</span>
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">{bk.hotelName}</h3>
-                <p className="text-xs font-semibold text-[var(--text-secondary)]">Suite: {bk.roomName}</p>
-                
-                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 p-3 rounded-xl bg-[var(--bg-tertiary)] text-[11px] font-semibold text-[var(--text-secondary)]">
-                  <div>Check-In: <span className="text-[var(--text-primary)] font-bold">{bk.checkIn}</span></div>
-                  <div>Check-Out: <span className="text-[var(--text-primary)] font-bold">{bk.checkOut}</span></div>
-                </div>
+        {(() => {
+          const safeBookings = Array.isArray(bookings) ? bookings : [];
+          const visibleBookings = showAllVouchers ? safeBookings : safeBookings.slice(0, 4);
+
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {visibleBookings.map(bk => (
+                  <div key={bk.id} className="p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-md space-y-4 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="badge badge-emerald">{bk.status}</span>
+                        <span className="font-mono text-xs font-bold text-amber-500">{bk.id}</span>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">{bk.hotelName}</h3>
+                      <p className="text-xs font-semibold text-[var(--text-secondary)]">Suite: {bk.roomName}</p>
+                      
+                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 p-3 rounded-xl bg-[var(--bg-tertiary)] text-[11px] font-semibold text-[var(--text-secondary)]">
+                        <div>Check-In: <span className="text-[var(--text-primary)] font-bold">{bk.checkIn}</span></div>
+                        <div>Check-Out: <span className="text-[var(--text-primary)] font-bold">{bk.checkOut}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[var(--border-light)] flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-extrabold text-[var(--text-primary)]">{formatPrice(bk.total)}</span>
+                      <button 
+                        onClick={() => {
+                          setActiveVoucher(bk);
+                          setIsVoucherModalOpen(true);
+                        }}
+                        className="btn btn-outline text-xs py-2 px-3 flex items-center gap-1.5"
+                      >
+                        <QrCode className="w-4 h-4 text-amber-500" /> Printable Voucher
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {safeBookings.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-xs text-[var(--text-muted)]">
+                    No active bookings found.
+                  </div>
+                )}
               </div>
 
-              <div className="pt-3 border-t border-[var(--border-light)] flex flex-wrap items-center justify-between gap-3">
-                <span className="text-sm font-extrabold text-[var(--text-primary)]">{formatPrice(bk.total)}</span>
-                <button 
-                  onClick={() => {
-                    setActiveVoucher(bk);
-                    setIsVoucherModalOpen(true);
-                  }}
-                  className="btn btn-outline text-xs py-2 px-3 flex items-center gap-1.5"
-                >
-                  <QrCode className="w-4 h-4 text-amber-500" /> Printable Voucher
-                </button>
-              </div>
+              {/* See More Vouchers Button */}
+              {safeBookings.length > 4 && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => setShowAllVouchers(prev => !prev)}
+                    className="btn btn-outline text-xs px-6 py-2.5 rounded-full flex items-center gap-2 border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-xs font-bold cursor-pointer hover:scale-105"
+                  >
+                    {showAllVouchers ? (
+                      <>
+                        <ChevronUp className="w-4 h-4" /> Show Less Vouchers
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4" /> See More Vouchers ({safeBookings.length - 4} More)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })()}
       </div>
     </PortalLayout>
   );

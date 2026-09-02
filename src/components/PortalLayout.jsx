@@ -213,7 +213,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
               <span>Home</span>
             </Link>
 
-            <h1 className="text-base sm:text-xl font-extrabold text-[var(--text-primary)] truncate max-w-[140px] xs:max-w-[220px] sm:max-w-none">
+            <h1 className="font-sans text-base sm:text-xl font-extrabold text-[var(--text-primary)] truncate max-w-[140px] xs:max-w-[220px] sm:max-w-none">
               {title === 'Partner Portal' || title === 'Manager Portal' ? 'Hotel Manager Hub' : title}
             </h1>
           </div>
@@ -349,7 +349,11 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
               </div>
 
               {/* Wishlist Link (Available on all dashboards) */}
-              <Link to="/customer/wishlist" className="hidden md:flex p-2 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] relative" title="My Wishlist">
+              <Link 
+                to={role === 'manager' || user?.role === 'manager' ? '/manager/wishlist' : role === 'admin' || user?.role === 'admin' ? '/admin/wishlist' : '/customer/wishlist'} 
+                className="hidden md:flex p-2 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] hover:border-amber-500 text-[var(--text-primary)] transition-colors relative cursor-pointer" 
+                title="My Wishlist"
+              >
                 <Heart className="w-4 h-4 text-rose-500" />
                 {safeWishlist.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-extrabold flex items-center justify-center">

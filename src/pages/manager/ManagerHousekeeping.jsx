@@ -44,9 +44,15 @@ export const ManagerHousekeeping = () => {
   }, []);
 
   const handleStatusChange = (roomId, newStatus) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
+    // 1. Optimistic instant local update (0ms latency)
+    setRooms(prev => {
+      const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingStatus: newStatus } : r);
+      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
 
+    // 2. Persist to MongoDB Atlas & JSON
+    const room = rooms.find(r => r.id === roomId) || {};
     fetch(`/api/rooms/${roomId}/housekeeping`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -58,14 +64,27 @@ export const ManagerHousekeeping = () => {
     })
       .then(res => res.json())
       .then(updated => {
-        setRooms(prev => prev.map(r => r.id === roomId ? updated : r));
-      });
+        if (updated && updated.id) {
+          setRooms(prev => {
+            const list = prev.map(r => r.id === roomId ? { ...r, ...updated } : r);
+            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); } catch (e) {}
+            return list;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handlePriorityChange = (roomId, newPriority) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
+    // 1. Optimistic instant local update (0ms latency)
+    setRooms(prev => {
+      const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingPriority: newPriority } : r);
+      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
 
+    // 2. Persist to MongoDB Atlas & JSON
+    const room = rooms.find(r => r.id === roomId) || {};
     fetch(`/api/rooms/${roomId}/housekeeping`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -77,32 +96,50 @@ export const ManagerHousekeeping = () => {
     })
       .then(res => res.json())
       .then(updated => {
-        setRooms(prev => prev.map(r => r.id === roomId ? updated : r));
-      });
+        if (updated && updated.id) {
+          setRooms(prev => {
+            const list = prev.map(r => r.id === roomId ? { ...r, ...updated } : r);
+            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); } catch (e) {}
+            return list;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleNotesSave = (roomId) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
+    // 1. Optimistic instant local update (0ms latency)
+    const savingNote = noteInput;
+    setRooms(prev => {
+      const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingNotes: savingNote } : r);
+      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setEditingNotesId(null);
+    setNoteInput('');
 
-    setLoading(true);
+    // 2. Persist to MongoDB Atlas & JSON
+    const room = rooms.find(r => r.id === roomId) || {};
     fetch(`/api/rooms/${roomId}/housekeeping`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         housekeepingStatus: room.housekeepingStatus || 'Ready',
         housekeepingPriority: room.housekeepingPriority || 'Medium',
-        housekeepingNotes: noteInput
+        housekeepingNotes: savingNote
       })
     })
       .then(res => res.json())
       .then(updated => {
-        setRooms(prev => prev.map(r => r.id === roomId ? updated : r));
-        setEditingNotesId(null);
-        setNoteInput('');
-        setLoading(false);
+        if (updated && updated.id) {
+          setRooms(prev => {
+            const list = prev.map(r => r.id === roomId ? { ...r, ...updated } : r);
+            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); } catch (e) {}
+            return list;
+          });
+        }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {});
   };
 
   // Get Reservation Status dynamically based on active bookings
@@ -127,7 +164,8 @@ export const ManagerHousekeeping = () => {
   };
 
   // Filter logic
-  const filteredRooms = rooms.filter(r => {
+  const safeRooms = Array.isArray(rooms) ? rooms : [];
+  const filteredRooms = safeRooms.filter(r => {
     const rName = r.name || r.type || '';
     const matchesSearch = rName.toLowerCase().includes(searchQuery.toLowerCase()) || (r.id || '').includes(searchQuery);
     
@@ -137,6 +175,19 @@ export const ManagerHousekeeping = () => {
 
     return matchesSearch && matchesRoom && matchesStatus && matchesPriority;
   });
+
+  // Housekeeping Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const totalPages = Math.ceil(filteredRooms.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRooms = filteredRooms.slice(indexOfFirstItem, indexOfLastItem);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roomFilter, statusFilter, priorityFilter, searchQuery]);
 
   return (
     <PortalLayout role="manager" title="Housekeeping Tracker">
@@ -214,7 +265,7 @@ export const ManagerHousekeeping = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRooms.map((room, idx) => {
+                {currentRooms.map((room, idx) => {
                   const resStatus = getReservationStatus(room.name);
                   // Calculate mock floor based on idx or room name
                   const floorText = idx < 2 ? '1st' : idx < 4 ? '2nd' : '3rd';
@@ -337,7 +388,7 @@ export const ManagerHousekeeping = () => {
                 {filteredRooms.length === 0 && (
                   <tr>
                     <td colSpan="7" className="py-12 text-center text-xs text-slate-400">
-                      No matching rooms found in the directory.
+                      No matching housekeeping records found.
                     </td>
                   </tr>
                 )}
@@ -345,6 +396,47 @@ export const ManagerHousekeeping = () => {
             </table>
           </div>
         </div>
+
+        {/* Housekeeping Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs font-bold text-slate-600">
+            <span className="text-[11px] text-slate-400 font-semibold">
+              Showing <strong className="text-slate-700">{indexOfFirstItem + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastItem, filteredRooms.length)}</strong> of <strong className="text-slate-700">{filteredRooms.length}</strong> Rooms
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                    currentPage === pageNum
+                      ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </PortalLayout>

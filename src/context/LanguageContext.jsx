@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export const LANGUAGES = {
-  EN: { code: 'EN', name: 'English', flag: '🇺🇸', dir: 'ltr' },
-  BN: { code: 'BN', name: 'বাংলা', flag: '🇧🇩', dir: 'ltr' },
-  ES: { code: 'ES', name: 'Español', flag: '🇪🇸', dir: 'ltr' },
-  FR: { code: 'FR', name: 'Français', flag: '🇫🇷', dir: 'ltr' },
-  AR: { code: 'AR', name: 'العربية', flag: '🇸🇦', dir: 'rtl' },
-  DE: { code: 'DE', name: 'Deutsch', flag: '🇩🇪', dir: 'ltr' }
+  EN: { code: 'EN', name: 'English', label: 'English (EN)', dir: 'ltr' },
+  BN: { code: 'BN', name: 'বাংলা', label: 'বাংলা (BN)', dir: 'ltr' },
+  ES: { code: 'ES', name: 'Español', label: 'Español (ES)', dir: 'ltr' },
+  FR: { code: 'FR', name: 'Français', label: 'Français (FR)', dir: 'ltr' },
+  AR: { code: 'AR', name: 'العربية', label: 'العربية (AR)', dir: 'rtl' },
+  DE: { code: 'DE', name: 'Deutsch', label: 'Deutsch (DE)', dir: 'ltr' }
 };
 
 const TRANSLATIONS = {

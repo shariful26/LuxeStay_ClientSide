@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Building2, ShieldCheck, CheckCircle2, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Building2, ShieldCheck, CheckCircle2, DollarSign, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
 
@@ -48,10 +48,16 @@ export const BookingsManagement = () => {
           setHotels(hotelsData);
           try { localStorage.setItem('luxestay_cache_hotels', JSON.stringify(hotelsData)); } catch (e) {}
           if (hotelsData.length > 0) {
+            const h = hotelsData[0];
+            const diffTime = new Date(tomorrowStr).getTime() - new Date(todayStr).getTime();
+            const nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            const rate = Number(h.pricePerNight || 550);
             setFormData(prev => ({
               ...prev,
-              hotelId: hotelsData[0].id,
-              total: hotelsData[0].pricePerNight || 550
+              hotelId: h.id,
+              nights,
+              nightlyRate: rate,
+              total: nights * rate
             }));
           }
         }
@@ -60,6 +66,57 @@ export const BookingsManagement = () => {
 
     fetchAdminBookings();
   }, []);
+
+  const calculateAdminBookingTotal = (hotelId, checkIn, checkOut, mealPlan) => {
+    const selectedHotel = hotels.find(h => h.id === hotelId) || hotels[0];
+    const nightlyRate = Number(selectedHotel?.pricePerNight || 550);
+
+    let nights = 1;
+    if (checkIn && checkOut) {
+      const diffTime = new Date(checkOut).getTime() - new Date(checkIn).getTime();
+      nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    let mealPlanExtra = 0;
+    if (mealPlan && mealPlan.includes('All-Inclusive')) {
+      mealPlanExtra = 50;
+    } else if (mealPlan && mealPlan.includes('Half Board')) {
+      mealPlanExtra = 35;
+    }
+
+    const total = nights * (nightlyRate + mealPlanExtra);
+    return { nights, nightlyRate, total };
+  };
+
+  const handleAdminFieldChange = (field, value) => {
+    setFormData(prev => {
+      let updated = { ...prev, [field]: value };
+
+      if (field === 'checkIn') {
+        const inTime = new Date(value).getTime();
+        const outTime = new Date(updated.checkOut).getTime();
+        if (isNaN(outTime) || inTime >= outTime) {
+          const nextDay = new Date(value);
+          nextDay.setDate(nextDay.getDate() + 1);
+          updated.checkOut = nextDay.toISOString().split('T')[0];
+        }
+      }
+
+      const { nights, nightlyRate, total } = calculateAdminBookingTotal(
+        updated.hotelId,
+        updated.checkIn,
+        updated.checkOut,
+        updated.mealPlan
+      );
+
+      return {
+        ...updated,
+        nights,
+        nightlyRate,
+        total
+      };
+    });
+  };
 
   const handleStatusChange = (id, newStatus) => {
     // 1. Optimistic UI update in state & localStorage cache (0ms instant)
@@ -221,8 +278,9 @@ export const BookingsManagement = () => {
                     <td className="pr-6">
                       <div className="flex flex-col items-end gap-1.5 py-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mr-1">
-                            💳 {bk.paymentMethod?.split(' ')[0] || 'Invoice'}
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mr-1 flex items-center gap-1">
+                            <CreditCard className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{bk.paymentMethod?.split(' ')[0] || 'Invoice'}</span>
                           </span>
                           {renderStatusBadge(bk.status)}
                         </div>
@@ -307,21 +365,13 @@ export const BookingsManagement = () => {
             </div>
 
             <form onSubmit={handleCreateAdminBooking} className="p-6 space-y-4 text-xs font-semibold">
-              
-              <div>
+                        <div>
                 <label className="block text-[var(--text-secondary)] font-bold mb-1">
                   Select Hotel Property *
                 </label>
                 <select 
                   value={formData.hotelId}
-                  onChange={(e) => {
-                    const h = hotels.find(item => item.id === e.target.value);
-                    setFormData({ 
-                      ...formData, 
-                      hotelId: e.target.value,
-                      total: h ? h.pricePerNight : formData.total 
-                    });
-                  }}
+                  onChange={(e) => handleAdminFieldChange('hotelId', e.target.value)}
                   className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold cursor-pointer"
                 >
                   {hotels.map(ht => (
@@ -370,7 +420,7 @@ export const BookingsManagement = () => {
                     type="date" 
                     required
                     value={formData.checkIn}
-                    onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                    onChange={(e) => handleAdminFieldChange('checkIn', e.target.value)}
                     className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold"
                   />
                 </div>
@@ -382,8 +432,9 @@ export const BookingsManagement = () => {
                   <input 
                     type="date" 
                     required
+                    min={formData.checkIn}
                     value={formData.checkOut}
-                    onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                    onChange={(e) => handleAdminFieldChange('checkOut', e.target.value)}
                     className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold"
                   />
                 </div>
@@ -411,41 +462,41 @@ export const BookingsManagement = () => {
                   </label>
                   <select 
                     value={formData.mealPlan}
-                    onChange={(e) => setFormData({ ...formData, mealPlan: e.target.value })}
+                    onChange={(e) => handleAdminFieldChange('mealPlan', e.target.value)}
                     className="w-full p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold cursor-pointer"
                   >
                     <option value="Room Only (No Meals)" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Room Only (No Meals)</option>
-                    <option value="All-Inclusive 3 Meals Package (Breakfast, Lunch & Dinner)" className="bg-[var(--bg-card)] text-[var(--text-primary)]">All-Inclusive 3 Meals Full Board</option>
-                    <option value="Half Board Package (Breakfast & Dinner)" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Half Board (Breakfast & Dinner)</option>
+                    <option value="All-Inclusive 3 Meals Package (Breakfast, Lunch & Dinner)" className="bg-[var(--bg-card)] text-[var(--text-primary)]">All-Inclusive 3 Meals Full Board (+$50/night)</option>
+                    <option value="Half Board Package (Breakfast & Dinner)" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Half Board (Breakfast & Dinner +$35/night)</option>
                     <option value="Gourmet Breakfast Daily" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Breakfast Only</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-amber-500 font-extrabold uppercase tracking-wider mb-1">
-                  Total Reservation Amount ($ USD) *
-                </label>
-                <input 
-                  type="number" 
-                  required
-                  min="1"
-                  value={formData.total}
-                  onChange={(e) => setFormData({ ...formData, total: e.target.value })}
-                  className="w-full p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-[var(--text-primary)] outline-none font-bold text-lg text-amber-500"
-                />
+              {/* Total Summary Price with dynamic rate breakdown */}
+              <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/30 space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] font-semibold">
+                  <span>Stay Duration & Nightly Rate:</span>
+                  <span className="font-bold text-[var(--text-primary)]">
+                    {Math.max(1, Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24)))} Night(s) × ${(hotels.find(h => h.id === formData.hotelId) || hotels[0])?.pricePerNight || 550}/night
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[var(--text-primary)] font-black text-sm pt-2 border-t border-amber-500/20">
+                  <span>Calculated Reservation Total:</span>
+                  <span className="text-xl font-black text-amber-500">${formData.total}</span>
+                </div>
               </div>
 
               <div className="pt-3 border-t border-[var(--border-light)] flex items-center justify-end gap-3">
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold hover:bg-[var(--border-light)] transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold hover:bg-[var(--border-light)] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
-                  type="submit"
+                  type="submit" 
                   disabled={loading}
                   className="btn btn-primary bg-amber-500 hover:bg-amber-600 px-6 py-2.5 text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/25 cursor-pointer"
                 >

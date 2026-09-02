@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const FAQS = [
@@ -11,10 +12,19 @@ const FAQS = [
 
 export const FAQ = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [openIdx, setOpenIdx] = useState(0);
 
   return (
-    <div className="container max-w-3xl pt-16 pb-12 space-y-8 animate-fade-in">
+    <div className="container max-w-3xl pt-16 pb-12 space-y-8 animate-fade-in font-sans">
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border-light)] bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer shadow-xs hover:border-amber-500/40"
+      >
+        <ArrowLeft className="w-4 h-4 text-amber-500" />
+        <span>Back to Previous Page</span>
+      </button>
+
       <div className="text-center space-y-3">
         <span className="text-xs font-extrabold uppercase tracking-widest text-amber-500 block pt-4">{t('faq')}</span>
         <h1 className="text-4xl font-extrabold text-[var(--text-primary)]">{t('faq')} & Help Center</h1>

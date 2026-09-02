@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Calendar, User, Phone, Mail, Building2, ShieldCheck, CheckCircle2, DollarSign, Utensils, Search, ChevronDown, MoreHorizontal, Check, Edit, Info, ArrowLeft, Star, Award, MapPin, Save } from 'lucide-react';
+import { 
+  Plus, X, Calendar, User, Phone, Mail, Building2, ShieldCheck, CheckCircle2, 
+  DollarSign, Utensils, Search, ChevronDown, MoreHorizontal, Check, Edit, Info, 
+  ArrowLeft, Star, Award, MapPin, Save, Bed, Moon, Eye, ArrowRight 
+} from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -113,38 +117,109 @@ export const ManagerBookings = () => {
       .catch(() => {});
   };
 
+  const calculateBookingDetails = (roomId, checkIn, checkOut, mealPlan) => {
+    const selectedRoom = rooms.find(r => r.id === roomId) || rooms[0];
+    const nightlyRate = Number(selectedRoom?.price || 450);
+
+    let nights = 1;
+    if (checkIn && checkOut) {
+      const diffTime = new Date(checkOut).getTime() - new Date(checkIn).getTime();
+      nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    let mealPlanExtra = 0;
+    if (mealPlan === 'All Inclusive (Meals & Spa)') {
+      mealPlanExtra = 50;
+    }
+
+    const total = nights * (nightlyRate + mealPlanExtra);
+    return { nights, nightlyRate, total };
+  };
+
   const openAddModal = () => {
     setEditingBooking(null);
+    const initialRoom = rooms[0];
+    const { nights, nightlyRate, total } = calculateBookingDetails(
+      initialRoom?.id,
+      todayStr,
+      tomorrowStr,
+      'Breakfast Included'
+    );
+
     setFormData({
-      roomId: rooms[0]?.id || '',
+      roomId: initialRoom?.id || '',
       guestName: '',
       guestEmail: '',
       guestPhone: '',
       checkIn: todayStr,
       checkOut: tomorrowStr,
+      nights,
+      nightlyRate,
       guests: 2,
       mealPlan: 'Breakfast Included',
       paymentMethod: 'Walk-in Cash at Reception',
-      total: rooms[0]?.price || 450
+      total
     });
     setIsModalOpen(true);
   };
 
   const openEditModal = (booking) => {
     setEditingBooking(booking);
+    const cIn = booking.checkIn || todayStr;
+    const cOut = booking.checkOut || tomorrowStr;
+    const { nights, nightlyRate, total } = calculateBookingDetails(
+      booking.roomId,
+      cIn,
+      cOut,
+      booking.mealPlan || 'Breakfast Included'
+    );
+
     setFormData({
       roomId: booking.roomId || rooms[0]?.id || '',
       guestName: booking.guestName || '',
       guestEmail: booking.guestEmail || '',
       guestPhone: booking.guestPhone || '',
-      checkIn: booking.checkIn || todayStr,
-      checkOut: booking.checkOut || tomorrowStr,
+      checkIn: cIn,
+      checkOut: cOut,
+      nights: booking.nights || nights,
+      nightlyRate: booking.nightlyRate || nightlyRate,
       guests: booking.guests || 2,
       mealPlan: booking.mealPlan || 'Breakfast Included',
       paymentMethod: booking.paymentMethod || 'Walk-in Cash at Reception',
-      total: booking.total || 450
+      total: booking.total || total
     });
     setIsModalOpen(true);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => {
+      let updated = { ...prev, [field]: value };
+
+      // If checkIn changed and is >= checkOut, shift checkOut forward by 1 day
+      if (field === 'checkIn') {
+        const inTime = new Date(value).getTime();
+        const outTime = new Date(updated.checkOut).getTime();
+        if (isNaN(outTime) || inTime >= outTime) {
+          const nextDay = new Date(value);
+          nextDay.setDate(nextDay.getDate() + 1);
+          updated.checkOut = nextDay.toISOString().split('T')[0];
+        }
+      }
+
+      const { nights, nightlyRate, total } = calculateBookingDetails(
+        updated.roomId,
+        updated.checkIn,
+        updated.checkOut,
+        updated.mealPlan
+      );
+
+      return {
+        ...updated,
+        nights,
+        nightlyRate,
+        total
+      };
+    });
   };
 
   const handleSaveBooking = (e) => {
@@ -153,9 +228,18 @@ export const ManagerBookings = () => {
 
     const selectedRoomDetails = rooms.find(r => r.id === formData.roomId);
     const targetHotelId = selectedRoomDetails?.hotelId || 'h1';
+    const { nights, nightlyRate, total } = calculateBookingDetails(
+      formData.roomId,
+      formData.checkIn,
+      formData.checkOut,
+      formData.mealPlan
+    );
 
     const payload = {
       ...formData,
+      nights,
+      nightlyRate,
+      total: formData.total || total,
       hotelId: targetHotelId,
       roomName: selectedRoomDetails?.name || 'Deluxe Executive Suite'
     };
@@ -180,7 +264,8 @@ export const ManagerBookings = () => {
   };
 
   // dynamic filtering based on search query, status dropdown, and check-in date selection
-  const filteredBookings = bookings.filter(b => {
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  const filteredBookings = safeBookings.filter(b => {
     const matchesSearch = 
       (b.guestName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
       (b.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -191,6 +276,19 @@ export const ManagerBookings = () => {
     
     return matchesSearch && matchesStatus && matchesDate;
   });
+
+  // Reservations Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, dateFilter]);
 
   // Find dynamic room specs of selected booking
   const matchedRoom = selectedBooking ? rooms.find(r => r.id === selectedBooking.roomId || r.name === selectedBooking.roomName) : null;
@@ -269,67 +367,121 @@ export const ManagerBookings = () => {
             </div>
 
             {/* List Table */}
-            <div className="bg-white rounded-3xl border border-slate-200/70 shadow-2xs overflow-hidden w-full">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden w-full">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] uppercase font-black text-slate-400 tracking-wider">
-                      <th className="py-4.5 px-6">Guest</th>
-                      <th className="py-4.5 px-5">Room</th>
-                      <th className="py-4.5 px-5">Request</th>
-                      <th className="py-4.5 px-5">Duration</th>
-                      <th className="py-4.5 px-5">Check-In & Out</th>
-                      <th className="py-4.5 px-5">Status</th>
-                      <th className="py-4.5 px-6 text-center">Action</th>
+                    <tr className="border-b border-slate-200/80 bg-slate-50/90 text-[10px] uppercase font-black text-slate-500 tracking-wider">
+                      <th className="py-4 px-6">Guest & Ref</th>
+                      <th className="py-4 px-5">Room / Suite</th>
+                      <th className="py-4 px-5">Meal Plan</th>
+                      <th className="py-4 px-5">Stay Duration</th>
+                      <th className="py-4 px-5">Check-In / Out</th>
+                      <th className="py-4 px-5">Total Price</th>
+                      <th className="py-4 px-5">Status</th>
+                      <th className="py-4 px-6 text-center">Quick Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
-                    {filteredBookings.map((b) => (
+                    {currentBookings.map((b) => (
                       <tr 
                         key={b.id}
                         onClick={() => setSelectedBooking(b)}
-                        className="cursor-pointer hover:bg-slate-50/50 transition-colors"
+                        className="cursor-pointer hover:bg-amber-50/25 transition-all group"
                       >
-                        <td className="py-4.5 px-6">
-                          <span className="text-slate-950 block text-sm font-extrabold leading-tight">{b.guestName}</span>
-                          <span className="text-[10px] text-slate-400 font-bold font-mono">BK-{b.id?.slice(-5).toUpperCase() || '23524'}</span>
+                        {/* Guest Name & Avatar */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                              {b.guestName ? b.guestName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'G'}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-slate-950 block text-sm font-extrabold leading-tight group-hover:text-amber-600 transition-colors truncate">
+                                {b.guestName}
+                              </span>
+                              <span className="inline-block mt-0.5 font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">
+                                {b.id?.startsWith('BK-') ? b.id : `BK-${b.id?.slice(-5).toUpperCase() || '23524'}`}
+                              </span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-4.5 px-5">
-                          <span className="text-slate-800 block font-extrabold">{b.roomName || 'Deluxe Room'}</span>
-                          <span className="text-[10px] text-slate-400 font-semibold">Room 101</span>
+
+                        {/* Room & Suite */}
+                        <td className="py-4 px-5">
+                          <span className="text-slate-900 block font-extrabold text-xs truncate max-w-[180px]">
+                            {b.roomName || 'Deluxe Luxury Room'}
+                          </span>
+                          <span className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-0.5">
+                            <Bed className="w-3 h-3 text-amber-500" /> Room 101
+                          </span>
                         </td>
-                        <td className="py-4.5 px-5 text-slate-400 font-medium max-w-[150px] truncate">
-                          {b.mealPlan || 'Breakfast Included'}
+
+                        {/* Meal Plan */}
+                        <td className="py-4 px-5">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-50 text-slate-700 border border-slate-200/80">
+                            <Utensils className="w-3 h-3 text-amber-500" />
+                            <span className="max-w-[120px] truncate">{b.mealPlan || 'Breakfast Included'}</span>
+                          </span>
                         </td>
-                        <td className="py-4.5 px-5 font-black text-slate-950">
-                          {b.nights || 3} nights
+
+                        {/* Duration */}
+                        <td className="py-4 px-5">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-amber-300 font-extrabold text-[10px] shadow-2xs">
+                            <Moon className="w-3 h-3 text-amber-400" />
+                            <span>{b.nights || 1} {b.nights === 1 ? 'Night' : 'Nights'}</span>
+                          </span>
                         </td>
-                        <td className="py-4.5 px-5 text-slate-500 font-medium">
-                          {b.checkIn} — {b.checkOut}
+
+                        {/* Dates */}
+                        <td className="py-4 px-5">
+                          <div className="text-[11px] font-bold text-slate-700 space-y-0.5">
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-400 text-[9px] uppercase font-bold">In:</span> <span>{b.checkIn}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-400 text-[9px] uppercase font-bold">Out:</span> <span className="text-slate-500">{b.checkOut}</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-4.5 px-5">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${
+
+                        {/* Total Price */}
+                        <td className="py-4 px-5">
+                          <span className="text-sm font-black text-slate-950 block">
+                            {formatPrice(b.total || (b.nightlyRate ? b.nightlyRate * (b.nights || 1) : 450))}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-4 px-5">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                             b.status?.toLowerCase() === 'confirmed' || b.status?.toLowerCase() === 'upcoming'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                              ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20'
                               : b.status?.toLowerCase() === 'checked-in' || b.status?.toLowerCase() === 'active'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                              ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
                               : b.status?.toLowerCase() === 'cancelled'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                              : 'bg-yellow-50 text-amber-700 border border-yellow-100'
+                              ? 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
                           }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              b.status?.toLowerCase() === 'checked-in' ? 'bg-emerald-500 animate-pulse' :
+                              b.status?.toLowerCase() === 'confirmed' ? 'bg-blue-500' :
+                              b.status?.toLowerCase() === 'cancelled' ? 'bg-rose-500' : 'bg-amber-500'
+                            }`} />
                             {b.status || 'Pending'}
                           </span>
                         </td>
-                        <td className="py-4.5 px-6 text-center">
-                          <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+
+                        {/* Action Buttons */}
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             {/* Check-In checkmark button */}
-                            {b.status !== 'Checked-In' && (
+                            {b.status !== 'Checked-In' && b.status !== 'Cancelled' && (
                               <button 
                                 onClick={() => handleStatusChange(b.id, 'Checked-In')}
-                                className="p-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors cursor-pointer"
+                                className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-600 transition-all cursor-pointer shadow-xs border border-emerald-200"
                                 title="Check In Guest"
                               >
-                                <Check className="w-4 h-4" />
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                               </button>
                             )}
                             
@@ -337,10 +489,10 @@ export const ManagerBookings = () => {
                             {b.status === 'Cancelled' && (
                               <button 
                                 onClick={() => handleStatusChange(b.id, 'Confirmed')}
-                                className="p-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors cursor-pointer"
+                                className="p-2 rounded-xl bg-blue-50 hover:bg-blue-500 hover:text-white text-blue-600 transition-all cursor-pointer shadow-xs border border-blue-200"
                                 title="Reactivate Booking"
                               >
-                                <ShieldCheck className="w-4 h-4" />
+                                <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
                               </button>
                             )}
 
@@ -348,20 +500,69 @@ export const ManagerBookings = () => {
                             {b.status !== 'Cancelled' && (
                               <button 
                                 onClick={() => handleStatusChange(b.id, 'Cancelled')}
-                                className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                                className="p-2 rounded-xl bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 transition-all cursor-pointer shadow-xs border border-rose-200"
                                 title="Cancel Booking"
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5 stroke-[2.5]" />
                               </button>
                             )}
                           </div>
                         </td>
                       </tr>
                     ))}
+
+                    {filteredBookings.length === 0 && (
+                      <tr>
+                        <td colSpan="8" className="py-12 text-center text-xs text-slate-400">
+                          No matching reservations found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs font-bold text-slate-600">
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Showing <strong className="text-slate-700">{indexOfFirstItem + 1}</strong>–<strong className="text-slate-700">{Math.min(indexOfLastItem, filteredBookings.length)}</strong> of <strong className="text-slate-700">{filteredBookings.length}</strong> Reservations
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center ${
+                        currentPage === pageNum
+                          ? 'bg-[#e2f896] text-slate-950 border border-[#d4ed83] shadow-xs scale-105'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
         )}
@@ -476,14 +677,15 @@ export const ManagerBookings = () => {
                   <div className="flex items-center justify-between pb-1 border-b border-slate-100">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Booking Info</span>
                     
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase flex items-center gap-1 ${
                       selectedBooking.status?.toLowerCase() === 'confirmed' || selectedBooking.status?.toLowerCase() === 'upcoming'
                         ? 'bg-blue-50 text-blue-700 border border-blue-100'
                         : selectedBooking.status?.toLowerCase() === 'checked-in' || selectedBooking.status?.toLowerCase() === 'active'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                         : 'bg-rose-50 text-rose-700 border border-rose-100'
                     }`}>
-                      {selectedBooking.status === 'Cancelled' ? '✓ Booking Cancelled' : '✓ Booking Confirmed'}
+                      <Check className="w-3 h-3" />
+                      <span>{selectedBooking.status === 'Cancelled' ? 'Booking Cancelled' : 'Booking Confirmed'}</span>
                     </span>
                   </div>
 
@@ -775,11 +977,8 @@ export const ManagerBookings = () => {
                 <select 
                   required
                   value={formData.roomId}
-                  onChange={(e) => {
-                    const r = rooms.find(item => item.id === e.target.value);
-                    setFormData({ ...formData, roomId: e.target.value, total: r?.price || 450 });
-                  }}
-                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none cursor-pointer text-slate-800"
+                  onChange={(e) => handleFieldChange('roomId', e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none cursor-pointer text-slate-800 font-bold"
                 >
                   {rooms.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -838,7 +1037,7 @@ export const ManagerBookings = () => {
                     type="date" 
                     required
                     value={formData.checkIn}
-                    onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                    onChange={(e) => handleFieldChange('checkIn', e.target.value)}
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none text-slate-900 font-bold text-xs"
                   />
                 </div>
@@ -848,8 +1047,9 @@ export const ManagerBookings = () => {
                   <input 
                     type="date" 
                     required
+                    min={formData.checkIn}
                     value={formData.checkOut}
-                    onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                    onChange={(e) => handleFieldChange('checkOut', e.target.value)}
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none text-slate-900 font-bold text-xs"
                   />
                 </div>
@@ -873,20 +1073,28 @@ export const ManagerBookings = () => {
                   <label className="block mb-1">Meal Plan Inclusions</label>
                   <select 
                     value={formData.mealPlan}
-                    onChange={(e) => setFormData({ ...formData, mealPlan: e.target.value })}
+                    onChange={(e) => handleFieldChange('mealPlan', e.target.value)}
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none cursor-pointer text-slate-800"
                   >
                     <option value="Breakfast Included">Breakfast Included</option>
-                    <option value="All Inclusive (Meals & Spa)">All Inclusive (Meals & Spa)</option>
+                    <option value="All Inclusive (Meals & Spa)">All Inclusive (Meals & Spa +$50/night)</option>
                     <option value="Room Only (No Meals)">Room Only (No Meals)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Total Summary Price */}
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-center justify-between text-slate-900 font-bold">
-                <span>Calculated Booking Total:</span>
-                <span className="text-base font-black">{formatPrice(formData.total)}</span>
+              {/* Total Summary Price with dynamic rate breakdown */}
+              <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/30 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                  <span>Stay Duration & Nightly Rate:</span>
+                  <span className="font-bold text-slate-800">
+                    {Math.max(1, Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24)))} Night(s) × {formatPrice((rooms.find(r => r.id === formData.roomId) || rooms[0])?.price || 450)}/night
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-950 font-black text-sm pt-2 border-t border-amber-500/20">
+                  <span>Calculated Booking Total:</span>
+                  <span className="text-xl font-black text-amber-600">{formatPrice(formData.total)}</span>
+                </div>
               </div>
 
               {/* Actions */}
@@ -901,7 +1109,7 @@ export const ManagerBookings = () => {
                 <button 
                   type="submit" 
                   disabled={loading || rooms.length === 0}
-                  className="px-5 py-2 rounded-xl bg-[#e2f896] text-slate-950 hover:bg-[#d4ed83] flex items-center gap-1.5 shadow-md font-black cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-[#e2f896] text-slate-950 hover:bg-[#d4ed83] flex items-center gap-1.5 shadow-md font-black cursor-pointer text-xs"
                 >
                   <Save className="w-4 h-4" />
                   {loading ? 'Saving...' : editingBooking ? 'Save Changes' : 'Confirm Manual Reservation'}

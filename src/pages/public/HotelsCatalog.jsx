@@ -133,10 +133,11 @@ export const HotelsCatalog = () => {
     setCurrentPage(1);
   }, [hotels]);
 
+  const safeHotels = Array.isArray(hotels) ? hotels : [];
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentHotels = hotels.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(hotels.length / itemsPerPage);
+  const currentHotels = safeHotels.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(safeHotels.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);

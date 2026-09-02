@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Key, ShieldCheck, CheckCircle2, AlertCircle, Save, Loader2, Sparkles, Lock, DollarSign, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
+import { CreditCard, Key, ShieldCheck, CheckCircle2, AlertCircle, Save, Loader2, Sparkles, Lock, DollarSign, Globe, ToggleLeft, ToggleRight, Info, Zap } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 
 export const AdminPaymentSettings = () => {
@@ -138,33 +138,36 @@ export const AdminPaymentSettings = () => {
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                🧪 Test Mode (Sandbox)
+                Test Mode (Sandbox)
               </button>
               <button
                 type="button"
                 onClick={() => handleModeToggle('live')}
-                className={`py-2 px-4 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                   settings.mode === 'live'
-                    ? 'bg-emerald-500 text-white shadow-md'
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                🚀 Live Mode (Production)
+                <Zap className="w-3.5 h-3.5" />
+                <span>Live Mode (Production)</span>
               </button>
             </div>
           </div>
 
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+          <div className="text-xs leading-relaxed">
             {settings.mode === 'test' ? (
-              <span className="text-amber-400 font-semibold">
-                ℹ️ Test Sandbox Mode is active. Customers can test purchases using demo credit card credentials without charging real money.
+              <span className="text-amber-400 font-semibold flex items-center gap-1.5">
+                <Info className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>Test Sandbox Mode is active. Customers can test purchases using demo credit card credentials without charging real money.</span>
               </span>
             ) : (
-              <span className="text-emerald-400 font-semibold">
-                ⚡ Live Production Mode is active. Real payments will be processed directly through your configured merchant API gateways.
+              <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Live Production Mode is active. Real payments will be processed directly through your configured merchant API gateways.</span>
               </span>
             )}
-          </p>
+          </div>
         </div>
 
         {/* GATEWAY SETTINGS TABS & CARDS */}
@@ -471,8 +474,9 @@ export const AdminPaymentSettings = () => {
                   </button>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs leading-relaxed font-medium">
-                  ℹ️ When enabled, guests can confirm room reservations instantly without upfront online card payment. Hotel reception collects full payment during check-in.
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs leading-relaxed font-medium flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <span>When enabled, guests can confirm room reservations instantly without upfront online card payment. Hotel reception collects full payment during check-in.</span>
                 </div>
               </div>
             )}
