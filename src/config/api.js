@@ -1,7 +1,6 @@
 /**
  * LuxeStay - Centralized API Configuration & Client
- * 
- * Envato Marketplace Standard Architecture
+
  * Supports zero-configuration development and flexible production deployment.
  */
 

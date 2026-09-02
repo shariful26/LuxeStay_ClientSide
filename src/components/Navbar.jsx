@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Building2, Sun, Moon, User, Shield, Briefcase, 
+import {
+  Building2, Sun, Moon, User, Shield, Briefcase,
   Heart, Sparkles, LogOut, Menu, X, ChevronDown, Gift, Bell,
   Compass, BookOpen, HelpCircle, FileText, Globe, Calendar, CheckCircle2, Check, ExternalLink
 } from 'lucide-react';
@@ -236,7 +236,7 @@ export const Navbar = () => {
 
       <div className="border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl shadow-md">
         <div className="container max-w-7xl mx-auto flex items-center justify-between gap-3 xl:gap-6 py-4 sm:py-5 px-3 sm:px-6">
-          
+
           {/* Left Brand Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0 mr-4 xl:mr-8 group">
             <img 
@@ -261,16 +261,15 @@ export const Navbar = () => {
               const Icon = link.icon;
 
               return (
-                <Link 
-                  key={link.path} 
-                  to={link.path} 
-                  className={`py-1 text-xs xl:text-sm font-extrabold uppercase tracking-wider whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 border-b-2 ${
-                    isActive 
-                      ? 'border-amber-600 text-amber-600 dark:border-amber-500 dark:text-amber-500' 
-                      : link.highlight 
-                        ? 'border-transparent text-amber-600 dark:text-amber-500 hover:border-amber-600 font-black' 
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`py-1 text-xs xl:text-sm font-extrabold uppercase tracking-wider whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 border-b-2 ${isActive
+                      ? 'border-amber-600 text-amber-600 dark:border-amber-500 dark:text-amber-500'
+                      : link.highlight
+                        ? 'border-transparent text-amber-600 dark:text-amber-500 hover:border-amber-600 font-black'
                         : 'border-transparent text-[var(--text-primary)] hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-600/50'
-                  }`}
+                    }`}
                 >
                   {Icon && <Icon className="w-3.5 h-3.5" />}
                   <span>{link.label}</span>
@@ -279,16 +278,15 @@ export const Navbar = () => {
             })}
 
             {/* Pages Dropdown (Gallery, Destinations, Blog, About, Contact, FAQ, Terms) */}
-            <div 
+            <div
               className="relative group cursor-pointer"
               onMouseEnter={() => setPagesDropdownOpen(true)}
               onMouseLeave={() => setPagesDropdownOpen(false)}
             >
-              <button 
+              <button
                 type="button"
-                className={`nav-dropdown-btn py-1 text-xs xl:text-sm font-extrabold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 outline-none focus:outline-none cursor-pointer ${
-                  isPagesActive || pagesDropdownOpen ? 'active-dropdown' : ''
-                }`}
+                className={`nav-dropdown-btn py-1 text-xs xl:text-sm font-extrabold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 outline-none focus:outline-none cursor-pointer ${isPagesActive || pagesDropdownOpen ? 'active-dropdown' : ''
+                  }`}
               >
                 <span>{t('pages')}</span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${pagesDropdownOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-amber-500'}`} />
@@ -327,7 +325,7 @@ export const Navbar = () => {
           <div className="hidden md:flex flex-nowrap items-center gap-2.5 xl:gap-3.5 flex-shrink-0 ml-auto">
 
             {/* Theme Toggle */}
-            <button 
+            <button
               onClick={toggleTheme}
               className="w-10 h-10 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors cursor-pointer flex items-center justify-center flex-shrink-0"
               title="Toggle Dark/Light Theme"
@@ -337,14 +335,13 @@ export const Navbar = () => {
 
             {/* Interactive Notification Bell with Dropdown Popup */}
             <div ref={notifRef} className="relative">
-              <button 
+              <button
                 type="button"
                 onClick={() => setNotifDropdownOpen(prev => !prev)}
-                className={`w-10 h-10 rounded-xl border transition-all duration-200 cursor-pointer relative flex items-center justify-center flex-shrink-0 ${
-                  notifDropdownOpen 
-                    ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-md shadow-amber-500/10' 
+                className={`w-10 h-10 rounded-xl border transition-all duration-200 cursor-pointer relative flex items-center justify-center flex-shrink-0 ${notifDropdownOpen
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-md shadow-amber-500/10'
                     : 'border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500'
-                }`}
+                  }`}
                 title="Notifications & Alerts"
                 aria-label="Toggle notifications"
                 aria-expanded={notifDropdownOpen}
@@ -360,7 +357,7 @@ export const Navbar = () => {
               {/* Notification Dropdown Popup */}
               {notifDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-2xl z-50 animate-fade-in overflow-hidden">
-                  
+
                   {/* Header */}
                   <div className="p-4 border-b border-[var(--border-light)] flex items-center justify-between bg-[var(--bg-tertiary)]/50">
                     <div className="flex items-center gap-2">
@@ -375,7 +372,7 @@ export const Navbar = () => {
                       </div>
                     </div>
                     {unreadCount > 0 && (
-                      <button 
+                      <button
                         onClick={handleMarkAllRead}
                         className="text-[11px] font-bold text-amber-500 hover:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
                       >
@@ -397,19 +394,18 @@ export const Navbar = () => {
                       notifications.map((item) => {
                         const ItemIcon = item.icon || Sparkles;
                         return (
-                          <div 
+                          <div
                             key={item.id}
                             onClick={() => handleNotificationClick(item)}
-                            className={`group p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-3 ${
-                              item.read 
-                                ? 'bg-transparent border-transparent hover:bg-[var(--bg-tertiary)] opacity-75 hover:opacity-100' 
+                            className={`group p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-3 ${item.read
+                                ? 'bg-transparent border-transparent hover:bg-[var(--bg-tertiary)] opacity-75 hover:opacity-100'
                                 : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 shadow-xs'
-                            }`}
+                              }`}
                           >
                             <div className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${item.iconColor || 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                               <ItemIcon className="w-4 h-4" />
                             </div>
-                            
+
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-1 mb-0.5">
                                 <h4 className={`text-xs truncate ${item.read ? 'font-bold text-[var(--text-primary)]' : 'font-extrabold text-amber-600 dark:text-amber-400'}`}>
@@ -435,7 +431,7 @@ export const Navbar = () => {
                   {/* Footer */}
                   <div className="p-3 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)]/30 flex items-center justify-between text-[11px] font-bold">
                     <span className="text-[var(--text-muted)] text-[10px]">LuxeStay Alerts</span>
-                    <button 
+                    <button
                       onClick={() => {
                         setNotifDropdownOpen(false);
                         if (user?.role === 'admin') navigate('/admin/dashboard');
@@ -458,15 +454,15 @@ export const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-3 flex-shrink-0">
                 {/* Premium User Profile Pill */}
-                <Link 
+                <Link
                   to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'manager' ? '/manager/dashboard' : '/customer/dashboard'}
                   className="h-10 flex items-center gap-2 pl-1 pr-3.5 rounded-full bg-slate-950 border border-amber-500/30 hover:border-amber-400/60 hover:scale-[1.03] transition-all duration-300 shadow-md group"
                   title="Go to Dashboard"
                 >
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name} 
-                    className="w-7 h-7 rounded-full object-cover border-2 border-amber-500 group-hover:border-amber-400 transition-colors" 
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-7 h-7 rounded-full object-cover border-2 border-amber-500 group-hover:border-amber-400 transition-colors"
                   />
                   <div className="flex flex-col text-left">
                     <span className="text-[11px] font-black text-amber-500 leading-tight group-hover:text-amber-400 transition-colors">
@@ -479,16 +475,16 @@ export const Navbar = () => {
                 </Link>
 
                 {/* Premium Eye-Catching Logout Button */}
-                <button 
-                  onClick={logout} 
-                  className="w-10 h-10 flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-500 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all duration-300 shadow-xs cursor-pointer hover:scale-105 active:scale-95" 
+                <button
+                  onClick={logout}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/5 text-rose-500 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all duration-300 shadow-xs cursor-pointer hover:scale-105 active:scale-95"
                   title="Logout Account"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <Link 
+              <Link
                 to="/login"
                 className="h-10 px-5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white border border-amber-400/40 text-xs font-extrabold tracking-wider uppercase flex items-center justify-center text-center shadow-md shadow-amber-600/20 hover:shadow-lg transition-all cursor-pointer flex-shrink-0"
               >
@@ -500,17 +496,16 @@ export const Navbar = () => {
 
           {/* Mobile/Tablet Controls */}
           <div className="md:hidden flex items-center gap-2">
-            
+
             {/* Mobile Notification Bell */}
             <div ref={mobileNotifRef} className="relative">
-              <button 
+              <button
                 type="button"
                 onClick={() => setNotifDropdownOpen(prev => !prev)}
-                className={`p-2 rounded-xl border transition-colors cursor-pointer relative flex items-center justify-center ${
-                  notifDropdownOpen 
-                    ? 'border-amber-500 bg-amber-500/10 text-amber-500' 
+                className={`p-2 rounded-xl border transition-colors cursor-pointer relative flex items-center justify-center ${notifDropdownOpen
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-500'
                     : 'border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500'
-                }`}
+                  }`}
                 title="Notifications"
                 aria-label="Toggle notifications"
               >
@@ -539,7 +534,7 @@ export const Navbar = () => {
                       </div>
                     </div>
                     {unreadCount > 0 && (
-                      <button 
+                      <button
                         onClick={handleMarkAllRead}
                         className="text-[11px] font-bold text-amber-500 hover:underline flex items-center gap-1 cursor-pointer"
                       >
@@ -554,19 +549,18 @@ export const Navbar = () => {
                     {notifications.map((item) => {
                       const ItemIcon = item.icon || Sparkles;
                       return (
-                        <div 
+                        <div
                           key={item.id}
                           onClick={() => handleNotificationClick(item)}
-                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-2.5 ${
-                            item.read 
-                              ? 'bg-transparent border-transparent opacity-75' 
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-2.5 ${item.read
+                              ? 'bg-transparent border-transparent opacity-75'
                               : 'bg-amber-500/5 border-amber-500/20'
-                          }`}
+                            }`}
                         >
                           <div className={`w-8 h-8 rounded-xl border flex items-center justify-center flex-shrink-0 ${item.iconColor || 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                             <ItemIcon className="w-3.5 h-3.5" />
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1 mb-0.5">
                               <h4 className={`text-xs truncate ${item.read ? 'font-bold text-[var(--text-primary)]' : 'font-extrabold text-amber-600'}`}>
@@ -591,7 +585,7 @@ export const Navbar = () => {
                   {/* Footer */}
                   <div className="p-3 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)]/30 flex items-center justify-between text-[11px] font-bold">
                     <span className="text-[var(--text-muted)] text-[10px]">LuxeStay Alerts</span>
-                    <button 
+                    <button
                       onClick={() => {
                         setNotifDropdownOpen(false);
                         if (user?.role === 'admin') navigate('/admin/dashboard');
@@ -610,7 +604,7 @@ export const Navbar = () => {
             </div>
 
             {/* Theme Toggle Button (Mobile/Tablet Only) */}
-            <button 
+            <button
               onClick={toggleTheme}
               className="p-2 rounded-xl border border-[var(--border-light)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-amber-500 transition-colors cursor-pointer flex items-center justify-center flex-shrink-0"
               title="Toggle Dark/Light Theme"
@@ -618,7 +612,7 @@ export const Navbar = () => {
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
 
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl border border-[var(--border-light)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
             >
@@ -633,10 +627,10 @@ export const Navbar = () => {
       {mobileMenuOpen && (
         <div className="xl:hidden border-b border-[var(--border-light)] bg-[var(--bg-card)] px-6 py-6 space-y-4 animate-fade-in text-sm font-bold shadow-2xl">
           {navLinks.map(link => (
-            <Link 
-              key={link.path} 
-              to={link.path} 
-              onClick={() => setMobileMenuOpen(false)} 
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={() => setMobileMenuOpen(false)}
               className={`block py-2 border-b border-[var(--border-light)] ${link.highlight ? 'text-amber-600 font-extrabold' : ''}`}
             >
               {link.label}
@@ -679,11 +673,11 @@ export const Navbar = () => {
               </div>
             )}
           </div>
-          
+
           {user ? (
             <div className="pt-4 border-t border-[var(--border-light)] space-y-3">
               {/* Active Profile Info Redirect to Dashboard */}
-              <Link 
+              <Link
                 to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'manager' ? '/manager/dashboard' : '/customer/dashboard'}
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-tertiary)] border border-amber-500/20 shadow-xs"
@@ -695,7 +689,7 @@ export const Navbar = () => {
                 </div>
               </Link>
               {/* Direct Logout Button */}
-              <button 
+              <button
                 onClick={() => {
                   logout();
                   setMobileMenuOpen(false);
@@ -708,7 +702,7 @@ export const Navbar = () => {
             </div>
           ) : (
             <div className="pt-4 border-t border-[var(--border-light)]">
-              <Link 
+              <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full h-11 rounded-xl bg-amber-600 text-white font-extrabold flex items-center justify-center text-xs tracking-wider uppercase shadow-md cursor-pointer"
