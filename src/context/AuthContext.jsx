@@ -67,19 +67,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Robust Helper for Authentication API Calls with 3.5s timeout
+  // Robust Helper for Authentication API Calls (handles serverless cold-starts & connection drops)
   const safeAuthFetch = async (endpoint, payload) => {
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3500);
-
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: controller.signal
+        body: JSON.stringify(payload)
       });
-      clearTimeout(timer);
 
       const text = await res.text();
       if (text && text.trim().startsWith('{')) {
@@ -87,7 +82,7 @@ export const AuthProvider = ({ children }) => {
         return { status: res.status, data };
       }
     } catch (err) {
-      // safe fallback on network timeout
+      // safe fallback on network disconnect
     }
     return { status: 500, data: { error: 'Unable to connect to authentication server' } };
   };
@@ -96,18 +91,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, role = 'customer') => {
     const cleanEmail = String(email || '').trim().toLowerCase();
 
-    // Query live MongoDB Atlas authentication server
+    // 1. Query live MongoDB Atlas authentication server
     const { data } = await safeAuthFetch('/api/auth/login', { email: cleanEmail, password, role });
     
     if (data?.user) {
       setUser(data.user);
       localStorage.setItem('luxestay_user', JSON.stringify(data.user));
       return data;
-    } else if (data?.error) {
+    } else if (data?.error && data.error !== 'Unable to connect to authentication server') {
       return { error: data.error };
     }
 
-    // Fast-path fallback only if server network is temporarily unreachable
+    // 2. Intelligent offline / network fallback for demo users
     if (CLIENT_DEMO_USERS[cleanEmail] && (password === '123456' || password.length >= 4)) {
       const demoUser = CLIENT_DEMO_USERS[cleanEmail];
       const effectiveRole = demoUser.role || role;
@@ -118,7 +113,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userPayload };
     }
 
-    return { error: 'Unable to connect to authentication server' };
+    return { error: data?.error || 'Unable to connect to authentication server' };
   };
 
   // Real HTTP Register API (saves directly to MongoDB Atlas)
