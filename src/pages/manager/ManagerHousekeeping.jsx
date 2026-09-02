@@ -270,6 +270,7 @@ export const ManagerHousekeeping = () => {
                   const floorText = room.floor || (idx < 2 ? '1st Floor' : idx < 4 ? '2nd Floor' : '3rd Floor');
                   const roomStatus = room.housekeepingStatus || 'Ready';
                   const roomPriority = room.housekeepingPriority || 'Medium';
+                  const resStatus = room.reservationStatus || (room.status === 'Booked' ? 'Checked-In' : room.status || 'Available');
 
                   return (
                     <tr key={room.id} className="hover:bg-slate-50/30">
