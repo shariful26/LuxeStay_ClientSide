@@ -59,8 +59,9 @@ export const ManagerInventory = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveItem = (e) => {
+  const handleSaveItem = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) return;
     setLoading(true);
 
     const calculatedAvailability = 
@@ -78,18 +79,48 @@ export const ManagerInventory = () => {
     const url = editingItem ? `/api/inventory/${editingItem.id}` : '/api/inventory';
     const method = editingItem ? 'PUT' : 'POST';
 
-    fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then(() => {
-        setLoading(false);
-        setIsModalOpen(false);
-        fetchInventory();
-      })
-      .catch(() => setLoading(false));
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const saved = await res.json();
+      
+      if (editingItem) {
+        setInventory(prev => {
+          const next = prev.map(i => i.id === editingItem.id ? { ...i, ...payload, ...saved } : i);
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+      } else {
+        const newItem = saved.id ? saved : { id: `inv_${Date.now()}`, ...payload };
+        setInventory(prev => {
+          const next = [newItem, ...prev];
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+      }
+    } catch (err) {
+      if (editingItem) {
+        setInventory(prev => {
+          const next = prev.map(i => i.id === editingItem.id ? { ...i, ...payload } : i);
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+      } else {
+        const fallback = { id: `inv_${Date.now()}`, ...payload };
+        setInventory(prev => {
+          const next = [fallback, ...prev];
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+      }
+    } finally {
+      setLoading(false);
+      setIsModalOpen(false);
+      setEditingItem(null);
+    }
   };
 
   const handleReorder = (itemId) => {
@@ -97,6 +128,12 @@ export const ManagerInventory = () => {
     if (!item) return;
 
     const newStock = (item.stock || 0) + 150;
+    setInventory(prev => {
+      const next = prev.map(i => i.id === itemId ? { ...i, stock: newStock, availability: 'Available' } : i);
+      try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
     fetch(`/api/inventory/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -104,11 +141,7 @@ export const ManagerInventory = () => {
         stock: newStock,
         availability: 'Available'
       })
-    })
-      .then(res => res.json())
-      .then(() => {
-        fetchInventory();
-      });
+    }).catch(() => {});
   };
 
   const safeInventory = Array.isArray(inventory) ? inventory : [];
