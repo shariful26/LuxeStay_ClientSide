@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, ShieldAlert, CheckCircle, Clock, Plus, X, Search, Filter, Phone, Mail, FileText, Settings, PlusCircle, HelpCircle, Save } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerConcierge = () => {
   const { user } = useAuth();
+  const toast = useToast();
   
   // Navigation tabs: 'staff' (Directory/Roster) or 'requests' (Guest Requests logs)
   const [activeTab, setActiveTab] = useState('staff');
@@ -60,49 +62,42 @@ export const ManagerConcierge = () => {
   const handleSaveStaff = async (e) => {
     e.preventDefault();
     if (!staffForm.name.trim()) return;
-    setLoading(true);
 
-    try {
-      const res = await fetch('/api/concierge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(staffForm)
-      });
-      const newCreated = await res.json();
-      const finalStaff = newCreated.id ? newCreated : { id: `FLG${Math.floor(100 + Math.random() * 900)}`, ...staffForm };
+    const staffName = staffForm.name;
+    const finalStaff = { id: `FLG${Math.floor(100 + Math.random() * 900)}`, ...staffForm };
 
-      setStaff(prev => {
-        const next = [finalStaff, ...prev];
-        try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(next)); } catch (e) {}
-        return next;
-      });
-    } catch (err) {
-      const fallbackStaff = { id: `FLG${Math.floor(100 + Math.random() * 900)}`, ...staffForm };
-      setStaff(prev => {
-        const next = [fallbackStaff, ...prev];
-        try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(next)); } catch (e) {}
-        return next;
-      });
-    } finally {
-      setLoading(false);
-      setIsStaffModalOpen(false);
-      setStaffForm({
-        name: '',
-        position: 'Head Concierge',
-        schedule: 'Monday - Friday | 8 AM - 4 PM',
-        contact: '+1 (555) 123-4567',
-        email: '',
-        status: 'Active'
-      });
-    }
+    setStaff(prev => {
+      const next = [finalStaff, ...prev];
+      try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setIsStaffModalOpen(false);
+    toast.success(`Concierge staff member "${staffName}" added!`, 'Staff Added');
+
+    setStaffForm({
+      name: '',
+      position: 'Head Concierge',
+      schedule: 'Monday - Friday | 8 AM - 4 PM',
+      contact: '+1 (555) 123-4567',
+      email: '',
+      status: 'Active'
+    });
+
+    fetch('/api/concierge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(staffForm)
+    }).catch(() => {});
   };
 
-  const handleStatusChange = (staffId, newStatus) => {
+  const handleStatusChange = (staffId, newStatus, staffName = 'Staff') => {
     setStaff(prev => {
       const updated = prev.map(s => s.id === staffId ? { ...s, status: newStatus } : s);
       try { localStorage.setItem('luxestay_cache_concierge_staff', JSON.stringify(updated)); } catch (e) {}
       return updated;
     });
+    toast.success(`${staffName} status changed to ${newStatus}!`, 'Staff Status');
 
     fetch(`/api/concierge/${staffId}`, {
       method: 'PUT',
@@ -117,6 +112,7 @@ export const ManagerConcierge = () => {
       try { localStorage.setItem('luxestay_cache_concierge_requests', JSON.stringify(updated)); } catch (e) {}
       return updated;
     });
+    toast.success(`Guest service request marked as ${newStatus}!`, 'Request Updated');
 
     fetch(`/api/concierge/requests/${requestId}`, {
       method: 'PUT',

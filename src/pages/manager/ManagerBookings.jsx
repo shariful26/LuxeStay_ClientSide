@@ -7,12 +7,14 @@ import {
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const ManagerBookings = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
+  const toast = useToast();
   
   // State variables
   const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
@@ -85,7 +87,7 @@ export const ManagerBookings = () => {
   }, [user]);
 
   const handleStatusChange = (id, newStatus) => {
-    // 1. Optimistic UI update in state & localStorage cache (0ms instant)
+    // 1. Instant local update for instant UI feedback (0ms latency)
     setBookings(prev => {
       const updated = prev.map(b => b.id === id ? { ...b, status: newStatus } : b);
       try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(updated)); } catch (e) {}
@@ -94,6 +96,7 @@ export const ManagerBookings = () => {
     if (selectedBooking?.id === id) {
       setSelectedBooking(prev => prev ? { ...prev, status: newStatus } : null);
     }
+    toast.success(`Booking ${id} status updated to "${newStatus}"!`, 'Reservation Status');
 
     // 2. Server Persistence to MongoDB Atlas
     fetch(`/api/bookings/${id}/status`, {
@@ -259,6 +262,7 @@ export const ManagerBookings = () => {
         setEditingBooking(null);
         fetchBookingsData();
         setSelectedBooking(saved);
+        toast.success(editingBooking ? `Reservation for ${formData.guestName} updated!` : `Walk-in reservation for ${formData.guestName} created!`, editingBooking ? 'Booking Updated' : 'Booking Created');
       })
       .catch(() => setLoading(false));
   };

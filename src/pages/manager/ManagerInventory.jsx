@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, Search, Edit2, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Save } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerInventory = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [inventory, setInventory] = useState(() => getInstantData('inventory', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -62,7 +64,6 @@ export const ManagerInventory = () => {
   const handleSaveItem = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
-    setLoading(true);
 
     const calculatedAvailability = 
       formData.stock <= 0 
@@ -76,51 +77,36 @@ export const ManagerInventory = () => {
       availability: calculatedAvailability
     };
 
-    const url = editingItem ? `/api/inventory/${editingItem.id}` : '/api/inventory';
-    const method = editingItem ? 'PUT' : 'POST';
+    const isEdit = !!editingItem;
+    const url = isEdit ? `/api/inventory/${editingItem.id}` : '/api/inventory';
+    const method = isEdit ? 'PUT' : 'POST';
 
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    if (isEdit) {
+      setInventory(prev => {
+        const next = prev.map(i => i.id === editingItem.id ? { ...i, ...payload } : i);
+        try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+        return next;
       });
-      const saved = await res.json();
-      
-      if (editingItem) {
-        setInventory(prev => {
-          const next = prev.map(i => i.id === editingItem.id ? { ...i, ...payload, ...saved } : i);
-          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
-          return next;
-        });
-      } else {
-        const newItem = saved.id ? saved : { id: `inv_${Date.now()}`, ...payload };
-        setInventory(prev => {
-          const next = [newItem, ...prev];
-          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
-          return next;
-        });
-      }
-    } catch (err) {
-      if (editingItem) {
-        setInventory(prev => {
-          const next = prev.map(i => i.id === editingItem.id ? { ...i, ...payload } : i);
-          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
-          return next;
-        });
-      } else {
-        const fallback = { id: `inv_${Date.now()}`, ...payload };
-        setInventory(prev => {
-          const next = [fallback, ...prev];
-          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
-          return next;
-        });
-      }
-    } finally {
-      setLoading(false);
       setIsModalOpen(false);
       setEditingItem(null);
+      toast.success(`Inventory item "${formData.name}" updated!`, 'Stock Updated');
+    } else {
+      const newItem = { id: `inv_${Date.now()}`, ...payload };
+      setInventory(prev => {
+        const next = [newItem, ...prev];
+        try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+      setIsModalOpen(false);
+      setEditingItem(null);
+      toast.success(`New item "${formData.name}" added to inventory!`, 'Item Created');
     }
+
+    fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
   };
 
   const handleReorder = (itemId) => {
@@ -133,6 +119,8 @@ export const ManagerInventory = () => {
       try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
       return next;
     });
+
+    toast.success(`Restocked +150 units for "${item.name}"!`, 'Restock Order Placed');
 
     fetch(`/api/inventory/${itemId}`, {
       method: 'PUT',

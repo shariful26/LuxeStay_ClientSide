@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Clock, Hammer, HelpCircle, Save, Filter, Search, Edit2 } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerHousekeeping = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [rooms, setRooms] = useState(() => getInstantData('manager_rooms', []));
   const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
   const [editingNotesId, setEditingNotesId] = useState(null);
@@ -44,6 +46,9 @@ export const ManagerHousekeeping = () => {
   }, []);
 
   const handleStatusChange = (roomId, newStatus) => {
+    const room = rooms.find(r => r.id === roomId);
+    const roomName = room?.name || 'Suite';
+
     // 1. Optimistic instant local update (0ms latency)
     setRooms(prev => {
       const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingStatus: newStatus } : r);
@@ -51,15 +56,16 @@ export const ManagerHousekeeping = () => {
       return updated;
     });
 
+    toast.success(`${roomName} housekeeping status updated to ${newStatus}!`, 'Status Updated');
+
     // 2. Persist to MongoDB Atlas & JSON
-    const room = rooms.find(r => r.id === roomId) || {};
     fetch(`/api/rooms/${roomId}/housekeeping`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         housekeepingStatus: newStatus,
-        housekeepingPriority: room.housekeepingPriority || 'Medium',
-        housekeepingNotes: room.housekeepingNotes || ''
+        housekeepingPriority: room?.housekeepingPriority || 'Medium',
+        housekeepingNotes: room?.housekeepingNotes || ''
       })
     })
       .then(res => res.json())

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Save, CheckCircle2, Loader2, Camera, Upload, Image as ImageIcon, Sparkles, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const PRESET_AVATARS = [
   { label: 'Executive Gold', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80' },
@@ -13,6 +14,7 @@ const PRESET_AVATARS = [
 
 export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
   const { user, updateProfile } = useAuth();
+  const toast = useToast();
   const activeRole = user?.role || role;
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,16 +69,17 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
   const handleImageFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file (JPG, PNG, WEBP, etc.)');
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Profile image size should be under 2MB for fast cloud sync.', 'File Too Large');
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onloadend = () => {
         if (reader.result) {
           setFormData(prev => ({ ...prev, avatar: reader.result }));
-          setUploadNotice('Photo uploaded! Click "Save Profile Changes" to apply.');
-          setTimeout(() => setUploadNotice(''), 5000);
+          setUploadNotice('Profile image attached. Click "Save Changes" to apply.');
+          toast.info('Custom photo loaded! Click "Save Changes" to apply.', 'Photo Attached');
+          setTimeout(() => setUploadNotice(''), 4000);
         }
       };
       reader.readAsDataURL(file);
@@ -90,7 +93,10 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
     setLoading(false);
     if (res?.success) {
       setSaved(true);
+      toast.success('Your profile settings have been updated and synced with cloud!', 'Profile Saved');
       setTimeout(() => setSaved(false), 4000);
+    } else {
+      toast.error('Failed to update profile. Please try again.', 'Error');
     }
   };
 
@@ -290,6 +296,7 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
 };
 
 const PasswordSecuritySection = ({ user }) => {
+  const toast = useToast();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showCurrentPass, setShowCurrentPass] = useState(false);
@@ -318,15 +325,19 @@ const PasswordSecuritySection = ({ user }) => {
       setLoading(false);
       if (res.ok && data.success) {
         setMsg({ text: 'Password updated and encrypted with bcrypt successfully!', isError: false });
+        toast.success('Your password has been changed and securely encrypted!', 'Password Changed');
         setCurrentPassword('');
         setNewPassword('');
         setTimeout(() => setMsg({ text: '', isError: false }), 5000);
       } else {
-        setMsg({ text: data.error || 'Failed to update password', isError: true });
+        const errorText = data.error || 'Failed to update password';
+        setMsg({ text: errorText, isError: true });
+        toast.error(errorText, 'Password Reset Error');
       }
     } catch (err) {
       setLoading(false);
       setMsg({ text: 'Server error updating password', isError: true });
+      toast.error('Server error updating password', 'Error');
     }
   };
 

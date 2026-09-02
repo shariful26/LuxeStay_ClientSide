@@ -3,12 +3,14 @@ import { DollarSign, ArrowUpRight, Clock, CheckCircle, CreditCard, Building2, Gl
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const ManagerWallet = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
+  const toast = useToast();
   const [payouts, setPayouts] = useState(() => getInstantData('manager_payouts', []));
   const [transfers, setTransfers] = useState(() => getInstantData('manager_transfers', []));
   const [bookings, setBookings] = useState(() => getInstantData('manager_bookings', []));
@@ -186,65 +188,81 @@ export const ManagerWallet = () => {
   // Submit Admin Payout Request
   const handleRequestPayout = async (e) => {
     e.preventDefault();
-    if (Number(payoutForm.amount) <= 0 || Number(payoutForm.amount) > availableBalance) {
-      alert(`Withdrawal amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
+    const amountVal = Number(payoutForm.amount);
+    if (amountVal <= 0 || amountVal > availableBalance) {
+      toast.error(`Withdrawal amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch('/api/payouts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          partnerId: user?.id || 'u_1786134647659',
-          partnerName: user?.name || 'shariful',
-          ...payoutForm,
-          amount: Number(payoutForm.amount)
-        })
-      });
+    const newPayout = {
+      id: `po_${Date.now()}`,
+      partnerId: user?.id || 'u_1786134647659',
+      partnerName: user?.name || user?.companyName || 'Host Manager',
+      ...payoutForm,
+      amount: amountVal,
+      status: 'Pending',
+      createdAt: new Date().toISOString()
+    };
 
-      if (res.ok) {
-        const newPayout = await res.json();
-        setPayouts([newPayout, ...payouts]);
-        setIsPayoutModalOpen(false);
-      }
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
+    // Instant 0ms Optimistic UI Update & Cache Sync
+    setPayouts(prev => {
+      const updated = [newPayout, ...prev];
+      try {
+        localStorage.setItem('luxestay_cache_manager_payouts', JSON.stringify(updated));
+        localStorage.setItem('luxestay_cache_payouts', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    setIsPayoutModalOpen(false);
+    toast.success(`Payout request of ${formatPrice(amountVal)} submitted successfully.`);
+
+    // Asynchronous background persistence to MongoDB Atlas
+    fetch('/api/payouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPayout)
+    }).catch(() => {});
   };
 
   // Submit Direct Personal Account Transfer
   const handlePersonalTransfer = async (e) => {
     e.preventDefault();
-    if (Number(transferForm.amount) <= 0 || Number(transferForm.amount) > availableBalance) {
-      alert(`Transfer amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
+    const amountVal = Number(transferForm.amount);
+    if (amountVal <= 0 || amountVal > availableBalance) {
+      toast.error(`Transfer amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch('/api/transfers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          partnerId: user?.id || 'u_1786134647659',
-          partnerName: user?.name || 'shariful',
-          ...transferForm,
-          amount: Number(transferForm.amount)
-        })
-      });
+    const newTransfer = {
+      id: `tr_${Date.now()}`,
+      partnerId: user?.id || 'u_1786134647659',
+      partnerName: user?.name || user?.companyName || 'Host Manager',
+      ...transferForm,
+      amount: amountVal,
+      status: 'Completed',
+      createdAt: new Date().toISOString()
+    };
 
-      if (res.ok) {
-        const newTransfer = await res.json();
-        setTransfers([newTransfer, ...transfers]);
-        setIsTransferModalOpen(false);
-      }
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
+    // Instant 0ms Optimistic UI Update & Cache Sync
+    setTransfers(prev => {
+      const updated = [newTransfer, ...prev];
+      try {
+        localStorage.setItem('luxestay_cache_manager_transfers', JSON.stringify(updated));
+        localStorage.setItem('luxestay_cache_transfers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    setIsTransferModalOpen(false);
+    toast.success(`Transfer of ${formatPrice(amountVal)} processed successfully.`);
+
+    // Asynchronous background persistence to MongoDB Atlas
+    fetch('/api/transfers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTransfer)
+    }).catch(() => {});
   };
 
   // Combine Payouts and Transfers into a unified ledger list

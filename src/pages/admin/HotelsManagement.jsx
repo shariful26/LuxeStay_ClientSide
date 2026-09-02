@@ -7,10 +7,12 @@ import {
 import { Link } from 'react-router-dom';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
 export const HotelsManagement = () => {
+  const toast = useToast();
   const [hotels, setHotels] = useState(() => getInstantData('hotels', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -95,6 +97,7 @@ export const HotelsManagement = () => {
       updateCache(next);
       return next;
     });
+    toast.success(updatedFeatured ? `"${hotel.name}" is now featured on Homepage!` : `"${hotel.name}" removed from featured listings.`, 'Featured Status');
 
     try {
       const res = await fetch(`/api/hotels/${hotel.id}`, {
@@ -119,6 +122,7 @@ export const HotelsManagement = () => {
       updateCache(next);
       return next;
     });
+    toast.success(`"${hotel.name}" status updated to ${newStatus}!`, 'Hotel Status');
 
     try {
       const res = await fetch(`/api/hotels/${hotel.id}`, {
@@ -179,109 +183,75 @@ export const HotelsManagement = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleSaveHotel = async (e) => {
+  const handleSaveHotel = (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
-    setLoading(true);
 
-    try {
-      if (editingHotel) {
-        // UPDATE EXISTING HOTEL (PUT)
-        const res = await fetch(`/api/hotels/${editingHotel.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...formData,
-            pricePerNight: Number(formData.pricePerNight),
-            images: [formData.image]
-          })
-        });
+    const payload = {
+      ...formData,
+      pricePerNight: Number(formData.pricePerNight) || 450,
+      images: [formData.image || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"]
+    };
 
-        if (res.ok) {
-          const updated = await res.json();
-          setHotels(prev => {
-            const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...updated } : h);
-            updateCache(next);
-            return next;
-          });
-        } else {
-          setHotels(prev => {
-            const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h);
-            updateCache(next);
-            return next;
-          });
-        }
-      } else {
-        // CREATE NEW HOTEL (POST)
-        const res = await fetch('/api/hotels', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...formData,
-            pricePerNight: Number(formData.pricePerNight),
-            images: [formData.image]
-          })
-        });
-
-        if (res.ok) {
-          const created = await res.json();
-          setHotels(prev => {
-            const next = [created, ...prev];
-            updateCache(next);
-            return next;
-          });
-        } else {
-          const fallback = {
-            id: `h${Date.now()}`,
-            ...formData,
-            pricePerNight: Number(formData.pricePerNight),
-            images: [formData.image],
-            featured: false
-          };
-          setHotels(prev => {
-            const next = [fallback, ...prev];
-            updateCache(next);
-            return next;
-          });
-        }
-      }
-    } catch (err) {
-      if (editingHotel) {
-        setHotels(prev => {
-          const next = prev.map(h => h.id === editingHotel.id ? { ...h, ...formData, pricePerNight: Number(formData.pricePerNight), images: [formData.image] } : h);
-          updateCache(next);
-          return next;
-        });
-      } else {
-        const fallback = {
-          id: `h${Date.now()}`,
-          ...formData,
-          pricePerNight: Number(formData.pricePerNight),
-          images: [formData.image],
-          featured: false
-        };
-        setHotels(prev => {
-          const next = [fallback, ...prev];
-          updateCache(next);
-          return next;
-        });
-      }
-    } finally {
-      setLoading(false);
+    if (editingHotel) {
+      const updatedItem = { ...editingHotel, ...payload };
+      setHotels(prev => {
+        const next = prev.map(h => h.id === editingHotel.id ? updatedItem : h);
+        updateCache(next);
+        return next;
+      });
       setIsAddModalOpen(false);
       setEditingHotel(null);
+      toast.success(`Hotel "${formData.name}" updated successfully!`, 'Hotel Updated');
+
+      fetch(`/api/hotels/${editingHotel.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } else {
+      const newHotel = {
+        id: `h${Date.now()}`,
+        ...payload,
+        rating: 5.0,
+        reviewCount: 0,
+        featured: false
+      };
+      setHotels(prev => {
+        const next = [newHotel, ...prev];
+        updateCache(next);
+        return next;
+      });
+      setIsAddModalOpen(false);
+      setEditingHotel(null);
+      toast.success(`New hotel property "${formData.name}" registered!`, 'Hotel Created');
+
+      fetch('/api/hotels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     }
   };
 
-  const handleDeleteHotel = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this hotel listing from the platform?')) return;
-    try {
-      await fetch(`/api/hotels/${id}`, { method: 'DELETE' });
-    } catch (e) {}
-    setHotels(prev => {
-      const next = prev.filter(h => h.id !== id);
-      updateCache(next);
-      return next;
+  const handleDeleteHotel = (id, hotelName = 'Hotel') => {
+    toast.confirm({
+      title: 'Delete Hotel Listing?',
+      message: `Are you sure you want to permanently delete "${hotelName}" from the platform? All associated suites will also be affected.`,
+      confirmText: 'Yes, Delete Listing',
+      type: 'danger',
+      onConfirm: async () => {
+        setHotels(prev => {
+          const next = prev.filter(h => h.id !== id);
+          updateCache(next);
+          return next;
+        });
+        toast.success(`"${hotelName}" removed from platform.`, 'Hotel Deleted');
+
+        try {
+          await fetch(`/api/hotels/${id}`, { method: 'DELETE' });
+        } catch (e) {}
+      }
     });
   };
 

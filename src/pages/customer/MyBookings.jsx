@@ -5,6 +5,7 @@ import { WriteReviewModal } from '../../components/WriteReviewModal';
 import { useAuth } from '../../context/AuthContext';
 import { useBooking } from '../../context/BookingContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
@@ -22,6 +23,7 @@ export const MyBookings = () => {
   const { user } = useAuth();
   const { activeVoucher, setActiveVoucher, setIsVoucherModalOpen } = useBooking();
   const { formatPrice } = useCurrency();
+  const toast = useToast();
 
   useEffect(() => {
     fetch('/api/hotels')
@@ -95,12 +97,15 @@ export const MyBookings = () => {
       const data = await res.json();
       if (!res.ok) {
         setExtending(false);
-        setExtendErrorMsg(data.error || 'This room is already reserved for future dates by another guest.');
+        const errMsg = data.error || 'This room is already reserved for future dates by another guest.';
+        setExtendErrorMsg(errMsg);
+        toast.error(errMsg, 'Extension Failed');
         return;
       }
 
       setExtending(false);
       setExtendSuccessMsg('Stay extended successfully!');
+      toast.success(`Stay extended by +${extraNights} nights! New check-out: ${newCheckOut}`, 'Reservation Extended');
       
       // Update local state
       setBookings(prev => prev.map(b => b.id === selectedExtendBooking.id ? data.booking : b));

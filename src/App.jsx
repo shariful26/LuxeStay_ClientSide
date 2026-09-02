@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { MessageProvider } from './context/MessageContext';
+import { ToastProvider } from './context/ToastContext';
 
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -168,22 +169,24 @@ function AppContent() {
     </div>
   );
 }
-
+ 
 export function App() {
   return (
     <LanguageProvider>
       <ThemeProvider>
         <CurrencyProvider>
           <AuthProvider>
-            <BookingProvider>
-              <WishlistProvider>
-                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                  <MessageProvider>
-                    <AppContent />
-                  </MessageProvider>
-                </Router>
-              </WishlistProvider>
-            </BookingProvider>
+            <ToastProvider>
+              <BookingProvider>
+                <WishlistProvider>
+                  <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <MessageProvider>
+                      <AppContent />
+                    </MessageProvider>
+                  </Router>
+                </WishlistProvider>
+              </BookingProvider>
+            </ToastProvider>
           </AuthProvider>
         </CurrencyProvider>
       </ThemeProvider>

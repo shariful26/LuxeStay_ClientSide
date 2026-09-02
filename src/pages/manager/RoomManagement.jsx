@@ -3,11 +3,13 @@ import { Plus, X, Trash2, Bed, Users, DollarSign, Image as ImageIcon, Sparkles, 
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useToast } from '../../context/ToastContext';
 import { getInstantData, filterPartnerItems } from '../../utils/instantCache';
 
 export const RoomManagement = () => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
+  const toast = useToast();
   const [partnerHotels, setPartnerHotels] = useState(() => getInstantData('manager_hotels', []));
   const [rooms, setRooms] = useState(() => getInstantData('manager_rooms', []));
   const [selectedRoom, setSelectedRoom] = useState(() => {
@@ -146,22 +148,29 @@ export const RoomManagement = () => {
     } catch (e) {}
   };
 
-  const handleDelete = async (roomId) => {
+  const handleDelete = (roomId) => {
     if (!roomId) return;
-    if (window.confirm("Are you sure you want to permanently delete this room type?")) {
-      setRooms(prev => {
-        const next = prev.filter(r => r.id !== roomId);
-        updateRoomsCache(next);
-        return next;
-      });
-      if (selectedRoom?.id === roomId) {
-        setSelectedRoom(null);
-      }
+    toast.confirm({
+      title: 'Delete Room Suite?',
+      message: 'Are you sure you want to permanently remove this suite from your hotel inventory? This action cannot be undone.',
+      confirmText: 'Yes, Delete Suite',
+      type: 'danger',
+      onConfirm: async () => {
+        setRooms(prev => {
+          const next = prev.filter(r => r.id !== roomId);
+          updateRoomsCache(next);
+          return next;
+        });
+        if (selectedRoom?.id === roomId) {
+          setSelectedRoom(null);
+        }
+        toast.success('Room suite deleted successfully!', 'Deleted');
 
-      try {
-        await fetch(`/api/rooms/${roomId}`, { method: 'DELETE' });
-      } catch (e) {}
-    }
+        try {
+          await fetch(`/api/rooms/${roomId}`, { method: 'DELETE' });
+        } catch (e) {}
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -181,8 +190,9 @@ export const RoomManagement = () => {
       image: roomImage
     };
 
-    const url = editingRoom ? `/api/rooms/${editingRoom.id}` : '/api/rooms';
-    const method = editingRoom ? 'PUT' : 'POST';
+    const isEdit = !!editingRoom;
+    const url = isEdit ? `/api/rooms/${editingRoom.id}` : '/api/rooms';
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
       const res = await fetch(url, {
@@ -193,13 +203,14 @@ export const RoomManagement = () => {
       const saved = await res.json();
       const finalResult = { ...(editingRoom || {}), ...payload, ...(saved || {}) };
 
-      if (editingRoom) {
+      if (isEdit) {
         setRooms(prev => {
           const next = prev.map(r => r.id === editingRoom.id ? finalResult : r);
           updateRoomsCache(next);
           return next;
         });
         setSelectedRoom(finalResult);
+        toast.success(`Suite "${formData.name}" updated successfully!`, 'Room Updated');
       } else {
         const newCreatedRoom = { id: saved.id || `r${Date.now()}`, ...finalResult };
         setRooms(prev => {
@@ -208,16 +219,18 @@ export const RoomManagement = () => {
           return next;
         });
         setSelectedRoom(newCreatedRoom);
+        toast.success(`New suite "${formData.name}" added successfully!`, 'Room Created');
       }
     } catch (err) {
       const fallbackRoom = { id: editingRoom ? editingRoom.id : `r${Date.now()}`, ...payload };
-      if (editingRoom) {
+      if (isEdit) {
         setRooms(prev => {
           const next = prev.map(r => r.id === editingRoom.id ? fallbackRoom : r);
           updateRoomsCache(next);
           return next;
         });
         setSelectedRoom(fallbackRoom);
+        toast.success(`Suite "${formData.name}" updated!`, 'Room Updated');
       } else {
         setRooms(prev => {
           const next = [fallbackRoom, ...prev];
@@ -225,6 +238,7 @@ export const RoomManagement = () => {
           return next;
         });
         setSelectedRoom(fallbackRoom);
+        toast.success(`New suite "${formData.name}" added!`, 'Room Created');
       }
     } finally {
       setLoading(false);

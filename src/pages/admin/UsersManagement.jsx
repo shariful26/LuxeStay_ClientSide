@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Search, Trash2, ShieldCheck, User, Briefcase, Shield, X, Sparkles, Phone, Mail, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
+import { useToast } from '../../context/ToastContext';
 
 import { getInstantData } from '../../utils/instantCache';
 
 export const UsersManagement = () => {
+  const toast = useToast();
   const [users, setUsers] = useState(() => getInstantData('users', []));
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -44,12 +46,13 @@ export const UsersManagement = () => {
     } catch (e) {}
   };
 
-  const handleRoleChange = async (id, newRole) => {
+  const handleRoleChange = async (id, newRole, userName = 'User') => {
     setUsers(prev => {
       const next = prev.map(u => u.id === id ? { ...u, role: newRole } : u);
       updateUsersCache(next);
       return next;
     });
+    toast.success(`${userName} role changed to ${newRole.toUpperCase()}!`, 'Role Updated');
 
     try {
       const res = await fetch(`/api/users/${id}/role`, {
@@ -68,72 +71,60 @@ export const UsersManagement = () => {
     } catch (e) {}
   };
 
-  const handleDeleteUser = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user account?')) return;
-    try {
-      await fetch(`/api/users/${id}`, { method: 'DELETE' });
-    } catch (e) {}
-    setUsers(prev => {
-      const next = prev.filter(u => u.id !== id);
-      updateUsersCache(next);
-      return next;
+  const handleDeleteUser = (id, userName = 'User') => {
+    toast.confirm({
+      title: 'Delete User Account?',
+      message: `Are you sure you want to permanently delete the account of "${userName}"? This action cannot be undone.`,
+      confirmText: 'Yes, Delete Account',
+      type: 'danger',
+      onConfirm: async () => {
+        setUsers(prev => {
+          const next = prev.filter(u => u.id !== id);
+          updateUsersCache(next);
+          return next;
+        });
+        toast.success(`User "${userName}" deleted successfully!`, 'User Deleted');
+
+        try {
+          await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        } catch (e) {}
+      }
     });
   };
 
-  const handleAddUser = async (e) => {
+  const handleAddUser = (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) return;
-    setLoading(true);
 
-    try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+    const newUser = {
+      id: `u_${Date.now()}`,
+      ...formData,
+      memberSince: '2026'
+    };
 
-      if (res.ok) {
-        const createdUser = await res.json();
-        setUsers(prev => {
-          const next = [createdUser, ...prev];
-          updateUsersCache(next);
-          return next;
-        });
-      } else {
-        const fallbackUser = {
-          id: `u_${Date.now()}`,
-          ...formData,
-          memberSince: '2026'
-        };
-        setUsers(prev => {
-          const next = [fallbackUser, ...prev];
-          updateUsersCache(next);
-          return next;
-        });
-      }
-    } catch (err) {
-      const fallbackUser = {
-        id: `u_${Date.now()}`,
-        ...formData,
-        memberSince: '2026'
-      };
-      setUsers(prev => {
-        const next = [fallbackUser, ...prev];
-        updateUsersCache(next);
-        return next;
-      });
-    } finally {
-      setLoading(false);
-      setIsAddModalOpen(false);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'customer',
-        country: 'United States',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
-      });
-    }
+    setUsers(prev => {
+      const next = [newUser, ...prev];
+      updateUsersCache(next);
+      return next;
+    });
+
+    setIsAddModalOpen(false);
+    toast.success(`Account for "${formData.name}" created as ${formData.role.toUpperCase()}!`, 'User Created');
+    
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'customer',
+      country: 'United States',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+    });
+
+    fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    }).catch(() => {});
   };
 
   const filteredUsers = users.filter(u => {
@@ -308,7 +299,7 @@ export const UsersManagement = () => {
                       <div className="flex items-center justify-end gap-2">
                         <select 
                           value={u.role} 
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          onChange={(e) => handleRoleChange(u.id, e.target.value, u.name)}
                           className="p-2.5 py-1.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-light)] text-xs font-bold text-[var(--text-primary)] outline-none cursor-pointer hover:border-amber-500 transition-colors shadow-xs"
                         >
                           <option value="customer" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Customer</option>
@@ -316,7 +307,7 @@ export const UsersManagement = () => {
                           <option value="admin" className="bg-[var(--bg-card)] text-[var(--text-primary)]">Super Admin</option>
                         </select>
                         <button 
-                          onClick={() => handleDeleteUser(u.id)}
+                          onClick={() => handleDeleteUser(u.id, u.name)}
                           className="p-1.5 rounded-xl text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
                           title="Delete User Account"
                         >
