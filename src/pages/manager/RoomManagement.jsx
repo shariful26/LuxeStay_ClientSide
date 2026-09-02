@@ -98,6 +98,7 @@ export const RoomManagement = () => {
     setEditingRoom(null);
     setFormData({
       name: '',
+      hotelId: partnerHotels[0]?.id || 'h1',
       type: 'Deluxe Room',
       price: 450,
       capacity: 2,
@@ -117,16 +118,18 @@ export const RoomManagement = () => {
 
   const openEditModal = (room) => {
     setEditingRoom(room);
+    const roomImg = (room.images && room.images[0]) || room.image || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80';
     setFormData({
       name: room.name || '',
+      hotelId: room.hotelId || partnerHotels[0]?.id || 'h1',
       type: room.type || 'Deluxe Room',
       price: room.price || 450,
       capacity: room.capacity || 2,
       bedType: room.bedType || '1 King Bed',
       size: room.size || '75 m² / 807 sq ft',
       view: room.view || 'Panoramic Sea & Caldera View',
-      location: room.location || '',
-      image: room.image || '',
+      location: room.location || room.address || '',
+      image: roomImg,
       status: room.status || 'Available',
       description: room.description || '',
       freeCancellation: room.freeCancellation !== undefined ? room.freeCancellation : true,
@@ -136,50 +139,98 @@ export const RoomManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (roomId) => {
+  const updateRoomsCache = (newRooms) => {
+    try {
+      localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(newRooms));
+      localStorage.setItem('luxestay_cache_rooms', JSON.stringify(newRooms));
+    } catch (e) {}
+  };
+
+  const handleDelete = async (roomId) => {
+    if (!roomId) return;
     if (window.confirm("Are you sure you want to permanently delete this room type?")) {
-      fetch(`/api/rooms/${roomId}`, { method: 'DELETE' })
-        .then(() => {
-          setRooms(prev => {
-            const next = prev.filter(r => r.id !== roomId);
-            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(next)); } catch (e) {}
-            return next;
-          });
-          if (selectedRoom?.id === roomId) {
-            setSelectedRoom(null);
-          }
-        });
+      setRooms(prev => {
+        const next = prev.filter(r => r.id !== roomId);
+        updateRoomsCache(next);
+        return next;
+      });
+      if (selectedRoom?.id === roomId) {
+        setSelectedRoom(null);
+      }
+
+      try {
+        await fetch(`/api/rooms/${roomId}`, { method: 'DELETE' });
+      } catch (e) {}
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) return;
     setLoading(true);
 
-    const targetHotelId = partnerHotels[0]?.id || 'h1';
+    const targetHotelId = formData.hotelId || editingRoom?.hotelId || partnerHotels[0]?.id || 'h1';
+    const roomImage = formData.image || "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80";
 
     const payload = {
       ...formData,
       hotelId: targetHotelId,
-      images: [formData.image],
+      price: Number(formData.price) || 350,
+      capacity: Number(formData.capacity) || 2,
+      images: [roomImage],
+      image: roomImage
     };
 
     const url = editingRoom ? `/api/rooms/${editingRoom.id}` : '/api/rooms';
     const method = editingRoom ? 'PUT' : 'POST';
 
-    fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then(saved => {
-        setLoading(false);
-        setIsModalOpen(false);
-        fetchRoomsData();
-        setSelectedRoom(saved);
-      })
-      .catch(() => setLoading(false));
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const saved = await res.json();
+      const finalResult = { ...(editingRoom || {}), ...payload, ...(saved || {}) };
+
+      if (editingRoom) {
+        setRooms(prev => {
+          const next = prev.map(r => r.id === editingRoom.id ? finalResult : r);
+          updateRoomsCache(next);
+          return next;
+        });
+        setSelectedRoom(finalResult);
+      } else {
+        const newCreatedRoom = { id: saved.id || `r${Date.now()}`, ...finalResult };
+        setRooms(prev => {
+          const next = [newCreatedRoom, ...prev];
+          updateRoomsCache(next);
+          return next;
+        });
+        setSelectedRoom(newCreatedRoom);
+      }
+    } catch (err) {
+      const fallbackRoom = { id: editingRoom ? editingRoom.id : `r${Date.now()}`, ...payload };
+      if (editingRoom) {
+        setRooms(prev => {
+          const next = prev.map(r => r.id === editingRoom.id ? fallbackRoom : r);
+          updateRoomsCache(next);
+          return next;
+        });
+        setSelectedRoom(fallbackRoom);
+      } else {
+        setRooms(prev => {
+          const next = [fallbackRoom, ...prev];
+          updateRoomsCache(next);
+          return next;
+        });
+        setSelectedRoom(fallbackRoom);
+      }
+    } finally {
+      setLoading(false);
+      setIsModalOpen(false);
+      setEditingRoom(null);
+    }
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -291,7 +342,7 @@ export const RoomManagement = () => {
                   >
                     {/* Left image thumb */}
                     <div className="w-full sm:w-44 h-32 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0">
-                      <img src={room.image || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80"} alt={room.name} className="w-full h-full object-cover" />
+                      <img src={(room.images && room.images[0]) || room.image || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80"} alt={room.name} className="w-full h-full object-cover" />
                     </div>
 
                     {/* Right info */}
@@ -329,7 +380,30 @@ export const RoomManagement = () => {
 
                       {/* Bottom row */}
                       <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
-                        <span className="text-[11px] font-bold text-slate-400">Available: <strong className="text-slate-700">18/25 Rooms</strong></span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(room);
+                            }}
+                            className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white transition-colors cursor-pointer text-[10px] font-black flex items-center gap-1"
+                            title="Edit this room"
+                          >
+                            <Edit3 className="w-3 h-3" /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(room.id);
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-black flex items-center gap-1"
+                            title="Delete this room"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                         <div className="flex items-baseline gap-0.5">
                           <span className="text-base font-black text-slate-900">{formatPrice(room.price || 150)}</span>
                           <span className="text-[10px] text-slate-400 font-semibold">/night</span>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, CheckCircle2, Loader2, MapPin, Star, Image, CheckSquare, Upload, X, Users, Bed, Shield, Building2, Sparkles, ShieldCheck } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +16,8 @@ const HOTEL_AMENITIES_LIST = [
 ];
 
 export const AddEditHotel = () => {
+  const { id } = useParams();
+  const isEditing = !!id;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
@@ -32,11 +34,39 @@ export const AddEditHotel = () => {
     capacity: 2,
     bedType: '1 King Bed',
     roomType: 'Deluxe Executive Suite',
-    status: 'Active / Available',
+    status: 'Pending',
     image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
     amenities: ["Infinity Pool", "Private Beach", "Luxury Spa", "Free Wi-Fi", "Butler Service"],
     description: ''
   });
+
+  useEffect(() => {
+    if (isEditing && id) {
+      fetch(`/api/hotels/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.error) {
+            setFormData({
+              name: data.name || '',
+              destination: data.destination || 'Santorini, Greece',
+              destinationSlug: data.destinationSlug || 'santorini',
+              address: data.address || '',
+              pricePerNight: data.pricePerNight || 450,
+              category: data.category || 'Resort & Spa',
+              starRating: data.starRating || 5,
+              capacity: data.capacity || 2,
+              bedType: data.bedType || '1 King Bed',
+              roomType: data.roomType || 'Deluxe Executive Suite',
+              status: data.status || 'Pending',
+              image: (data.images && data.images[0]) || data.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+              amenities: Array.isArray(data.amenities) && data.amenities.length > 0 ? data.amenities : ["Infinity Pool", "Private Beach", "Luxury Spa", "Free Wi-Fi", "Butler Service"],
+              description: data.description || ''
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [id, isEditing]);
 
   const toggleAmenity = (amenity) => {
     setFormData(prev => {
@@ -74,15 +104,37 @@ export const AddEditHotel = () => {
       partnerId: user?.id || `p_${Date.now()}`,
       partnerEmail: user?.email || '',
       partnerName: user?.name || user?.companyName || 'Aura Hospitality',
-      status: 'Pending'
+      images: [formData.image],
+      status: isEditing ? (formData.status || 'Pending') : 'Pending'
     };
 
+    const url = isEditing ? `/api/hotels/${id}` : '/api/hotels';
+    const method = isEditing ? 'PUT' : 'POST';
+
     try {
-      await fetch('/api/hotels', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(hotelPayload)
       });
+      const savedHotel = await res.json();
+      
+      // Update local storage cache for manager
+      try {
+        const cached = localStorage.getItem('luxestay_cache_manager_hotels');
+        if (cached) {
+          let list = JSON.parse(cached);
+          if (Array.isArray(list)) {
+            if (isEditing) {
+              list = list.map(h => h.id === id ? { ...h, ...hotelPayload, ...savedHotel } : h);
+            } else {
+              list = [{ id: savedHotel.id || `h${Date.now()}`, ...hotelPayload, ...savedHotel }, ...list];
+            }
+            localStorage.setItem('luxestay_cache_manager_hotels', JSON.stringify(list));
+            localStorage.setItem('luxestay_cache_hotels', JSON.stringify(list));
+          }
+        }
+      } catch (e) {}
     } catch (err) {
       // safe fallback on save
     }
