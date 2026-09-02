@@ -2,20 +2,48 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
+// Safe storage helper with quota management and cache garbage collection
+const safeSetUserStorage = (userObj) => {
+  if (!userObj) {
+    try { localStorage.removeItem('luxestay_user'); } catch (e) {}
+    return;
+  }
+  try {
+    localStorage.setItem('luxestay_user', JSON.stringify(userObj));
+  } catch (err) {
+    // If QuotaExceededError, clean stale caches
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('luxestay_cache_') || k.startsWith('luxestay_read_')) {
+          localStorage.removeItem(k);
+        }
+      });
+      // Retry with optimized lightweight user
+      const lightUser = { ...userObj };
+      if (lightUser.avatar && lightUser.avatar.startsWith('data:') && lightUser.avatar.length > 25000) {
+        lightUser.avatar = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
+      }
+      localStorage.setItem('luxestay_user', JSON.stringify(lightUser));
+    } catch (e) {
+      console.warn('Storage quota full, retaining in memory state.');
+    }
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('luxestay_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('luxestay_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
   });
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('luxestay_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('luxestay_user');
-    }
+    safeSetUserStorage(user);
   }, [user]);
 
   // Instant client-side cached profiles for quick demo login
@@ -101,7 +129,7 @@ export const AuthProvider = ({ children }) => {
     
     if (data?.user) {
       setUser(data.user);
-      localStorage.setItem('luxestay_user', JSON.stringify(data.user));
+      safeSetUserStorage(data.user);
       return data;
     } else if (data?.error && data.error !== 'Unable to connect to authentication server') {
       return { error: data.error };
@@ -117,7 +145,7 @@ export const AuthProvider = ({ children }) => {
       const userPayload = { ...demoUser, role: effectiveRole };
       
       setUser(userPayload);
-      localStorage.setItem('luxestay_user', JSON.stringify(userPayload));
+      safeSetUserStorage(userPayload);
       return { success: true, user: userPayload };
     }
 
@@ -189,7 +217,7 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       if (data.user) {
         setUser(data.user);
-        localStorage.setItem('luxestay_user', JSON.stringify(data.user));
+        safeSetUserStorage(data.user);
         return { success: true, user: data.user, message: data.message };
       }
     } catch (e) {
@@ -197,7 +225,7 @@ export const AuthProvider = ({ children }) => {
     }
     const newUserState = { ...user, ...updatedData };
     setUser(newUserState);
-    localStorage.setItem('luxestay_user', JSON.stringify(newUserState));
+    safeSetUserStorage(newUserState);
     return { success: true, user: newUserState };
   };
 
@@ -220,7 +248,7 @@ export const AuthProvider = ({ children }) => {
         const found = allUsers.find(u => u.role === effectiveRole);
         if (found) {
           setUser(found);
-          localStorage.setItem('luxestay_user', JSON.stringify(found));
+          safeSetUserStorage(found);
           return found;
         }
       }

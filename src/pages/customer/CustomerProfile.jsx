@@ -65,22 +65,44 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
     }
   }, [user]);
 
-  // Handle local file select and convert to base64 Data URL
+  // Handle local file select and convert to high-performance compressed base64 avatar
   const handleImageFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Profile image size should be under 2MB for fast cloud sync.', 'File Too Large');
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          setFormData(prev => ({ ...prev, avatar: reader.result }));
-          setUploadNotice('Profile image attached. Click "Save Changes" to apply.');
-          toast.info('Custom photo loaded! Click "Save Changes" to apply.', 'Photo Attached');
+      reader.onload = (readerEvent) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 320;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+          setFormData(prev => ({ ...prev, avatar: compressedDataUrl }));
+          setUploadNotice('Profile image optimized & attached. Click "Save Changes" to apply.');
+          toast.info('Custom photo loaded & optimized! Click "Save Changes" to apply.', 'Photo Attached');
           setTimeout(() => setUploadNotice(''), 4000);
-        }
+        };
+        img.onerror = () => {
+          setFormData(prev => ({ ...prev, avatar: readerEvent.target?.result }));
+        };
+        img.src = readerEvent.target?.result;
       };
       reader.readAsDataURL(file);
     }
