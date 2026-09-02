@@ -67,14 +67,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Robust Helper for Authentication API Calls (handles serverless cold-starts & connection drops)
-  const safeAuthFetch = async (endpoint, payload) => {
+  // Robust Helper for Authentication API Calls (handles serverless cold-starts & connection drops with timeout)
+  const safeAuthFetch = async (endpoint, payload, timeoutMs = 3500) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       const text = await res.text();
       if (text && text.trim().startsWith('{')) {
@@ -82,16 +86,17 @@ export const AuthProvider = ({ children }) => {
         return { status: res.status, data };
       }
     } catch (err) {
-      // safe fallback on network disconnect
+      clearTimeout(timeoutId);
+      // safe fallback on network disconnect or timeout
     }
     return { status: 500, data: { error: 'Unable to connect to authentication server' } };
   };
 
-  // Real HTTP Login API (Live MongoDB Atlas Authentication)
+  // Real HTTP Login API (Live MongoDB Atlas & Fast Server Authentication)
   const login = async (email, password, role = 'customer') => {
     const cleanEmail = String(email || '').trim().toLowerCase();
 
-    // 1. Query live MongoDB Atlas authentication server
+    // 1. Query live server authentication
     const { data } = await safeAuthFetch('/api/auth/login', { email: cleanEmail, password, role });
     
     if (data?.user) {
@@ -102,7 +107,7 @@ export const AuthProvider = ({ children }) => {
       return { error: data.error };
     }
 
-    // 2. Intelligent offline / network fallback for demo users
+    // 2. Intelligent offline / network fallback for demo users if backend server unreachable
     if (CLIENT_DEMO_USERS[cleanEmail] && (password === '123456' || password.length >= 4)) {
       const demoUser = CLIENT_DEMO_USERS[cleanEmail];
       const effectiveRole = demoUser.role || role;
