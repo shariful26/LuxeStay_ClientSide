@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Robust Helper for Authentication API Calls (handles serverless cold-starts & connection drops with timeout)
-  const safeAuthFetch = async (endpoint, payload, timeoutMs = 3500) => {
+  const safeAuthFetch = async (endpoint, payload, timeoutMs = 8000) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
