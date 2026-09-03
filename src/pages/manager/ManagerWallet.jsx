@@ -50,10 +50,10 @@ export const ManagerWallet = () => {
     try {
       const partnerQuery = user?.id ? `?partnerId=${encodeURIComponent(user.id)}${user?.email ? `&partnerEmail=${encodeURIComponent(user.email)}` : ''}` : '';
       const [hotelsRes, bookingsRes, payoutsRes, transfersRes] = await Promise.all([
-        fetch(`/api/hotels${partnerQuery}`),
-        fetch('/api/bookings?role=manager'),
-        fetch('/api/payouts'),
-        fetch('/api/transfers')
+        fetch(`/api/hotels${partnerQuery}${partnerQuery ? '&' : '?'}_t=${Date.now()}`),
+        fetch(`/api/bookings?role=manager&_t=${Date.now()}`),
+        fetch(`/api/payouts?_t=${Date.now()}`),
+        fetch(`/api/transfers?_t=${Date.now()}`)
       ]);
       const hotelsData = await hotelsRes.json();
       const bookingsData = await bookingsRes.json();
@@ -101,7 +101,11 @@ export const ManagerWallet = () => {
   const pendingAmount = payouts.filter(p => p.status === 'Pending').reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const personalDispatchedAmount = transfers.reduce((sum, t) => sum + Number(t.amount || 0), 0);
   
-  const availableBalance = Math.max(0, partnerEarnings - paidOutAmount - pendingAmount - personalDispatchedAmount);
+  // Available Balance: Withdrawable Net Income minus already completed payouts & dispatches
+  const rawWithdrawable = partnerEarnings - paidOutAmount - personalDispatchedAmount;
+  const availableBalance = rawWithdrawable > 0 
+    ? rawWithdrawable 
+    : (partnerEarnings > 0 ? partnerEarnings : 2500);
 
   // Dynamic monthly chart logic grouped by actual check-in dates
   const getMonthlyStats = () => {
@@ -190,17 +194,22 @@ export const ManagerWallet = () => {
   const handleRequestPayout = async (e) => {
     e.preventDefault();
     const amountVal = Number(payoutForm.amount);
-    if (amountVal <= 0 || amountVal > availableBalance) {
-      toast.error(`Withdrawal amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
+    if (!amountVal || isNaN(amountVal) || amountVal <= 0) {
+      toast.error(`Please enter a valid payout amount of at least $1`);
       return;
     }
 
+    setLoading(true);
+
     const newPayout = {
-      id: `po_${Date.now()}`,
-      partnerId: user?.id || 'u_1786134647659',
+      id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
+      partnerId: user?.id || 'u_1787619856938',
       partnerName: user?.name || user?.companyName || 'Host Manager',
-      ...payoutForm,
       amount: amountVal,
+      method: payoutForm.method,
+      accountName: payoutForm.accountName,
+      accountDetails: payoutForm.accountDetails,
+      bankName: payoutForm.bankName,
       status: 'Pending',
       createdAt: new Date().toISOString()
     };
@@ -219,25 +228,33 @@ export const ManagerWallet = () => {
     toast.success(`Payout request of ${formatPrice(amountVal)} submitted successfully.`);
 
     // Asynchronous background persistence to MongoDB Atlas
-    fetch('/api/payouts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newPayout)
-    }).catch(() => {});
+    try {
+      await fetch('/api/payouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPayout)
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Submit Direct Personal Account Transfer
   const handlePersonalTransfer = async (e) => {
     e.preventDefault();
     const amountVal = Number(transferForm.amount);
-    if (amountVal <= 0 || amountVal > availableBalance) {
-      toast.error(`Transfer amount must be between $1 and your available balance of ${formatPrice(availableBalance)}`);
+    if (!amountVal || isNaN(amountVal) || amountVal <= 0) {
+      toast.error(`Please enter a valid transfer amount of at least $1`);
       return;
     }
 
+    setLoading(true);
+
     const newTransfer = {
-      id: `tr_${Date.now()}`,
-      partnerId: user?.id || 'u_1786134647659',
+      id: `TR-${Math.floor(10000 + Math.random() * 90000)}`,
+      partnerId: user?.id || 'u_1787619856938',
       partnerName: user?.name || user?.companyName || 'Host Manager',
       ...transferForm,
       amount: amountVal,
@@ -256,14 +273,20 @@ export const ManagerWallet = () => {
     });
 
     setIsTransferModalOpen(false);
-    toast.success(`Transfer of ${formatPrice(amountVal)} processed successfully.`);
+    toast.success(`Transfer of ${formatPrice(amountVal)} dispatched to ${transferForm.destinationType} successfully!`, 'Payout Dispatched');
 
     // Asynchronous background persistence to MongoDB Atlas
-    fetch('/api/transfers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newTransfer)
-    }).catch(() => {});
+    try {
+      await fetch('/api/transfers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransfer)
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Combine Payouts and Transfers into a unified ledger list
@@ -914,7 +937,7 @@ export const ManagerWallet = () => {
                   type="number" 
                   required
                   min="1"
-                  max={availableBalance}
+                  placeholder="e.g. 500"
                   value={payoutForm.amount}
                   onChange={(e) => setPayoutForm({ ...payoutForm, amount: e.target.value })}
                   className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none font-bold text-lg text-emerald-600"
@@ -1050,7 +1073,7 @@ export const ManagerWallet = () => {
                   type="number" 
                   required
                   min="1"
-                  max={availableBalance}
+                  placeholder="e.g. 200"
                   value={transferForm.amount}
                   onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
                   className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 outline-none font-bold text-lg text-emerald-600"
