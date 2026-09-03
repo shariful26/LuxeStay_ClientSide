@@ -20,7 +20,7 @@ export const ManagerMessages = () => {
   const prevMessagesLengthRef = React.useRef(0);
   const prevActiveChatIdRef = React.useRef('');
 
-  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount } = useMessages();
+  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount, deleteMessageFromContext, clearConversationFromContext } = useMessages();
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editMessageText, setEditMessageText] = useState('');
   const [isThreadMenuOpen, setIsThreadMenuOpen] = useState(false);
@@ -209,8 +209,6 @@ export const ManagerMessages = () => {
       markMessagesAsRead(activeChatId);
     }
   }, [activeChatId]);
-
-  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount, deleteMessageFromContext, clearConversationFromContext } = useMessages();
 
   // Individual message Edit Handler (Strict single message edit)
   const handleSaveEdit = async (msgId) => {
