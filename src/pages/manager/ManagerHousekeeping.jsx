@@ -24,15 +24,18 @@ export const ManagerHousekeeping = () => {
   const fetchData = async () => {
     try {
       const [roomsRes, bookingsRes] = await Promise.all([
-        fetch('/api/rooms'),
-        fetch('/api/bookings?role=manager')
+        fetch(`/api/rooms?_t=${Date.now()}`),
+        fetch(`/api/bookings?role=manager&_t=${Date.now()}`)
       ]);
       const roomsData = await roomsRes.json();
       const bookingsData = await bookingsRes.json();
 
-      if (Array.isArray(roomsData)) {
+      if (Array.isArray(roomsData) && roomsData.length > 0) {
         setRooms(roomsData);
-        try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(roomsData)); } catch (e) {}
+        try { 
+          localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(roomsData)); 
+          localStorage.setItem('luxestay_cache_rooms', JSON.stringify(roomsData));
+        } catch (e) {}
       }
       if (Array.isArray(bookingsData)) {
         setBookings(bookingsData);
@@ -52,7 +55,10 @@ export const ManagerHousekeeping = () => {
     // 1. Optimistic instant local update (0ms latency)
     setRooms(prev => {
       const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingStatus: newStatus } : r);
-      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      try { 
+        localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); 
+        localStorage.setItem('luxestay_cache_rooms', JSON.stringify(updated));
+      } catch (e) {}
       return updated;
     });
 
@@ -70,10 +76,13 @@ export const ManagerHousekeeping = () => {
     })
       .then(res => res.json())
       .then(updated => {
-        if (updated && updated.id) {
+        if (updated && (updated.id || updated._id)) {
           setRooms(prev => {
-            const list = prev.map(r => r.id === roomId ? { ...r, ...updated } : r);
-            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); } catch (e) {}
+            const list = prev.map(r => r.id === roomId ? { ...r, ...updated, housekeepingStatus: newStatus } : r);
+            try { 
+              localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); 
+              localStorage.setItem('luxestay_cache_rooms', JSON.stringify(list));
+            } catch (e) {}
             return list;
           });
         }
@@ -85,7 +94,10 @@ export const ManagerHousekeeping = () => {
     // 1. Optimistic instant local update (0ms latency)
     setRooms(prev => {
       const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingPriority: newPriority } : r);
-      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      try { 
+        localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); 
+        localStorage.setItem('luxestay_cache_rooms', JSON.stringify(updated));
+      } catch (e) {}
       return updated;
     });
 
@@ -102,10 +114,13 @@ export const ManagerHousekeeping = () => {
     })
       .then(res => res.json())
       .then(updated => {
-        if (updated && updated.id) {
+        if (updated && (updated.id || updated._id)) {
           setRooms(prev => {
-            const list = prev.map(r => r.id === roomId ? { ...r, ...updated } : r);
-            try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); } catch (e) {}
+            const list = prev.map(r => r.id === roomId ? { ...r, ...updated, housekeepingPriority: newPriority } : r);
+            try { 
+              localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(list)); 
+              localStorage.setItem('luxestay_cache_rooms', JSON.stringify(list));
+            } catch (e) {}
             return list;
           });
         }
@@ -118,7 +133,10 @@ export const ManagerHousekeeping = () => {
     const savingNote = noteInput;
     setRooms(prev => {
       const updated = prev.map(r => r.id === roomId ? { ...r, housekeepingNotes: savingNote } : r);
-      try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); } catch (e) {}
+      try { 
+        localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(updated)); 
+        localStorage.setItem('luxestay_cache_rooms', JSON.stringify(updated));
+      } catch (e) {}
       return updated;
     });
     setEditingNotesId(null);

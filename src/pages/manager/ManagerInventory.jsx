@@ -24,12 +24,29 @@ export const ManagerInventory = () => {
   });
 
   const fetchInventory = () => {
-    fetch('/api/inventory')
+    fetch(`/api/inventory?_t=${Date.now()}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setInventory(data);
-          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(data)); } catch (e) {}
+          const sanitized = data.map(item => {
+            const stockVal = Number(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : 100)) || 0;
+            const reorderVal = Number(item.reorderLimit !== undefined ? item.reorderLimit : (item.minThreshold !== undefined ? item.minThreshold : 50)) || 50;
+            const itemName = item.name || item.itemName || (item.category ? `${item.category} Supplies` : 'Inventory Asset');
+            const avail = stockVal <= 0 ? 'Out of Stock' : stockVal <= reorderVal ? 'Low' : 'Available';
+
+            return {
+              ...item,
+              name: itemName,
+              itemName: itemName,
+              stock: stockVal,
+              quantity: stockVal,
+              reorderLimit: reorderVal,
+              minThreshold: reorderVal,
+              availability: item.availability || (item.status === 'In Stock' ? 'Available' : item.status || avail)
+            };
+          });
+          setInventory(sanitized);
+          try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(sanitized)); } catch (e) {}
         }
       })
       .catch(() => {});
@@ -53,10 +70,10 @@ export const ManagerInventory = () => {
   const handleOpenEditModal = (item) => {
     setEditingItem(item);
     setFormData({
-      name: item.name || '',
+      name: item.name || item.itemName || '',
       category: item.category || 'Linen',
-      stock: item.stock || 0,
-      reorderLimit: item.reorderLimit || 0
+      stock: Number(item.stock !== undefined ? item.stock : item.quantity) || 0,
+      reorderLimit: Number(item.reorderLimit !== undefined ? item.reorderLimit : item.minThreshold) || 50
     });
     setIsModalOpen(true);
   };
@@ -65,16 +82,23 @@ export const ManagerInventory = () => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
+    const sVal = Number(formData.stock) || 0;
+    const rVal = Number(formData.reorderLimit) || 50;
     const calculatedAvailability = 
-      formData.stock <= 0 
+      sVal <= 0 
         ? 'Out of Stock' 
-        : formData.stock <= formData.reorderLimit 
+        : sVal <= rVal 
         ? 'Low' 
         : 'Available';
 
     const payload = {
       ...formData,
-      availability: calculatedAvailability
+      stock: sVal,
+      quantity: sVal,
+      reorderLimit: rVal,
+      minThreshold: rVal,
+      availability: calculatedAvailability,
+      status: calculatedAvailability === 'Available' ? 'In Stock' : calculatedAvailability
     };
 
     const isEdit = !!editingItem;
@@ -106,41 +130,81 @@ export const ManagerInventory = () => {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    }).catch(() => {});
+    })
+      .then(res => res.json())
+      .then(updated => {
+        if (updated && updated.id) {
+          setInventory(prev => {
+            const next = prev.map(i => i.id === updated.id ? { ...i, ...updated } : i);
+            try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleReorder = (itemId) => {
     const item = inventory.find(i => i.id === itemId);
     if (!item) return;
 
-    const newStock = (item.stock || 0) + 150;
+    const currentStock = Number(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : 0)) || 0;
+    const newStock = currentStock + 150;
+
     setInventory(prev => {
-      const next = prev.map(i => i.id === itemId ? { ...i, stock: newStock, availability: 'Available' } : i);
+      const next = prev.map(i => i.id === itemId ? { 
+        ...i, 
+        stock: newStock, 
+        quantity: newStock, 
+        availability: 'Available',
+        status: 'In Stock'
+      } : i);
       try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
       return next;
     });
 
-    toast.success(`Restocked +150 units for "${item.name}"!`, 'Restock Order Placed');
+    toast.success(`Restocked +150 units for "${item.name || item.itemName}"!`, 'Restock Order Placed');
 
     fetch(`/api/inventory/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         stock: newStock,
-        availability: 'Available'
+        quantity: newStock,
+        availability: 'Available',
+        status: 'In Stock'
       })
-    }).catch(() => {});
+    })
+      .then(res => res.json())
+      .then(updated => {
+        if (updated && updated.id) {
+          setInventory(prev => {
+            const next = prev.map(i => i.id === itemId ? { ...i, ...updated } : i);
+            try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleAdjustStock = (itemId, delta) => {
     const item = inventory.find(i => i.id === itemId);
     if (!item) return;
 
-    const newStock = Math.max(0, (item.stock || 0) + delta);
-    const newAvail = newStock <= 0 ? 'Out of Stock' : newStock <= (item.reorderLimit || 50) ? 'Low' : 'Available';
+    const currentStock = Number(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : 100)) || 0;
+    const limit = Number(item.reorderLimit !== undefined ? item.reorderLimit : (item.minThreshold !== undefined ? item.minThreshold : 50)) || 50;
+    const newStock = Math.max(0, currentStock + delta);
+    const newAvail = newStock <= 0 ? 'Out of Stock' : newStock <= limit ? 'Low' : 'Available';
 
     setInventory(prev => {
-      const next = prev.map(i => i.id === itemId ? { ...i, stock: newStock, availability: newAvail } : i);
+      const next = prev.map(i => i.id === itemId ? { 
+        ...i, 
+        stock: newStock, 
+        quantity: newStock, 
+        availability: newAvail,
+        status: newAvail === 'Available' ? 'In Stock' : newAvail
+      } : i);
       try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
       return next;
     });
@@ -148,8 +212,26 @@ export const ManagerInventory = () => {
     fetch(`/api/inventory/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock: newStock, availability: newAvail })
-    }).catch(() => {});
+      body: JSON.stringify({ 
+        stock: newStock, 
+        quantity: newStock, 
+        reorderLimit: limit,
+        minThreshold: limit,
+        availability: newAvail,
+        status: newAvail === 'Available' ? 'In Stock' : newAvail
+      })
+    })
+      .then(res => res.json())
+      .then(updated => {
+        if (updated && updated.id) {
+          setInventory(prev => {
+            const next = prev.map(i => i.id === itemId ? { ...i, ...updated } : i);
+            try { localStorage.setItem('luxestay_cache_inventory', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleDeleteItem = async (itemId, name) => {
@@ -247,7 +329,7 @@ export const ManagerInventory = () => {
                     <tr key={item.id} className="hover:bg-slate-50/30">
                       
                       {/* Item Name */}
-                      <td className="py-4 px-5 text-slate-900 font-extrabold">{item.name}</td>
+                      <td className="py-4 px-5 text-slate-900 font-extrabold">{item.name || item.itemName || item.category || 'Supply Item'}</td>
                       
                       {/* Category */}
                       <td className="py-4 px-4 text-slate-500 font-medium">{item.category}</td>
@@ -276,7 +358,7 @@ export const ManagerInventory = () => {
                             <Minus className="w-3 h-3" />
                           </button>
                           <span className="text-slate-900 font-black text-xs min-w-[55px] text-center">
-                            {item.stock} Units
+                            {Number(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : 0))} Units
                           </span>
                           <button
                             onClick={() => handleAdjustStock(item.id, 10)}
@@ -289,7 +371,9 @@ export const ManagerInventory = () => {
                       </td>
 
                       {/* Reorder limit */}
-                      <td className="py-4 px-4 text-slate-400 font-medium">{item.reorderLimit} Units</td>
+                      <td className="py-4 px-4 text-slate-400 font-medium">
+                        {Number(item.reorderLimit !== undefined ? item.reorderLimit : (item.minThreshold !== undefined ? item.minThreshold : 50))} Units
+                      </td>
 
                       {/* Action buttons */}
                       <td className="py-4 px-5 text-center">
