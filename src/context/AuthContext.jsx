@@ -8,15 +8,7 @@ const getStoredUser = () => {
     const saved = localStorage.getItem('luxestay_user') || sessionStorage.getItem('luxestay_user');
     if (!saved) return null;
     const parsed = JSON.parse(saved);
-    if (!parsed || !parsed.email) return null;
-    if (parsed.name === 'Alice Johnson' || parsed.id === 'u_customer_demo') {
-      localStorage.removeItem('luxestay_user');
-      sessionStorage.removeItem('luxestay_user');
-      return null;
-    }
-    if (parsed.avatar && parsed.avatar.includes('photo-1534528741775')) {
-      parsed.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(parsed.name || 'User')}&background=0284c7&color=fff&bold=true`;
-    }
+    if (!parsed || !parsed.email || !parsed.id) return null;
     return parsed;
   } catch (e) {
     return null;
