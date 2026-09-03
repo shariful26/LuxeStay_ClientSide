@@ -89,10 +89,36 @@ export const ManagerMessages = () => {
       .catch(() => {});
   }, [activeChatId, fetchedProfiles]);
 
-  // Group messages by customer
-  const chatGroups = {};
+  // Group messages by customer and include admin channel
+  const chatGroups = {
+    admin: {
+      id: 'admin',
+      name: 'LuxeStay Super Admin',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      phone: '+1 (800) 555-LUXE',
+      email: 'admin@luxestay.com',
+      status: 'Super Admin • Online',
+      country: 'United States',
+      role: 'admin',
+      messages: []
+    }
+  };
 
   messages.forEach(msg => {
+    const isAdminMsg = msg.senderRole === 'admin' || msg.recipientRole === 'admin' || msg.recipientId === 'admin';
+    if (isAdminMsg) {
+      chatGroups.admin.messages.push({
+        sender: msg.senderRole === 'admin' ? 'admin' : 'manager',
+        senderRole: msg.senderRole,
+        senderName: msg.senderName,
+        text: msg.text,
+        time: msg.time,
+        read: msg.read,
+        senderAvatar: msg.senderAvatar
+      });
+      return;
+    }
+
     const customerId = msg.senderRole === 'customer' 
       ? (msg.senderId || 'customer') 
       : (msg.recipientRole === 'customer' ? (msg.recipientId || 'customer') : 'customer');
@@ -210,9 +236,9 @@ export const ManagerMessages = () => {
         senderName: myName,
         senderRole: myRole,
         senderAvatar: myAvatar,
-        recipientId: activeChatId || 'customer',
-        recipientName: activeChatData ? activeChatData.name : 'Guest Customer',
-        recipientRole: 'customer',
+        recipientId: activeChatId === 'admin' ? 'admin' : (activeChatData?.id || 'customer'),
+        recipientName: activeChatData ? activeChatData.name : (activeChatId === 'admin' ? 'LuxeStay Super Admin' : 'Guest Customer'),
+        recipientRole: activeChatId === 'admin' ? 'admin' : 'customer',
         text: textValue,
         time: nowTime,
         read: false,

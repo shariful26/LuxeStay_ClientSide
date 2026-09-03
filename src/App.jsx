@@ -65,6 +65,7 @@ import { UsersManagement } from './pages/admin/UsersManagement';
 import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { AdminPaymentSettings } from './pages/admin/AdminPaymentSettings';
 import { AdminLogin } from './pages/admin/AdminLogin';
+import { AdminMessages } from './pages/admin/AdminMessages';
 
 function AppContent() {
   const location = useLocation();
@@ -155,6 +156,7 @@ function AppContent() {
           <Route path="/admin/rooms" element={<RoomsManagement />} />
           <Route path="/admin/bookings" element={<BookingsManagement />} />
           <Route path="/admin/users" element={<UsersManagement />} />
+          <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/payouts" element={<AdminPayouts />} />
           <Route path="/admin/payment-settings" element={<AdminPaymentSettings />} />
           <Route path="/admin/wishlist" element={<WishlistPage />} />

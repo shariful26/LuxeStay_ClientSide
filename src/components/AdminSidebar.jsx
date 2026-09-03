@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, UserCheck, ConciergeBell, BedDouble, 
-  Star, CheckSquare, Grid, BarChart3, Layers, ChevronDown, ChevronRight, Building2, X, Globe, Home, LogOut, Sun, Moon, Settings
+  Star, CheckSquare, Grid, BarChart3, Layers, ChevronDown, ChevronRight, Building2, X, Globe, Home, LogOut, Sun, Moon, Settings, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -16,6 +16,7 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
 
   const navItems = [
     { label: 'Dashboard Main', path: '/admin/dashboard' },
+    { label: 'Live Messages', path: '/admin/messages' },
     { label: 'Guest & Roles', path: '/admin/users' },
     { label: 'Room Catalog', path: '/admin/rooms' },
     { label: 'Hotels Directory', path: '/admin/hotels' },
@@ -133,6 +134,23 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
                 <div className="flex items-center gap-3">
                   <Users className="w-4 h-4 text-amber-500 flex-shrink-0" />
                   {(!isCollapsed || isOpen) && <span>User Roles</span>}
+                </div>
+              </Link>
+            </div>
+
+            <div>
+              <Link 
+                to="/admin/messages" 
+                onClick={() => onClose && onClose()}
+                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                  location.pathname === '/admin/messages' 
+                    ? 'bg-amber-500/15 text-amber-500 font-extrabold border border-amber-500/30 shadow-xs' 
+                    : 'hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  {(!isCollapsed || isOpen) && <span>Live Messages</span>}
                 </div>
               </Link>
             </div>

@@ -155,21 +155,33 @@ export const CustomerMessages = () => {
       phone: managerProfile.phone,
       email: managerProfile.email,
       status: managerProfile.status,
+      role: 'manager',
+      messages: []
+    },
+    admin: {
+      id: 'admin',
+      name: 'LuxeStay Platform Admin',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      phone: '+1 (800) 555-LUXE',
+      email: 'admin@luxestay.com',
+      status: 'Super Admin • Online',
+      role: 'admin',
       messages: []
     }
   };
 
   messages.forEach(msg => {
     const isCustomerMsg = msg.senderRole === 'customer' || (user?.id && String(msg.senderId) === String(user.id));
-    const isManagerMsg = msg.senderRole === 'manager' || msg.recipientRole === 'customer' || (user?.id && String(msg.recipientId) === String(user.id));
+    const isManagerMsg = msg.senderRole === 'manager' || msg.recipientRole === 'manager' || msg.recipientId === 'manager';
+    const isAdminMsg = msg.senderRole === 'admin' || msg.recipientRole === 'admin' || msg.recipientId === 'admin';
 
-    if (!isCustomerMsg && !isManagerMsg) return;
+    if (!isCustomerMsg && !isManagerMsg && !isAdminMsg) return;
 
-    // Direct into default manager thread or specific partner thread
-    const targetKey = 'manager';
+    // Direct into admin thread or manager thread
+    const targetKey = isAdminMsg ? 'admin' : 'manager';
 
     chatGroups[targetKey].messages.push({
-      sender: isCustomerMsg ? 'customer' : 'manager',
+      sender: isCustomerMsg ? 'customer' : (isAdminMsg ? 'admin' : 'manager'),
       senderRole: msg.senderRole,
       senderName: msg.senderName,
       senderAvatar: msg.senderAvatar,
@@ -194,9 +206,12 @@ export const CustomerMessages = () => {
     setShowEmojiPicker(false);
   };
 
-  // Set first chat active if none is selected
+  // Set chat active if specified in query or first chat
   useEffect(() => {
-    if (!activeChatId && Object.keys(chatGroups).length > 0) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('recipient') === 'admin') {
+      setActiveChatId('admin');
+    } else if (!activeChatId && Object.keys(chatGroups).length > 0) {
       setActiveChatId(Object.keys(chatGroups)[0]);
     }
   }, [chatGroups, activeChatId]);
@@ -268,9 +283,9 @@ export const CustomerMessages = () => {
         senderName: myName,
         senderRole: myRole,
         senderAvatar: myAvatar,
-        recipientId: activeChatId || 'manager',
-        recipientName: activeChatData ? activeChatData.name : 'Hotel Management',
-        recipientRole: 'manager',
+        recipientId: activeChatId === 'admin' ? 'admin' : (activeChatData?.id || 'manager'),
+        recipientName: activeChatData ? activeChatData.name : (activeChatId === 'admin' ? 'LuxeStay Platform Admin' : 'Hotel Management'),
+        recipientRole: activeChatId === 'admin' ? 'admin' : 'manager',
         text: textValue,
         time: nowTime,
         read: false,
