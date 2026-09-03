@@ -67,12 +67,10 @@ export const AuthProvider = ({ children }) => {
               setUser(data.user);
               safeSetUserStorage(data.user);
             }
-          } else if (res.status === 404 || res.status === 401) {
-            // User was deleted or not found in live MongoDB database
-            logout();
           }
+          // If server check fails or is loading, retain currentStored user gracefully
         } catch (e) {
-          // Keep stored offline/cached user active
+          // Keep stored user active
         }
       }
       if (isMounted) {

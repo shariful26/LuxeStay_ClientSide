@@ -185,8 +185,9 @@ export const CustomerMessages = () => {
     e.preventDefault();
     if (!newMessage.trim() && !attachment) return;
 
-    const myId = user?.id ? String(user.id) : 'customer';
+    const myId = user?.id ? String(user.id) : (user?.email || 'customer');
     const myName = user?.name || 'Verified Customer';
+    const myRole = user?.role || 'customer';
     const myAvatar = user?.avatar && !user.avatar.includes('photo-1534528741775')
       ? user.avatar 
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(myName)}&background=0284c7&color=fff&bold=true`;
