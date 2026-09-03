@@ -138,10 +138,48 @@ export const MessageProvider = ({ children }) => {
     }).catch(() => {});
   };
 
+  const deleteMessageFromContext = (msgId) => {
+    if (!msgId) return;
+    const targetId = String(msgId).trim();
+    setMessages(prev => {
+      const updated = prev.filter(m => String(m.id || m._id) !== targetId);
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const clearConversationFromContext = (partnerId) => {
+    if (!partnerId) return;
+    const pId = String(partnerId).trim();
+    setMessages(prev => {
+      const updated = prev.filter(m => {
+        const sId = String(m.senderId || '');
+        const rId = String(m.recipientId || '');
+        const match = 
+          sId === pId || m.senderRole === pId ||
+          rId === pId || m.recipientRole === pId;
+        return !match;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
   const closeToast = () => setToast(null);
 
   return (
-    <MessageContext.Provider value={{ toast, closeToast, unreadCount, setUnreadCount, fetchMessages, messages, setMessages, markChatAsRead }}>
+    <MessageContext.Provider value={{ 
+      toast, 
+      closeToast, 
+      unreadCount, 
+      setUnreadCount, 
+      fetchMessages, 
+      messages, 
+      setMessages, 
+      markChatAsRead,
+      deleteMessageFromContext,
+      clearConversationFromContext
+    }}>
       {children}
       
       {/* Side-Sliding Message Toast Component */}

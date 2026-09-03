@@ -20,7 +20,7 @@ export const CustomerMessages = () => {
   const [activeLightboxImage, setActiveLightboxImage] = useState(null);
   const [fetchedProfiles, setFetchedProfiles] = useState({});
 
-  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount } = useMessages();
+  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount, deleteMessageFromContext, clearConversationFromContext } = useMessages();
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editMessageText, setEditMessageText] = useState('');
   const [isThreadMenuOpen, setIsThreadMenuOpen] = useState(false);
@@ -29,8 +29,8 @@ export const CustomerMessages = () => {
   useEffect(() => {
     if (Array.isArray(contextMessages) && contextMessages.length > 0) {
       setMessages(prev => {
-        const serverIds = new Set(contextMessages.map(m => m.id));
-        const pending = prev.filter(m => !serverIds.has(m.id));
+        const serverIds = new Set(contextMessages.map(m => m.id || m._id));
+        const pending = prev.filter(m => !serverIds.has(m.id || m._id));
         const merged = [...contextMessages, ...pending];
         try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
         return merged;
@@ -44,10 +44,10 @@ export const CustomerMessages = () => {
     fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=customer&limit=50`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setMessages(prev => {
-            const serverIds = new Set(data.map(m => m.id));
-            const pending = prev.filter(m => !serverIds.has(m.id));
+            const serverIds = new Set(data.map(m => m.id || m._id));
+            const pending = prev.filter(m => !serverIds.has(m.id || m._id));
             const merged = [...data, ...pending];
             try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
             return merged;
@@ -59,7 +59,6 @@ export const CustomerMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    // Reasonable 30-second background refresh (reduced from aggressive 1.5s)
     const interval = setInterval(fetchMessages, 30000);
     return () => clearInterval(interval);
   }, [user]);
@@ -98,105 +97,106 @@ export const CustomerMessages = () => {
   // Also query specific manager sender if message has specific manager senderId
   useEffect(() => {
     if (Array.isArray(messages) && messages.length > 0) {
-      const managerMsg = messages.find(m => m.senderRole === 'manager' && m.senderId && m.senderId !== 'manager');
-      if (managerMsg && managerMsg.senderId && !fetchedProfiles[managerMsg.senderId]) {
-        fetch(`/api/users/${encodeURIComponent(managerMsg.senderId)}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.name) {
-              const profile = {
-                id: data.id,
-                name: data.name === 'manager' ? 'Shariful Islam (Hotel Manager)' : data.name,
-                avatar: data.avatar || managerMsg.senderAvatar || '',
-                phone: data.phone || '',
-                email: data.email || 'manager@luxestay.com',
-                status: data.status || 'Property Host • Online'
-              };
-              setManagerProfile(profile);
-              setFetchedProfiles(prev => ({ ...prev, [data.id]: profile, manager: profile }));
-            }
-          })
-          .catch(() => {});
-      }
-    }
-  }, [messages, fetchedProfiles]);
-
-  // Fetch real profile details dynamically for any other specific partner host
-  useEffect(() => {
-    if (!activeChatId || activeChatId === 'manager') return;
-    if (fetchedProfiles[activeChatId]) return;
-
-    setFetchedProfiles(prev => ({ ...prev, [activeChatId]: { loading: true } }));
-    fetch(`/api/users/${encodeURIComponent(activeChatId)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.name) {
-          setFetchedProfiles(prev => ({
-            ...prev,
-            [activeChatId]: {
-              id: data.id || activeChatId,
-              name: data.name || 'Hotel Host',
-              avatar: data.avatar || managerProfile.avatar,
-              phone: data.phone || managerProfile.phone,
-              email: data.email || managerProfile.email,
-              status: data.status || 'Property Host • Online'
-            }
-          }));
+      messages.forEach(m => {
+        const sId = m.senderId;
+        if (sId && sId !== 'customer' && sId !== user?.id && !fetchedProfiles[sId]) {
+          fetch(`/api/users/${encodeURIComponent(sId)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.name) {
+                setFetchedProfiles(prev => ({
+                  ...prev,
+                  [sId]: {
+                    id: data.id || sId,
+                    name: data.name,
+                    avatar: data.avatar || '',
+                    phone: data.phone || '',
+                    email: data.email || '',
+                    status: 'Property Host • Online'
+                  }
+                }));
+              }
+            })
+            .catch(() => {});
         }
-      })
-      .catch(() => {});
-  }, [activeChatId, fetchedProfiles, managerProfile]);
-
-  // Group messages for the customer with 100% dynamic manager data
-  const currentHost = fetchedProfiles[activeChatId] || managerProfile;
-
-  const chatGroups = {
-    manager: {
-      id: managerProfile.id || 'manager',
-      name: managerProfile.name,
-      avatar: managerProfile.avatar,
-      phone: managerProfile.phone,
-      email: managerProfile.email,
-      status: managerProfile.status,
-      role: 'manager',
-      messages: []
-    },
-    admin: {
-      id: 'admin',
-      name: 'LuxeStay Platform Admin',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      phone: '+1 (800) 555-LUXE',
-      email: 'admin@luxestay.com',
-      status: 'Super Admin • Online',
-      role: 'admin',
-      messages: []
+      });
     }
-  };
+  }, [messages, user]);
 
-  messages.forEach(msg => {
-    const isCustomerMsg = msg.senderRole === 'customer' || (user?.id && String(msg.senderId) === String(user.id));
-    const isManagerMsg = msg.senderRole === 'manager' || msg.recipientRole === 'manager' || msg.recipientId === 'manager';
-    const isAdminMsg = msg.senderRole === 'admin' || msg.recipientRole === 'admin' || msg.recipientId === 'admin';
+  // Group messages into Threads/Chats by Sender or Partner Role
+  const chatGroups = React.useMemo(() => {
+    const groups = {};
+    const myId = user?.id ? String(user.id) : (user?.email || 'customer');
 
-    if (!isCustomerMsg && !isManagerMsg && !isAdminMsg) return;
+    messages.forEach(msg => {
+      const isFromMe = String(msg.senderId) === myId || msg.senderRole === 'customer';
+      let partnerId = isFromMe ? (msg.recipientId || msg.recipientRole) : (msg.senderId || msg.senderRole);
 
-    // Direct into admin thread or manager thread
-    const targetKey = isAdminMsg ? 'admin' : 'manager';
+      if (!partnerId || partnerId === 'customer') partnerId = 'manager';
 
-    chatGroups[targetKey].messages.push({
-      sender: isCustomerMsg ? 'customer' : (isAdminMsg ? 'admin' : 'manager'),
-      senderRole: msg.senderRole,
-      senderName: msg.senderName,
-      senderAvatar: msg.senderAvatar,
-      text: msg.text,
-      time: msg.time,
-      status: msg.status || 'read',
-      attachment: msg.attachment || null
+      if (!groups[partnerId]) {
+        let name = 'Hotel Management';
+        let avatar = '';
+        let role = 'Hotel Host';
+
+        if (partnerId === 'admin' || msg.recipientRole === 'admin' || msg.senderRole === 'admin') {
+          name = 'LuxeStay Platform Admin';
+          role = 'Official Platform Support';
+        } else if (fetchedProfiles[partnerId]) {
+          name = fetchedProfiles[partnerId].name;
+          avatar = fetchedProfiles[partnerId].avatar;
+          role = 'Property Manager';
+        } else if (managerProfile && (partnerId === 'manager' || partnerId === managerProfile.id)) {
+          name = managerProfile.name;
+          avatar = managerProfile.avatar;
+          role = 'Property Manager';
+        }
+
+        groups[partnerId] = {
+          id: partnerId,
+          name,
+          avatar,
+          role,
+          unreadCount: 0,
+          messages: []
+        };
+      }
+
+      groups[partnerId].messages.push({
+        id: msg.id || msg._id,
+        sender: isFromMe ? 'customer' : 'host',
+        senderName: msg.senderName,
+        senderAvatar: msg.senderAvatar,
+        text: msg.text,
+        time: msg.time || (msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'),
+        read: msg.read,
+        edited: msg.edited,
+        raw: msg
+      });
+
+      if (!isFromMe && !msg.read) {
+        groups[partnerId].unreadCount += 1;
+      }
     });
-  });
 
-  const activeChatData = {
-    ...(chatGroups[activeChatId] || Object.values(chatGroups)[0]),
+    if (Object.keys(groups).length === 0) {
+      groups['manager'] = {
+        id: 'manager',
+        name: managerProfile.name,
+        avatar: managerProfile.avatar,
+        role: 'Property Manager',
+        unreadCount: 0,
+        messages: []
+      };
+    }
+
+    return groups;
+  }, [messages, user, managerProfile, fetchedProfiles]);
+
+  const activeChatData = chatGroups[activeChatId] || Object.values(chatGroups)[0] || null;
+  const currentHost = (activeChatId && fetchedProfiles[activeChatId]) || managerProfile;
+
+  const displayHost = {
     name: currentHost.name || (chatGroups[activeChatId]?.name),
     avatar: currentHost.avatar || (chatGroups[activeChatId]?.avatar),
     phone: currentHost.phone || (chatGroups[activeChatId]?.phone),
@@ -209,7 +209,6 @@ export const CustomerMessages = () => {
     setShowEmojiPicker(false);
   };
 
-  // Set chat active if specified in query or first chat
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('recipient') === 'admin') {
@@ -219,12 +218,10 @@ export const CustomerMessages = () => {
     }
   }, [chatGroups, activeChatId]);
 
-  // Mark active chat messages as read
   const markMessagesAsRead = (partnerId) => {
     if (!partnerId) return;
     const pId = String(partnerId).trim();
 
-    // 1. Optimistic UI update for instant decrement
     setMessages(prev => prev.map(m => {
       const match = String(m.senderId) === pId || m.senderRole === pId;
       if (match && !m.read) return { ...m, read: true };
@@ -235,7 +232,6 @@ export const CustomerMessages = () => {
       markChatAsRead(pId);
     }
 
-    // 2. Persist to MongoDB Atlas
     fetch('/api/messages/read', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -253,16 +249,25 @@ export const CustomerMessages = () => {
     }
   }, [activeChatId]);
 
-  // Individual message Edit Handler
+  // Individual message Edit Handler (Strict single message edit)
   const handleSaveEdit = async (msgId) => {
-    if (!editMessageText.trim()) return;
+    if (!editMessageText.trim() || !msgId) return;
     const cleanText = editMessageText.trim();
+    const targetId = String(msgId).trim();
 
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+    setMessages(prev => {
+      const updated = prev.map(m => {
+        const match = String(m.id || m._id) === targetId;
+        return match ? { ...m, text: cleanText, edited: true } : m;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     setEditingMessageId(null);
+    setEditMessageText('');
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText })
@@ -272,14 +277,22 @@ export const CustomerMessages = () => {
     }
   };
 
-  // Individual message Delete Handler
+  // Individual message Delete Handler (Strict single message deletion)
   const handleDeleteMessage = async (msgId) => {
+    if (!msgId) return;
     if (!window.confirm('Delete this message?')) return;
+    const targetId = String(msgId).trim();
 
-    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setMessages(prev => {
+      const updated = prev.filter(m => String(m.id || m._id) !== targetId);
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (deleteMessageFromContext) deleteMessageFromContext(targetId);
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'DELETE'
       });
     } catch (e) {
@@ -287,25 +300,31 @@ export const CustomerMessages = () => {
     }
   };
 
-  // Clear Conversation Handler (3-dot menu)
+  // Clear Conversation Handler (3-dot menu Action - Deletes from MongoDB Atlas permanently)
   const handleClearConversation = async () => {
     if (!window.confirm(`Delete all messages with ${activeChatData?.name || 'this contact'}?`)) return;
 
     const partnerId = activeChatId;
     setIsThreadMenuOpen(false);
 
-    setMessages(prev => prev.filter(m => {
-      const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
-                    (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
-      return !match;
-    }));
+    setMessages(prev => {
+      const updated = prev.filter(m => {
+        const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
+                      (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
+        return !match;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (clearConversationFromContext) clearConversationFromContext(partnerId);
 
     try {
       await fetch('/api/messages/clear-conversation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user1: user?.id || 'customer',
+          user1: user?.id || user?.email || 'customer',
           user2: partnerId
         })
       });
@@ -610,10 +629,11 @@ export const CustomerMessages = () => {
                         ? user.avatar 
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Customer')}&background=0284c7&color=fff&bold=true`;
                       const hostAvatar = msg.senderAvatar || activeChatData.avatar;
+                      const msgKey = String(msg.id || msg.raw?.id || msg.raw?._id || `msg-${index}`);
 
                       return (
                         <div 
-                          key={msg.id || index}
+                          key={msgKey}
                           className={`flex items-end gap-2.5 group/msg transition-all relative ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
                           {/* Received Message: Host Avatar on the LEFT (Facebook Messenger Style) */}
@@ -631,7 +651,7 @@ export const CustomerMessages = () => {
                             {isMe && !msg.text?.startsWith('data:image/') && (
                               <button
                                 onClick={() => {
-                                  setEditingMessageId(msg.id);
+                                  setEditingMessageId(msgKey);
                                   setEditMessageText(msg.text);
                                 }}
                                 className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
@@ -641,7 +661,7 @@ export const CustomerMessages = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeleteMessage(msg.id)}
+                              onClick={() => handleDeleteMessage(msgKey)}
                               className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-rose-500 hover:text-white text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
                               title="Delete message"
                             >
@@ -655,7 +675,7 @@ export const CustomerMessages = () => {
                                 ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white rounded-br-xs' 
                                 : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-bl-xs'
                             }`}>
-                              {editingMessageId === msg.id ? (
+                              {editingMessageId === msgKey ? (
                                 <div className="space-y-1.5 min-w-[200px]">
                                   <input
                                     type="text"
@@ -664,7 +684,7 @@ export const CustomerMessages = () => {
                                     className="w-full p-2 text-xs rounded-xl bg-slate-900 text-white outline-none border border-amber-500 font-medium"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                      if (e.key === 'Enter') handleSaveEdit(msgKey);
                                       if (e.key === 'Escape') setEditingMessageId(null);
                                     }}
                                   />
@@ -677,7 +697,7 @@ export const CustomerMessages = () => {
                                       <X className="w-3 h-3" />
                                     </button>
                                     <button
-                                      onClick={() => handleSaveEdit(msg.id)}
+                                      onClick={() => handleSaveEdit(msgKey)}
                                       className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
                                       title="Save edit"
                                     >

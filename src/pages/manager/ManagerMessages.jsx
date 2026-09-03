@@ -210,16 +210,27 @@ export const ManagerMessages = () => {
     }
   }, [activeChatId]);
 
-  // Individual message Edit Handler
-  const handleSaveEdit = async (msgId) => {
-    if (!editMessageText.trim()) return;
-    const cleanText = editMessageText.trim();
+  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount, deleteMessageFromContext, clearConversationFromContext } = useMessages();
 
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+  // Individual message Edit Handler (Strict single message edit)
+  const handleSaveEdit = async (msgId) => {
+    if (!editMessageText.trim() || !msgId) return;
+    const cleanText = editMessageText.trim();
+    const targetId = String(msgId).trim();
+
+    setMessages(prev => {
+      const updated = prev.map(m => {
+        const match = String(m.id || m._id) === targetId;
+        return match ? { ...m, text: cleanText, edited: true } : m;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     setEditingMessageId(null);
+    setEditMessageText('');
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText })
@@ -229,14 +240,22 @@ export const ManagerMessages = () => {
     }
   };
 
-  // Individual message Delete Handler
+  // Individual message Delete Handler (Strict single message deletion)
   const handleDeleteMessage = async (msgId) => {
+    if (!msgId) return;
     if (!window.confirm('Delete this message?')) return;
+    const targetId = String(msgId).trim();
 
-    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setMessages(prev => {
+      const updated = prev.filter(m => String(m.id || m._id) !== targetId);
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (deleteMessageFromContext) deleteMessageFromContext(targetId);
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'DELETE'
       });
     } catch (e) {
@@ -244,18 +263,24 @@ export const ManagerMessages = () => {
     }
   };
 
-  // Clear Conversation Handler (3-dot menu)
+  // Clear Conversation Handler (3-dot menu Action - Deletes from MongoDB Atlas permanently)
   const handleClearConversation = async () => {
     if (!window.confirm(`Delete all messages with ${activeChatData?.name || 'this contact'}?`)) return;
 
     const partnerId = activeChatId;
     setIsThreadMenuOpen(false);
 
-    setMessages(prev => prev.filter(m => {
-      const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
-                    (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
-      return !match;
-    }));
+    setMessages(prev => {
+      const updated = prev.filter(m => {
+        const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
+                      (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
+        return !match;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (clearConversationFromContext) clearConversationFromContext(partnerId);
 
     try {
       await fetch('/api/messages/clear-conversation', {
@@ -555,8 +580,10 @@ export const ManagerMessages = () => {
                   {activeChatData.messages.map((msg, idx) => {
                     const isGuest = msg.sender === activeChatData.id || msg.sender === 'customer';
                     const isImage = msg.text && msg.text.startsWith('data:image/');
+                    const msgKey = String(msg.id || msg.raw?.id || msg.raw?._id || `msg-${idx}`);
+
                     return (
-                      <div key={msg.id || idx} className={`flex items-end gap-2 group/msg relative ${isGuest ? 'justify-start' : 'justify-end'}`}>
+                      <div key={msgKey} className={`flex items-end gap-2 group/msg relative ${isGuest ? 'justify-start' : 'justify-end'}`}>
                         {isGuest && (
                           <img 
                             src={msg.senderAvatar || activeChatData.avatar} 
@@ -570,7 +597,7 @@ export const ManagerMessages = () => {
                           {!isGuest && !isImage && (
                             <button
                               onClick={() => {
-                                setEditingMessageId(msg.id);
+                                setEditingMessageId(msgKey);
                                 setEditMessageText(msg.text);
                               }}
                               className="p-1 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-500 transition-all cursor-pointer shadow-xs"
@@ -580,7 +607,7 @@ export const ManagerMessages = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => handleDeleteMessage(msg.id)}
+                            onClick={() => handleDeleteMessage(msgKey)}
                             className="p-1 rounded-lg bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 transition-all cursor-pointer shadow-xs"
                             title="Delete message"
                           >
@@ -593,7 +620,7 @@ export const ManagerMessages = () => {
                             ? 'bg-[#e2f896] text-slate-950 font-bold rounded-tl-none shadow-2xs' 
                             : 'bg-slate-900 text-white font-medium rounded-tr-none'
                         }`}>
-                          {editingMessageId === msg.id ? (
+                          {editingMessageId === msgKey ? (
                             <div className="space-y-1.5 min-w-[200px]">
                               <input
                                 type="text"
@@ -602,7 +629,7 @@ export const ManagerMessages = () => {
                                 className="w-full p-2 text-xs rounded-xl bg-slate-800 text-white outline-none border border-amber-500 font-medium"
                                 autoFocus
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                  if (e.key === 'Enter') handleSaveEdit(msgKey);
                                   if (e.key === 'Escape') setEditingMessageId(null);
                                 }}
                               />
@@ -615,7 +642,7 @@ export const ManagerMessages = () => {
                                   <X className="w-3 h-3" />
                                 </button>
                                 <button
-                                  onClick={() => handleSaveEdit(msg.id)}
+                                  onClick={() => handleSaveEdit(msgKey)}
                                   className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
                                   title="Save edit"
                                 >

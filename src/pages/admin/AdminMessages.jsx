@@ -142,16 +142,27 @@ export const AdminMessages = () => {
     }
   }, [activeContactId]);
 
-  // Individual message Edit Handler
-  const handleSaveEdit = async (msgId) => {
-    if (!editMessageText.trim()) return;
-    const cleanText = editMessageText.trim();
+  const { deleteMessageFromContext, clearConversationFromContext } = useMessages();
 
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+  // Individual message Edit Handler (Strict single message edit)
+  const handleSaveEdit = async (msgId) => {
+    if (!editMessageText.trim() || !msgId) return;
+    const cleanText = editMessageText.trim();
+    const targetId = String(msgId).trim();
+
+    setMessages(prev => {
+      const updated = prev.map(m => {
+        const match = String(m.id || m._id) === targetId;
+        return match ? { ...m, text: cleanText, edited: true } : m;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     setEditingMessageId(null);
+    setEditMessageText('');
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText })
@@ -161,14 +172,22 @@ export const AdminMessages = () => {
     }
   };
 
-  // Individual message Delete Handler
+  // Individual message Delete Handler (Strict single message deletion)
   const handleDeleteMessage = async (msgId) => {
+    if (!msgId) return;
     if (!window.confirm('Delete this message?')) return;
+    const targetId = String(msgId).trim();
 
-    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setMessages(prev => {
+      const updated = prev.filter(m => String(m.id || m._id) !== targetId);
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (deleteMessageFromContext) deleteMessageFromContext(targetId);
 
     try {
-      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+      await fetch(`/api/messages/${encodeURIComponent(targetId)}`, {
         method: 'DELETE'
       });
     } catch (e) {
@@ -176,18 +195,24 @@ export const AdminMessages = () => {
     }
   };
 
-  // Clear Conversation Handler (3-dot menu)
+  // Clear Conversation Handler (3-dot menu Action - Deletes from MongoDB Atlas permanently)
   const handleClearConversation = async () => {
     if (!window.confirm(`Delete all messages with ${activeContact?.name || 'this user'}?`)) return;
 
     const contactId = activeContactId;
     setIsThreadMenuOpen(false);
 
-    setMessages(prev => prev.filter(m => {
-      const match = (String(m.senderId) === String(contactId) || m.senderRole === contactId) ||
-                    (String(m.recipientId) === String(contactId) || m.recipientRole === contactId);
-      return !match;
-    }));
+    setMessages(prev => {
+      const updated = prev.filter(m => {
+        const match = (String(m.senderId) === String(contactId) || m.senderRole === contactId) ||
+                      (String(m.recipientId) === String(contactId) || m.recipientRole === contactId);
+        return !match;
+      });
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+
+    if (clearConversationFromContext) clearConversationFromContext(contactId);
 
     try {
       await fetch('/api/messages/clear-conversation', {
@@ -591,10 +616,11 @@ export const AdminMessages = () => {
                       const isAdminMe = msg.senderRole === 'admin' || (user?.id && String(msg.senderId) === String(user.id));
                       const contactAvatar = getCleanAvatar(activeContact.avatar, activeContact.name);
                       const adminAvatar = user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+                      const msgKey = String(msg.id || msg.raw?.id || msg.raw?._id || `msg-${index}`);
 
                       return (
                         <div
-                          key={msg.id || index}
+                          key={msgKey}
                           className={`flex items-end gap-2.5 group/msg transition-all relative ${isAdminMe ? 'justify-end' : 'justify-start'}`}
                         >
                           {/* Received Message: Contact Avatar on the LEFT (Facebook Messenger Style) */}
@@ -612,7 +638,7 @@ export const AdminMessages = () => {
                             {isAdminMe && !msg.text?.startsWith('data:image/') && (
                               <button
                                 onClick={() => {
-                                  setEditingMessageId(msg.id);
+                                  setEditingMessageId(msgKey);
                                   setEditMessageText(msg.text);
                                 }}
                                 className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
@@ -622,7 +648,7 @@ export const AdminMessages = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeleteMessage(msg.id)}
+                              onClick={() => handleDeleteMessage(msgKey)}
                               className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-rose-500 hover:text-white text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
                               title="Delete message"
                             >
@@ -636,7 +662,7 @@ export const AdminMessages = () => {
                                 ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold rounded-br-xs' 
                                 : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-bl-xs'
                             }`}>
-                              {editingMessageId === msg.id ? (
+                              {editingMessageId === msgKey ? (
                                 <div className="space-y-1.5 min-w-[200px]">
                                   <input
                                     type="text"
@@ -645,7 +671,7 @@ export const AdminMessages = () => {
                                     className="w-full p-2 text-xs rounded-xl bg-slate-900 text-white outline-none border border-amber-500 font-medium"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                      if (e.key === 'Enter') handleSaveEdit(msgKey);
                                       if (e.key === 'Escape') setEditingMessageId(null);
                                     }}
                                   />
@@ -658,7 +684,7 @@ export const AdminMessages = () => {
                                       <X className="w-3 h-3" />
                                     </button>
                                     <button
-                                      onClick={() => handleSaveEdit(msg.id)}
+                                      onClick={() => handleSaveEdit(msgKey)}
                                       className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
                                       title="Save edit"
                                     >
