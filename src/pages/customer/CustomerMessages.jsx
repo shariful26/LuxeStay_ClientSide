@@ -61,9 +61,47 @@ export const CustomerMessages = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Fetch real profile details dynamically ONLY for the active partner host (on demand)
+  // Dynamic Manager Profile fetched directly from MongoDB Atlas
+  const [managerProfile, setManagerProfile] = useState(() => {
+    try {
+      const cached = localStorage.getItem('luxestay_manager_profile');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return {
+      id: 'manager',
+      name: 'Shariful Islam (Verified Manager)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+      phone: '+880 1871-126026',
+      email: 'sharifulalam@gmail.com',
+      status: 'Property Host • Online'
+    };
+  });
+
+  // Fetch real manager profile details dynamically from MongoDB Atlas
   useEffect(() => {
-    if (!activeChatId) return;
+    fetch('/api/users/manager')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.name) {
+          const profile = {
+            id: data.id || 'manager',
+            name: data.name || 'Shariful Islam (Verified Manager)',
+            avatar: data.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+            phone: data.phone || '+880 1871-126026',
+            email: data.email || 'sharifulalam@gmail.com',
+            status: data.status || 'Property Host • Online'
+          };
+          setManagerProfile(profile);
+          setFetchedProfiles(prev => ({ ...prev, [profile.id]: profile, manager: profile }));
+          try { localStorage.setItem('luxestay_manager_profile', JSON.stringify(profile)); } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch real profile details dynamically for any other specific partner host
+  useEffect(() => {
+    if (!activeChatId || activeChatId === 'manager') return;
     if (fetchedProfiles[activeChatId]) return;
 
     setFetchedProfiles(prev => ({ ...prev, [activeChatId]: { loading: true } }));
@@ -74,27 +112,30 @@ export const CustomerMessages = () => {
           setFetchedProfiles(prev => ({
             ...prev,
             [activeChatId]: {
+              id: data.id || activeChatId,
               name: data.name || 'Hotel Host',
-              avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-              phone: data.phone || '+1 (555) 000-1122',
-              email: data.email || 'manager@luxestay.com',
-              status: 'Property Host • Online'
+              avatar: data.avatar || managerProfile.avatar,
+              phone: data.phone || managerProfile.phone,
+              email: data.email || managerProfile.email,
+              status: data.status || 'Property Host • Online'
             }
           }));
         }
       })
       .catch(() => {});
-  }, [activeChatId, fetchedProfiles]);
+  }, [activeChatId, fetchedProfiles, managerProfile]);
 
-  // Group messages for the customer
+  // Group messages for the customer with 100% dynamic manager data
+  const currentHost = fetchedProfiles[activeChatId] || managerProfile;
+
   const chatGroups = {
     manager: {
-      id: 'manager',
-      name: 'LuxeStay Hotel Management',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      phone: '+1 (555) 000-1122',
-      email: 'manager@luxestay.com',
-      status: 'Property Host • Online',
+      id: managerProfile.id || 'manager',
+      name: managerProfile.name,
+      avatar: managerProfile.avatar,
+      phone: managerProfile.phone,
+      email: managerProfile.email,
+      status: managerProfile.status,
       messages: []
     }
   };
@@ -112,6 +153,7 @@ export const CustomerMessages = () => {
       sender: isCustomerMsg ? 'customer' : 'manager',
       senderRole: msg.senderRole,
       senderName: msg.senderName,
+      senderAvatar: msg.senderAvatar,
       text: msg.text,
       time: msg.time,
       status: msg.status || 'read',
@@ -119,7 +161,14 @@ export const CustomerMessages = () => {
     });
   });
 
-  const activeChatData = chatGroups[activeChatId] || Object.values(chatGroups)[0] || null;
+  const activeChatData = {
+    ...(chatGroups[activeChatId] || Object.values(chatGroups)[0]),
+    name: currentHost.name || (chatGroups[activeChatId]?.name),
+    avatar: currentHost.avatar || (chatGroups[activeChatId]?.avatar),
+    phone: currentHost.phone || (chatGroups[activeChatId]?.phone),
+    email: currentHost.email || (chatGroups[activeChatId]?.email),
+    status: currentHost.status || (chatGroups[activeChatId]?.status)
+  };
 
   const handleSelectQuickQuestion = (question) => {
     setNewMessage(question);
@@ -380,58 +429,82 @@ export const CustomerMessages = () => {
                   ) : (
                     activeChatData.messages.map((msg, index) => {
                       const isMe = msg.sender === 'customer';
+                      const myAvatar = user?.avatar && !user.avatar.includes('photo-1534528741775')
+                        ? user.avatar 
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Customer')}&background=0284c7&color=fff&bold=true`;
+                      const hostAvatar = msg.senderAvatar || activeChatData.avatar;
+
                       return (
                         <div 
                           key={index}
-                          className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                          className={`flex items-end gap-2.5 ${isMe ? 'justify-end' : 'justify-start'} group/msg transition-all`}
                         >
+                          {/* Received Message: Host Avatar on the LEFT (Facebook Messenger Style) */}
                           {!isMe && (
                             <img 
-                              src={msg.senderAvatar || activeChatData.avatar} 
-                              className="w-7 h-7 rounded-full object-cover border border-[var(--border-light)] flex-shrink-0 mb-0.5" 
-                              alt="" 
+                              src={hostAvatar} 
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[var(--border-light)] shrink-0 mb-1 shadow-xs ring-1 ring-black/5 dark:ring-white/10" 
+                              alt={msg.senderName || 'Host'} 
+                              title={msg.senderName || 'Host'}
                             />
                           )}
                           
-                          <div className={msg.text.startsWith('data:image/') ? "max-w-[78%]" : `max-w-[78%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 text-xs font-medium shadow-xs ${
-                            isMe 
-                              ? 'bg-amber-600 text-white rounded-tr-none' 
-                              : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-tl-none'
-                          }`}>
-                            {msg.text.startsWith('data:image/') ? (
-                              <div className="relative group/image overflow-hidden rounded-2xl">
-                                <img 
-                                  src={msg.text} 
-                                  className="w-48 h-36 sm:w-56 sm:h-40 object-cover rounded-2xl shadow-md transition-all group-hover/image:opacity-90" 
-                                  alt="Attachment" 
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setActiveLightboxImage(msg.text);
-                                    }}
-                                    className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition-all cursor-pointer"
-                                    title="View Fullscreen"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </button>
-                                  <a
-                                    href={msg.text}
-                                    download={`attachment_${index}.png`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition-all cursor-pointer"
-                                    title="Download File"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </a>
+                          <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[78%] sm:max-w-[70%]`}>
+                            <div className={msg.text.startsWith('data:image/') ? "w-fit" : `rounded-2xl px-3.5 py-2.5 text-xs font-medium shadow-xs leading-relaxed ${
+                              isMe 
+                                ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white rounded-br-xs' 
+                                : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-bl-xs'
+                            }`}>
+                              {msg.text.startsWith('data:image/') ? (
+                                <div className="relative group/image overflow-hidden rounded-2xl">
+                                  <img 
+                                    src={msg.text} 
+                                    className="w-48 h-36 sm:w-56 sm:h-40 object-cover rounded-2xl shadow-md transition-all group-hover/image:opacity-90" 
+                                    alt="Attachment" 
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setActiveLightboxImage(msg.text);
+                                      }}
+                                      className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition-all cursor-pointer"
+                                      title="View Fullscreen"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <a
+                                      href={msg.text}
+                                      download={`attachment_${index}.png`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition-all cursor-pointer"
+                                      title="Download File"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </a>
+                                  </div>
                                 </div>
-                              </div>
-                            ) : (
-                              <span className="break-words leading-relaxed">{msg.text}</span>
-                            )}
+                              ) : (
+                                <span className="break-words">{msg.text}</span>
+                              )}
+                            </div>
+
+                            {/* Micro Timestamp below bubble (Facebook Messenger Style) */}
+                            <span className={`text-[9px] text-[var(--text-muted)] font-semibold mt-0.5 px-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                              {msg.time}
+                            </span>
                           </div>
+
+                          {/* Sent Message: Customer Avatar on the RIGHT (Facebook Messenger Style) */}
+                          {isMe && (
+                            <img 
+                              src={myAvatar} 
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-amber-500/60 shrink-0 mb-1 shadow-xs ring-1 ring-amber-500/20" 
+                              alt={user?.name || 'Me'} 
+                              title={user?.name || 'Me'}
+                            />
+                          )}
                         </div>
                       );
                     })
