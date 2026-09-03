@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, Building2, User, Briefcase, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Building2, User, Briefcase, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { user, login, loginWithGoogle, authLoading } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from;
@@ -30,6 +32,27 @@ export const Login = () => {
     if (typeof err === 'string') return err;
     if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
     return String(err);
+  };
+
+  const handleFillCredentials = (accountRole) => {
+    setErrorMsg('');
+    setShowPassword(true); // Automatically show password in input field
+    if (accountRole === 'customer') {
+      setEmail('customer@luxestay.com');
+      setPassword('123456');
+      setRole('customer');
+      if (toast?.success) toast.success('Customer credentials loaded (customer@luxestay.com)', 'Account Filled');
+    } else if (accountRole === 'manager') {
+      setEmail('manager@luxestay.com');
+      setPassword('123456');
+      setRole('manager');
+      if (toast?.success) toast.success('Manager credentials loaded (manager@luxestay.com)', 'Account Filled');
+    } else if (accountRole === 'admin') {
+      setEmail('admin@luxestay.com');
+      setPassword('123456');
+      setRole('admin');
+      if (toast?.success) toast.success('Admin credentials loaded (admin@luxestay.com)', 'Account Filled');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -115,23 +138,34 @@ export const Login = () => {
           </p>
         </div>
 
-        {/* Role Selector Tabs (Customer & Partner) */}
-        <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs font-extrabold">
+        {/* Role Selector Tabs (Customer, Manager & Super Admin) */}
+        <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs font-extrabold">
           <button
             type="button"
             onClick={() => setRole('customer')}
-            className={`py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'customer' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              role === 'customer' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
+            }`}
           >
-            <User className="w-4 h-4" /> Customer Account
+            <User className="w-3.5 h-3.5" /> Customer
           </button>
           <button
             type="button"
             onClick={() => setRole('manager')}
-            className={`py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'manager' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              role === 'manager' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
+            }`}
           >
-            <Briefcase className="w-4 h-4" /> Hotel Manager / Owner
+            <Briefcase className="w-3.5 h-3.5" /> Manager
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole('admin')}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              role === 'admin' ? 'bg-violet-600 text-white shadow-md' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" /> Admin
           </button>
         </div>
 
@@ -192,8 +226,13 @@ export const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 rounded-2xl font-extrabold text-sm text-white shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider ${role === 'manager' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500' : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400'
-              }`}
+            className={`w-full py-4 rounded-2xl font-extrabold text-sm text-white shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider ${
+              role === 'manager' 
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/25' 
+                : role === 'admin'
+                ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 shadow-violet-600/25'
+                : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 shadow-amber-600/25'
+            }`}
           >
             {loading ? (
               <>
@@ -202,12 +241,78 @@ export const Login = () => {
               </>
             ) : (
               <>
-                <span>SIGN IN AS {role === 'manager' ? 'HOTEL MANAGER' : role.toUpperCase()}</span>
+                <span>SIGN IN AS {role === 'manager' ? 'HOTEL MANAGER' : role === 'admin' ? 'SUPER ADMIN' : 'CUSTOMER'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
+
+        {/* 1-CLICK FAST CREDENTIALS AUTOFILL BUTTONS (Customer, Manager, Admin) */}
+        <div className="pt-1 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> 1-Click Fast Fill & Login:
+            </span>
+            <span className="text-[9px] text-slate-400 font-semibold">Real DB Accounts</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {/* Customer Account Button */}
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('customer')}
+              className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center gap-1 text-center group ${
+                email === 'customer@luxestay.com'
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/10 scale-[1.02]'
+                  : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-amber-500/60'
+              }`}
+              title="Click to fill customer@luxestay.com"
+            >
+              <div className="w-7 h-7 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                <User className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-black tracking-wide">Customer</span>
+              <span className="text-[9px] text-slate-400 font-mono truncate max-w-full">customer@...</span>
+            </button>
+
+            {/* Hotel Manager Account Button */}
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('manager')}
+              className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center gap-1 text-center group ${
+                email === 'manager@luxestay.com'
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10 scale-[1.02]'
+                  : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-emerald-500/60'
+              }`}
+              title="Click to fill manager@luxestay.com"
+            >
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-black tracking-wide">Manager</span>
+              <span className="text-[9px] text-slate-400 font-mono truncate max-w-full">manager@...</span>
+            </button>
+
+            {/* Super Admin Account Button */}
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('admin')}
+              className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center gap-1 text-center group ${
+                email === 'admin@luxestay.com'
+                  ? 'bg-violet-500/20 border-violet-500 text-violet-300 shadow-lg shadow-violet-500/10 scale-[1.02]'
+                  : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-violet-500/60'
+              }`}
+              title="Click to fill admin@luxestay.com"
+            >
+              <div className="w-7 h-7 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-black tracking-wide">Admin</span>
+              <span className="text-[9px] text-slate-400 font-mono truncate max-w-full">admin@...</span>
+            </button>
+          </div>
+        </div>
 
         {/* Divider */}
         <div className="relative flex items-center justify-center my-2">
@@ -243,3 +348,5 @@ export const Login = () => {
     </div>
   );
 };
+
+export default Login;
