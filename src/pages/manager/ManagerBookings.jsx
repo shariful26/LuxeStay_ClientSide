@@ -60,15 +60,13 @@ export const ManagerBookings = () => {
         const myHotelIds = myHotels.map(h => h.id);
 
         if (Array.isArray(bookingsData)) {
-          let myBookings = bookingsData.filter(b => myHotelIds.includes(b.hotelId));
-          if (myBookings.length === 0) myBookings = bookingsData;
+          const myBookings = bookingsData.filter(b => myHotelIds.includes(b.hotelId));
           setBookings(myBookings);
           try { localStorage.setItem('luxestay_cache_manager_bookings', JSON.stringify(myBookings)); } catch (e) {}
         }
 
         if (Array.isArray(roomsData)) {
-          let myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
-          if (myRooms.length === 0) myRooms = roomsData;
+          const myRooms = roomsData.filter(r => myHotelIds.includes(r.hotelId));
           setRooms(myRooms);
           try { localStorage.setItem('luxestay_cache_manager_rooms', JSON.stringify(myRooms)); } catch (e) {}
           if (myRooms.length > 0) {
