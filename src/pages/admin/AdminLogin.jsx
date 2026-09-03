@@ -76,6 +76,10 @@ export const AdminLogin = () => {
             <img 
               src="/logo.png" 
               alt="LuxeStay" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://ui-avatars.com/api/?name=Luxe+Stay&background=0284c7&color=fff&bold=true';
+              }}
               className="w-16 h-16 rounded-full object-cover shadow-xl shadow-amber-500/25 ring-2 ring-amber-500/40" 
             />
           </div>
