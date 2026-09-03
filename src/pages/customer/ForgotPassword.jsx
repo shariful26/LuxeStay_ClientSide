@@ -22,6 +22,13 @@ export const ForgotPassword = () => {
     setRole(newRole);
   };
 
+  const formatErr = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
+    return String(err);
+  };
+
   const handleSendCode = async (e) => {
     e.preventDefault();
     if (!email) return;
@@ -40,7 +47,8 @@ export const ForgotPassword = () => {
         setOtp(data.otp); // Pre-fill for instant seamless testing
         setStep(2);
       } else {
-        setErrorMsg(data.error || 'Failed to send reset code');
+        const raw = data.error || data.message || 'Failed to send reset code';
+        setErrorMsg(formatErr(raw));
       }
     } catch (err) {
       setLoading(false);
@@ -71,7 +79,8 @@ export const ForgotPassword = () => {
           }
         }, 2200);
       } else {
-        setErrorMsg(data.error || 'Failed to reset password');
+        const raw = data.error || data.message || 'Failed to reset password';
+        setErrorMsg(formatErr(raw));
       }
     } catch (err) {
       setLoading(false);
@@ -143,9 +152,10 @@ export const ForgotPassword = () => {
 
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold text-center">
-                {errorMsg}
+                {typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}
               </div>
             )}
+
 
             <div>
               <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1">6-Digit Verification Code</label>
@@ -200,9 +210,10 @@ export const ForgotPassword = () => {
 
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold text-center">
-                {errorMsg}
+                {typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}
               </div>
             )}
+
 
             <div>
               <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1">Email Address</label>

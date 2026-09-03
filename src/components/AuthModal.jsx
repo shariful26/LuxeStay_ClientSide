@@ -42,6 +42,13 @@ export const AuthModal = () => {
     }
   };
 
+  const formatErr = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
+    return String(err);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -56,7 +63,7 @@ export const AuthModal = () => {
 
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -74,7 +81,7 @@ export const AuthModal = () => {
     
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -160,7 +167,7 @@ export const AuthModal = () => {
         {errorMsg && (
           <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold flex items-center gap-2 animate-fade-in">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{errorMsg}</span>
+            <span>{typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}</span>
           </div>
         )}
 

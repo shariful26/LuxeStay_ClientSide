@@ -32,6 +32,13 @@ export const Register = () => {
     }
   };
 
+  const formatErr = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
+    return String(err);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -40,7 +47,7 @@ export const Register = () => {
     
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -62,7 +69,7 @@ export const Register = () => {
     const result = await loginWithGoogle(role);
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
     if (result && !result.error) {
@@ -154,7 +161,7 @@ export const Register = () => {
 
         {errorMsg && (
           <div className="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-extrabold text-center">
-            {errorMsg}
+            {typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}
           </div>
         )}
 

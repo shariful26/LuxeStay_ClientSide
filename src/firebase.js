@@ -29,17 +29,22 @@ export const loginWithGoogleFirebase = async () => {
       }
     };
   } catch (error) {
-    if (error.code === 'auth/operation-not-allowed') {
+    const code = error?.code || '';
+    const message = error?.message || '';
+    if (code === 'auth/operation-not-allowed') {
       return { 
         error: 'Google Sign-In is disabled in your Firebase Console. Please go to Firebase Console -> Build -> Authentication -> Sign-in method -> Enable Google.' 
       };
-    } else if (error.code === 'auth/unauthorized-domain') {
+    } else if (code === 'auth/unauthorized-domain') {
       return { 
-        error: 'Domain unauthorized in Firebase. Go to Firebase Console -> Authentication -> Settings -> Authorized Domains and add domain.' 
+        error: 'Domain unauthorized in Firebase. Go to Firebase Console -> Authentication -> Settings -> Authorized Domains and add your domain.' 
       };
-    } else if (error.code === 'auth/popup-closed-by-user') {
+    } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return { error: 'Google sign-in popup was closed before completing.' };
+    } else if (code === 'auth/popup-blocked') {
+      return { error: 'Google sign-in popup was blocked by browser. Please allow popups.' };
     }
-    return { error: error.message || 'Firebase authentication failed.' };
+    return { error: typeof message === 'string' && message ? message : 'Firebase authentication failed.' };
   }
 };
+

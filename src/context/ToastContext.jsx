@@ -11,9 +11,22 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const sanitizeToastText = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') return val.message || val.error || JSON.stringify(val);
+    return String(val);
+  };
+
   const addToast = useCallback(({ type = 'success', title = '', message = '', duration = 3500 }) => {
     const id = `toast_${Date.now()}_${Math.random()}`;
-    const newToast = { id, type, title, message, duration };
+    const newToast = { 
+      id, 
+      type, 
+      title: sanitizeToastText(title), 
+      message: sanitizeToastText(message), 
+      duration 
+    };
 
     setToasts((prev) => [newToast, ...prev.slice(0, 4)]);
 

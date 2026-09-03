@@ -12,6 +12,13 @@ export const AdminLogin = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const formatErr = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
+    return String(err);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -21,7 +28,7 @@ export const AdminLogin = () => {
 
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -75,7 +82,7 @@ export const AdminLogin = () => {
         {/* Error Alert */}
         {errorMsg && (
           <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold text-center animate-fade-in">
-            {errorMsg}
+            {typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}
           </div>
         )}
 

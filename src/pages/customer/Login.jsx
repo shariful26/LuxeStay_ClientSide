@@ -15,6 +15,13 @@ export const Login = () => {
   const location = useLocation();
   const from = location.state?.from;
 
+  const formatErr = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (typeof err === 'object') return err.message || err.error || JSON.stringify(err);
+    return String(err);
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
@@ -23,7 +30,7 @@ export const Login = () => {
 
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -48,7 +55,7 @@ export const Login = () => {
 
     if (result?.error) {
       setLoading(false);
-      setErrorMsg(result.error);
+      setErrorMsg(formatErr(result.error));
       return;
     }
 
@@ -127,7 +134,7 @@ export const Login = () => {
 
         {errorMsg && (
           <div className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-extrabold text-center">
-            {errorMsg}
+            {typeof errorMsg === 'object' ? (errorMsg?.message || JSON.stringify(errorMsg)) : String(errorMsg)}
           </div>
         )}
 
