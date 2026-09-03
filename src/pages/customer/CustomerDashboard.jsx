@@ -41,7 +41,7 @@ export const CustomerDashboard = () => {
       <div className="p-5 sm:p-8 rounded-2xl bg-slate-900 text-white shadow-md border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <img 
-            src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'} 
+            src={user?.avatar && !user.avatar.includes('photo-1534528741775') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Member')}&background=0284c7&color=fff&bold=true`} 
             alt="" 
             className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white object-cover flex-shrink-0" 
           />

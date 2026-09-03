@@ -390,7 +390,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
             <div className="flex items-center gap-3 pl-2 sm:pl-4 border-l border-[var(--border-light)]">
               <div className="flex items-center gap-2 sm:gap-3 select-none">
                 <img 
-                  src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'} 
+                  src={user?.avatar && !user.avatar.includes('photo-1534528741775') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0284c7&color=fff&bold=true`} 
                   alt="" 
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
                 />

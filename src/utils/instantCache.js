@@ -255,68 +255,7 @@ export const BASELINE_ROOMS = [
   }
 ];
 
-export const BASELINE_BOOKINGS = [
-  {
-    id: "BK-10492",
-    roomId: "r101",
-    roomName: "Deluxe Aegean Sunset Villa",
-    hotelId: "h1",
-    hotelName: "The Grand Azure Resort & Spa",
-    guestName: "Lady Genevieve Sterling",
-    guestEmail: "genevieve@sterling.co.uk",
-    guestPhone: "+44 7700 900123",
-    checkIn: "2026-09-01",
-    checkOut: "2026-09-05",
-    nights: 4,
-    guests: 2,
-    status: "Checked-In",
-    paymentStatus: "Paid",
-    total: 1800,
-    paymentMethod: "Visa Signature",
-    transactionId: "pi_3M92837192837482",
-    createdAt: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: "BK-10493",
-    roomId: "r201",
-    roomName: "Overwater Sunset Plunge Pool Villa",
-    hotelId: "h2",
-    hotelName: "Overwater Coral Sanctuary",
-    guestName: "Lord Alexander Wright",
-    guestEmail: "alexander@wright.com",
-    guestPhone: "+1 (555) 234-5678",
-    checkIn: "2026-09-03",
-    checkOut: "2026-09-08",
-    nights: 5,
-    guests: 2,
-    status: "Confirmed",
-    paymentStatus: "Paid",
-    total: 4450,
-    paymentMethod: "Stripe Card",
-    transactionId: "pi_3M48572918472918",
-    createdAt: new Date(Date.now() - 172800000).toISOString()
-  },
-  {
-    id: "BK-10494",
-    roomId: "r301",
-    roomName: "Central Park Skyline Suite",
-    hotelId: "h3",
-    hotelName: "The Ritz Horizon Tower",
-    guestName: "Dr. Jonathan Vance",
-    guestEmail: "jonathan.vance@health.org",
-    guestPhone: "+1 (212) 555-0199",
-    checkIn: "2026-09-02",
-    checkOut: "2026-09-06",
-    nights: 4,
-    guests: 2,
-    status: "Checked-In",
-    paymentStatus: "Paid",
-    total: 2080,
-    paymentMethod: "Apple Pay",
-    transactionId: "APL-GPAY-99214",
-    createdAt: new Date(Date.now() - 259200000).toISOString()
-  }
-];
+export const BASELINE_BOOKINGS = [];
 
 export const BASELINE_DESTINATIONS = [
   {
@@ -387,73 +326,7 @@ export const BASELINE_DESTINATIONS = [
   }
 ];
 
-export const BASELINE_MESSAGES = [
-  {
-    id: "msg1",
-    senderId: "alice",
-    senderName: "Alice Johnson",
-    senderRole: "customer",
-    recipientId: "manager",
-    recipientName: "manager",
-    recipientRole: "manager",
-    text: "Hi, can I request a late check-out for Room 101?",
-    time: "9:15 AM",
-    read: true,
-    createdAt: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: "msg2",
-    senderId: "manager",
-    senderName: "manager",
-    senderRole: "manager",
-    recipientId: "alice",
-    recipientName: "Alice Johnson",
-    recipientRole: "customer",
-    text: "Hi Alice, we can accommodate a late check-out for you. How late would you like to stay?",
-    time: "9:30 AM",
-    read: true,
-    createdAt: new Date(Date.now() - 3000000).toISOString()
-  },
-  {
-    id: "msg3",
-    senderId: "alice",
-    senderName: "Alice Johnson",
-    senderRole: "customer",
-    recipientId: "manager",
-    recipientName: "manager",
-    recipientRole: "manager",
-    text: "I was hoping to stay until 2 PM, is that possible?",
-    time: "9:40 AM",
-    read: true,
-    createdAt: new Date(Date.now() - 2400000).toISOString()
-  },
-  {
-    id: "msg4",
-    senderId: "manager",
-    senderName: "manager",
-    senderRole: "manager",
-    recipientId: "alice",
-    recipientName: "Alice Johnson",
-    recipientRole: "customer",
-    text: "Yes, that is perfectly fine. We have updated your checkout window to 2 PM at no extra cost.",
-    time: "9:45 AM",
-    read: true,
-    createdAt: new Date(Date.now() - 1800000).toISOString()
-  },
-  {
-    id: "msg5",
-    senderId: "alice",
-    senderName: "Alice Johnson",
-    senderRole: "customer",
-    recipientId: "manager",
-    recipientName: "manager",
-    recipientRole: "manager",
-    text: "Awesome! Thank you so much for the quick response. See you tomorrow.",
-    time: "9:50 AM",
-    read: true,
-    createdAt: new Date(Date.now() - 1200000).toISOString()
-  }
-];
+export const BASELINE_MESSAGES = [];
 
 const BASELINES = {
   hotels: BASELINE_HOTELS,

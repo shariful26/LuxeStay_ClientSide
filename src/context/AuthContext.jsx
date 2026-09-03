@@ -34,7 +34,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('luxestay_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed?.name === 'Alice Johnson' || parsed?.id === 'u_customer_demo') {
+        localStorage.removeItem('luxestay_user');
+        return null;
+      }
+      if (parsed?.avatar && parsed.avatar.includes('photo-1534528741775')) {
+        parsed.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(parsed.name || 'User')}&background=0284c7&color=fff&bold=true`;
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
@@ -145,7 +154,9 @@ export const AuthProvider = ({ children }) => {
           name: name || (email ? email.split('@')[0] : 'Google User'),
           email,
           role,
-          avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+          avatar: avatar && !avatar.includes('photo-1534528741775')
+            ? avatar 
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Google User')}&background=0284c7&color=fff&bold=true`,
           phone: '+1 (555) 000-9988',
           country: 'United States'
         };

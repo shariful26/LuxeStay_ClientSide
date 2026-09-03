@@ -75,7 +75,9 @@ export const ManagerMessages = () => {
             ...prev,
             [activeChatId]: {
               name: data.name || 'Guest Customer',
-              avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+              avatar: data.avatar && !data.avatar.includes('photo-1534528741775')
+                ? data.avatar
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Guest')}&background=0284c7&color=fff&bold=true`,
               phone: data.phone || '+1 (555) 000-0000',
               email: data.email || `${activeChatId}@example.com`,
               status: 'Guest • Online',
@@ -99,7 +101,9 @@ export const ManagerMessages = () => {
 
     const resolvedProfile = fetchedProfiles[customerId] || {
       name: customerName || 'Verified Guest',
-      avatar: customerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      avatar: customerAvatar && !customerAvatar.includes('photo-1534528741775')
+        ? customerAvatar
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName || 'Guest')}&background=0284c7&color=fff&bold=true`,
       phone: '+1 (555) 000-0000',
       email: `${customerId}@example.com`,
       status: 'Guest • Online',
@@ -436,7 +440,7 @@ export const ManagerMessages = () => {
 
                         {!isGuest && (
                           <img 
-                            src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'} 
+                            src={user?.avatar && !user.avatar.includes('photo-1534528741775') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Manager')}&background=0284c7&color=fff&bold=true`} 
                             className="w-7 h-7 rounded-full object-cover border border-slate-100 flex-shrink-0 mb-1" 
                             alt="" 
                           />

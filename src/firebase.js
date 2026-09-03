@@ -24,7 +24,7 @@ export const loginWithGoogleFirebase = async () => {
       user: {
         name: user.displayName || user.email.split('@')[0],
         email: user.email,
-        avatar: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'Google User')}&background=0284c7&color=fff&bold=true`,
         uid: user.uid
       }
     };

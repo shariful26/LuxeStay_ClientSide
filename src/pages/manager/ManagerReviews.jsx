@@ -413,7 +413,7 @@ export const ManagerReviews = () => {
                           className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/30 shadow-xs flex-shrink-0"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(r.guestName || 'Guest')}&background=0284c7&color=fff&bold=true`;
                           }}
                         />
                       ) : (

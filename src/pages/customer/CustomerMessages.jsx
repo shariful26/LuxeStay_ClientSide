@@ -187,8 +187,9 @@ export const CustomerMessages = () => {
 
     const myId = user?.id ? String(user.id) : 'customer';
     const myName = user?.name || 'Verified Customer';
-    const myRole = 'customer';
-    const myAvatar = user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+    const myAvatar = user?.avatar && !user.avatar.includes('photo-1534528741775')
+      ? user.avatar 
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(myName)}&background=0284c7&color=fff&bold=true`;
 
     const sendPayload = (textValue) => {
       const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

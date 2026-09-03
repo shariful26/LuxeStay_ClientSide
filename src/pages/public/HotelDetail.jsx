@@ -279,7 +279,7 @@ export const HotelDetail = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <img 
-                        src={rev.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'} 
+                        src={rev.guestAvatar && !rev.guestAvatar.includes('photo-1534528741775') ? rev.guestAvatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(rev.guestName || 'Guest')}&background=0284c7&color=fff&bold=true`} 
                         alt={rev.guestName} 
                         className="w-10 h-10 rounded-2xl object-cover border border-amber-500/20 shadow-xs"
                       />
@@ -521,8 +521,8 @@ export const HotelDetail = () => {
                   if (!contactMessage.trim()) return;
                   
                   const payload = {
-                    senderId: user?.id || 'alice',
-                    senderName: user?.name || 'Alice Johnson',
+                    senderId: user?.id || 'guest',
+                    senderName: user?.name || 'Guest User',
                     senderRole: 'customer',
                     recipientId: hotel.partnerId || 'partner1',
                     recipientName: hotel.partnerName || 'Hotel Concierge',

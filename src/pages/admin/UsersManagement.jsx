@@ -25,7 +25,7 @@ export const UsersManagement = () => {
     phone: '',
     role: 'customer',
     country: 'United States',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+    avatar: ''
   });
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export const UsersManagement = () => {
       phone: '',
       role: 'customer',
       country: 'United States',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+      avatar: ''
     });
 
     fetch('/api/users', {
@@ -264,7 +264,7 @@ export const UsersManagement = () => {
                     <td className="pl-6 font-bold text-[var(--text-primary)]">
                       <div className="flex items-center gap-2.5">
                         <img 
-                          src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} 
+                          src={u.avatar && !u.avatar.includes('photo-1534528741775') ? u.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=0284c7&color=fff&bold=true`} 
                           alt="" 
                           className="w-8 h-8 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
                         />

@@ -51,11 +51,11 @@ export const MessageProvider = ({ children }) => {
           
           // Trigger Toast notification
           setToast({
-            senderName: newest.senderName || 'LuxeStay Manager',
+            senderName: newest.senderName || 'LuxeStay Concierge',
             text: newest.text,
-            avatar: newest.senderRole === 'manager' 
-              ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' 
-              : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+            avatar: newest.senderAvatar && !newest.senderAvatar.includes('photo-1534528741775')
+              ? newest.senderAvatar
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(newest.senderName || 'Concierge')}&background=0284c7&color=fff&bold=true`,
             link: myRole === 'manager' ? '/manager/messages' : '/customer/messages'
           });
 

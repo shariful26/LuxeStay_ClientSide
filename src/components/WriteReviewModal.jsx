@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubmitted }) => {
   const { user } = useAuth();
 
-  const [guestName, setGuestName] = useState(user?.name || booking?.guestName || 'Shariful');
-  const [guestAvatar, setGuestAvatar] = useState(user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80');
+  const [guestName, setGuestName] = useState(user?.name || booking?.guestName || 'VIP Guest');
+  const [guestAvatar, setGuestAvatar] = useState(user?.avatar && !user.avatar.includes('photo-1534528741775') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || booking?.guestName || 'VIP Guest')}&background=0284c7&color=fff&bold=true`);
   const [guestCountry, setGuestCountry] = useState(user?.country || 'Global Traveler');
 
   const [rating, setRating] = useState(5);
@@ -58,7 +58,7 @@ export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubm
       hotelId: String(hotelId),
       hotelName: hotelName,
       guestName: guestName.trim() || user?.name || booking?.guestName || 'Verified Guest',
-      guestAvatar: guestAvatar || user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      guestAvatar: (guestAvatar && !guestAvatar.includes('photo-1534528741775')) ? guestAvatar : (user?.avatar && !user.avatar.includes('photo-1534528741775') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(guestName || 'Guest')}&background=0284c7&color=fff&bold=true`),
       guestCountry: guestCountry.trim() || 'Global Traveler',
       rating: rating,
       categories: categories,
@@ -144,7 +144,7 @@ export const WriteReviewModal = ({ isOpen, onClose, hotel, booking, onReviewSubm
                     className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/40 shadow-xs flex-shrink-0"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(guestName || 'Guest')}&background=0284c7&color=fff&bold=true`;
                     }}
                   />
                   <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 text-white rounded-full flex items-center justify-center">

@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
 const PRESET_AVATARS = [
-  { label: 'Executive Gold', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80' },
+  { label: 'Executive Gold', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80' },
   { label: 'VIP Platinum', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80' },
   { label: 'Suite Ambassador', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80' },
   { label: 'Luxury Traveler', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80' }
@@ -42,7 +42,9 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
     email: user?.email || '',
     phone: user?.phone || '',
     country: user?.country || 'United States',
-    avatar: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    avatar: user?.avatar && !user.avatar.includes('photo-1534528741775')
+      ? user.avatar 
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Member')}&background=0284c7&color=fff&bold=true`,
     address: user?.address || '',
     city: user?.city || '',
     state: user?.state || '',
@@ -56,7 +58,9 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
         email: user.email || '',
         phone: user.phone || '',
         country: user.country || 'United States',
-        avatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+        avatar: user.avatar && !user.avatar.includes('photo-1534528741775')
+          ? user.avatar 
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'Member')}&background=0284c7&color=fff&bold=true`,
         address: user.address || '',
         city: user.city || '',
         state: user.state || '',
@@ -136,7 +140,7 @@ export const CustomerProfile = ({ role = 'customer', mode = 'all' }) => {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-6 border-b border-[var(--border-light)]">
             <div className="relative group flex-shrink-0 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <img 
-                src={formData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'} 
+                src={formData.avatar && !formData.avatar.includes('photo-1534528741775') ? formData.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'Member')}&background=0284c7&color=fff&bold=true`} 
                 alt="Profile Avatar" 
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-amber-500 shadow-xl group-hover:opacity-90 transition-opacity" 
               />

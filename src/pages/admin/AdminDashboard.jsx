@@ -377,9 +377,8 @@ export const AdminDashboard = () => {
               {safeBookings.slice(0, 6).map((bk, idx) => (
                 <div key={bk.id || idx} className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] shadow-xs flex items-center gap-3 hover:border-amber-500/40 transition-colors">
                   <img 
-                    src={bk.guestAvatar || bk.avatar || `https://images.unsplash.com/photo-${1534528741775 + ((idx * 73) % 500)}?auto=format&fit=crop&w=150&q=80`} 
+                    src={bk.guestAvatar && !bk.guestAvatar.includes('photo-1534528741775') ? bk.guestAvatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(bk.guestName || bk.name || 'Guest')}&background=0284c7&color=fff&bold=true`} 
                     alt={bk.guestName || bk.name} 
-                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'; }}
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-amber-500 flex-shrink-0" 
                   />
                   <div className="flex-1 overflow-hidden">
@@ -507,9 +506,8 @@ export const AdminDashboard = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <img 
-                        src={rev.guestAvatar || rev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} 
+                        src={rev.guestAvatar && !rev.guestAvatar.includes('photo-1534528741775') ? rev.guestAvatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(rev.guestName || rev.name || 'Guest')}&background=0284c7&color=fff&bold=true`} 
                         alt={rev.guestName || rev.name} 
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'; }}
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500 flex-shrink-0" 
                       />
                       <div className="min-w-0 flex-1">

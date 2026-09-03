@@ -141,7 +141,7 @@ const TESTIMONIALS = [
   {
     name: 'Lady Genevieve Sterling',
     role: 'Verified Luxury Traveler',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    avatar: 'https://ui-avatars.com/api/?name=Genevieve+Sterling&background=0284c7&color=fff&bold=true',
     text: 'LuxeStay booked us an overwater sunset sanctuary in the Maldives with private butler service. The digital QR stay voucher check-in was completely effortless.',
     rating: 5,
     location: 'Maldives Overwater Sanctuary'
@@ -680,7 +680,7 @@ export const Home = () => {
                 </div>
                 <p className="text-xs text-[var(--text-primary)] leading-relaxed italic">"{tItem.comment || tItem.text}"</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-[var(--border-light)]">
-                  <img src={tItem.avatar || tItem.guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'} alt={tItem.guestName || tItem.name} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500" />
+                  <img src={tItem.avatar && !tItem.avatar.includes('photo-1534528741775') ? tItem.avatar : (tItem.guestAvatar && !tItem.guestAvatar.includes('photo-1534528741775') ? tItem.guestAvatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(tItem.guestName || tItem.name || 'Guest')}&background=0284c7&color=fff&bold=true`)} alt={tItem.guestName || tItem.name} className="w-10 h-10 rounded-full object-cover border-2 border-amber-500" />
                   <div>
                     <h4 className="text-xs font-bold text-[var(--text-primary)]">{tItem.guestName || tItem.name}</h4>
                     <span className="text-[11px] text-[var(--text-muted)] font-semibold">{tItem.hotelName || tItem.location || tItem.guestCountry || 'Verified Guest Stay'}</span>

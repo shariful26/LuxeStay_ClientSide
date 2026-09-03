@@ -605,7 +605,7 @@ export const ManagerBookings = () => {
                     {/* Avatar & Name */}
                     <div className="flex items-center gap-3">
                       <img 
-                        src={selectedBooking.guestAvatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"} 
+                        src={selectedBooking.guestAvatar && !selectedBooking.guestAvatar.includes('photo-1534528741775') ? selectedBooking.guestAvatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedBooking.guestName || 'Guest')}&background=0284c7&color=fff&bold=true`} 
                         className="w-14 h-14 rounded-full object-cover border border-slate-100 shadow-2xs" 
                         alt="" 
                       />
