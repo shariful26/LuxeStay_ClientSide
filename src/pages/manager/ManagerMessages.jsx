@@ -27,31 +27,21 @@ export const ManagerMessages = () => {
 
   // Sync with centralized messages when updated
   useEffect(() => {
-    if (Array.isArray(contextMessages) && contextMessages.length > 0) {
-      setMessages(prev => {
-        const serverIds = new Set(contextMessages.map(m => m.id));
-        const pending = prev.filter(m => !serverIds.has(m.id));
-        const merged = [...contextMessages, ...pending];
-        try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
-        return merged;
-      });
+    if (Array.isArray(contextMessages)) {
+      setMessages(contextMessages);
+      try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(contextMessages)); } catch (e) {}
     }
   }, [contextMessages]);
 
   const fetchMessages = () => {
     if (typeof document !== 'undefined' && document.hidden) return;
     const myId = user?.id || 'manager';
-    fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=manager&limit=50`)
+    fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=manager&limit=50&_t=${Date.now()}`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setMessages(prev => {
-            const serverIds = new Set(data.map(m => m.id));
-            const pending = prev.filter(m => !serverIds.has(m.id));
-            const merged = [...data, ...pending];
-            try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
-            return merged;
-          });
+        if (Array.isArray(data)) {
+          setMessages(data);
+          try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});
