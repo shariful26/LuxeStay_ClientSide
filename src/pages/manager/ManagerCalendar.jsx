@@ -17,7 +17,7 @@ export const ManagerCalendar = () => {
   const currentYear = currentDate.getFullYear();
 
   const fetchBookings = () => {
-    fetch('/api/bookings')
+    fetch('/api/bookings?role=manager')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

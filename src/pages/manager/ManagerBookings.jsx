@@ -45,9 +45,10 @@ export const ManagerBookings = () => {
 
   const fetchBookingsData = async () => {
     try {
+      const partnerQuery = user?.id ? `?partnerId=${encodeURIComponent(user.id)}${user?.email ? `&partnerEmail=${encodeURIComponent(user.email)}` : ''}` : '';
       const [hotelsRes, bookingsRes, roomsRes] = await Promise.all([
-        fetch('/api/hotels'),
-        fetch('/api/bookings'),
+        fetch(`/api/hotels${partnerQuery}`),
+        fetch('/api/bookings?role=manager'),
         fetch('/api/rooms')
       ]);
       const hotelsData = await hotelsRes.json();

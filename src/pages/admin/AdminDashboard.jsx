@@ -26,11 +26,11 @@ export const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       const [bookingsRes, hotelsRes, usersRes, roomsRes, reviewsRes] = await Promise.all([
-        fetch('/api/bookings'),
-        fetch('/api/hotels'),
-        fetch('/api/users'),
+        fetch('/api/bookings?role=admin&limit=50'),
+        fetch('/api/hotels?fields=compact'),
+        fetch('/api/users?limit=50'),
         fetch('/api/rooms'),
-        fetch('/api/reviews?role=admin&scope=all')
+        fetch('/api/reviews?role=admin&scope=all&limit=50')
       ]);
       const bookingsData = await bookingsRes.json();
       const hotelsData = await hotelsRes.json();

@@ -26,7 +26,7 @@ export const MyBookings = () => {
   const toast = useToast();
 
   useEffect(() => {
-    fetch('/api/hotels')
+    fetch('/api/hotels?fields=compact')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -36,20 +36,18 @@ export const MyBookings = () => {
       })
       .catch(() => {});
 
-    fetch('/api/bookings')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          let myData = data.filter(b => 
-            (user?.email && b.guestEmail && b.guestEmail.toLowerCase() === user.email.toLowerCase()) ||
-            (user?.id && b.userId === user.id)
-          );
-          if (myData.length === 0) myData = data;
-          setBookings(myData);
-          try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(myData)); } catch (e) {}
-        }
-      })
-      .catch(() => {});
+    if (user) {
+      const myId = user.id || user.email || '';
+      fetch(`/api/bookings?userId=${encodeURIComponent(myId)}&role=customer`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setBookings(data);
+            try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(data)); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+    }
   }, [user, activeVoucher]);
 
   const renderStatusBadge = (status) => {

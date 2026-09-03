@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft, ThumbsUp, Heart, Star } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useMessages } from '../../context/MessageContext';
 import { getInstantData } from '../../utils/instantCache';
 
 export const ManagerMessages = () => {
@@ -19,8 +20,25 @@ export const ManagerMessages = () => {
   const prevMessagesLengthRef = React.useRef(0);
   const prevActiveChatIdRef = React.useRef('');
 
+  const { fetchMessages: contextFetchMessages, messages: contextMessages } = useMessages();
+
+  // Sync with centralized messages when updated
+  useEffect(() => {
+    if (Array.isArray(contextMessages) && contextMessages.length > 0) {
+      setMessages(prev => {
+        const serverIds = new Set(contextMessages.map(m => m.id));
+        const pending = prev.filter(m => !serverIds.has(m.id));
+        const merged = [...contextMessages, ...pending];
+        try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
+        return merged;
+      });
+    }
+  }, [contextMessages]);
+
   const fetchMessages = () => {
-    fetch('/api/messages')
+    if (typeof document !== 'undefined' && document.hidden) return;
+    const myId = user?.id || 'manager';
+    fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=manager&limit=50`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -38,44 +56,36 @@ export const ManagerMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    // Fast real-time polling every 1.5 seconds
-    const interval = setInterval(fetchMessages, 1500);
+    // Reasonable 30-second background refresh (reduced from aggressive 1.5s)
+    const interval = setInterval(fetchMessages, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
-  // Fetch real profile details dynamically from backend
+  // Fetch real profile details dynamically ONLY for the active chat guest (lazy-load instead of bulk loop)
   useEffect(() => {
-    const customerIds = [...new Set(messages.map(msg => {
-      if (msg.senderRole === 'customer') return msg.senderId;
-      if (msg.recipientRole === 'customer') return msg.recipientId;
-      return null;
-    }).filter(id => Boolean(id) && id !== 'customer'))];
+    if (!activeChatId || activeChatId === 'customer' || activeChatId === 'manager') return;
+    if (fetchedProfiles[activeChatId]) return;
 
-    customerIds.forEach(id => {
-      if (id && !fetchedProfiles[id]) {
-        // Mark as requested immediately to prevent loop
-        setFetchedProfiles(prev => ({ ...prev, [id]: { loading: true } }));
-        fetch(`/api/users/${id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.name) {
-              setFetchedProfiles(prev => ({
-                ...prev,
-                [id]: {
-                  name: data.name || 'Guest Customer',
-                  avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-                  phone: data.phone || '+1 (555) 000-0000',
-                  email: data.email || `${id}@example.com`,
-                  status: 'Guest • Online',
-                  country: data.country || 'United States'
-                }
-              }));
+    setFetchedProfiles(prev => ({ ...prev, [activeChatId]: { loading: true } }));
+    fetch(`/api/users/${encodeURIComponent(activeChatId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.name) {
+          setFetchedProfiles(prev => ({
+            ...prev,
+            [activeChatId]: {
+              name: data.name || 'Guest Customer',
+              avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+              phone: data.phone || '+1 (555) 000-0000',
+              email: data.email || `${activeChatId}@example.com`,
+              status: 'Guest • Online',
+              country: data.country || 'United States'
             }
-          })
-          .catch(() => {});
-      }
-    });
-  }, [messages, user?.id]);
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [activeChatId, fetchedProfiles]);
 
   // Group messages by customer
   const chatGroups = {};

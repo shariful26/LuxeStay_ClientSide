@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft, ThumbsUp, Heart, Sparkles, Star, Check } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useMessages } from '../../context/MessageContext';
 import { getInstantData } from '../../utils/instantCache';
 
 export const CustomerMessages = () => {
@@ -19,8 +20,25 @@ export const CustomerMessages = () => {
   const [activeLightboxImage, setActiveLightboxImage] = useState(null);
   const [fetchedProfiles, setFetchedProfiles] = useState({});
 
+  const { fetchMessages: contextFetchMessages, messages: contextMessages } = useMessages();
+
+  // Sync with centralized messages when updated
+  useEffect(() => {
+    if (Array.isArray(contextMessages) && contextMessages.length > 0) {
+      setMessages(prev => {
+        const serverIds = new Set(contextMessages.map(m => m.id));
+        const pending = prev.filter(m => !serverIds.has(m.id));
+        const merged = [...contextMessages, ...pending];
+        try { localStorage.setItem('luxestay_cache_messages', JSON.stringify(merged)); } catch (e) {}
+        return merged;
+      });
+    }
+  }, [contextMessages]);
+
   const fetchMessages = () => {
-    fetch('/api/messages')
+    if (typeof document !== 'undefined' && document.hidden) return;
+    const myId = user?.id || user?.email || 'customer';
+    fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=customer&limit=50`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -38,44 +56,35 @@ export const CustomerMessages = () => {
 
   useEffect(() => {
     fetchMessages();
-    // Fast real-time polling every 1.5 seconds
-    const interval = setInterval(fetchMessages, 1500);
+    // Reasonable 30-second background refresh (reduced from aggressive 1.5s)
+    const interval = setInterval(fetchMessages, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
-  // Fetch real profile details dynamically from backend
+  // Fetch real profile details dynamically ONLY for the active partner host (on demand)
   useEffect(() => {
-    const myId = user?.id ? String(user.id) : 'customer';
-    const partnerIds = [...new Set(messages.map(msg => {
-      if (msg.senderRole === 'manager') return msg.senderId;
-      if (msg.recipientRole === 'manager') return msg.recipientId;
-      return null;
-    }).filter(id => Boolean(id) && id !== 'manager' && id !== myId))];
+    if (!activeChatId) return;
+    if (fetchedProfiles[activeChatId]) return;
 
-    partnerIds.forEach(id => {
-      if (id && !fetchedProfiles[id]) {
-        // Mark as requested immediately to prevent loop
-        setFetchedProfiles(prev => ({ ...prev, [id]: { loading: true } }));
-        fetch(`/api/users/${id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.name) {
-              setFetchedProfiles(prev => ({
-                ...prev,
-                [id]: {
-                  name: data.name || 'Hotel Host',
-                  avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-                  phone: data.phone || '+1 (555) 000-1122',
-                  email: data.email || 'manager@luxestay.com',
-                  status: 'Property Host • Online'
-                }
-              }));
+    setFetchedProfiles(prev => ({ ...prev, [activeChatId]: { loading: true } }));
+    fetch(`/api/users/${encodeURIComponent(activeChatId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.name) {
+          setFetchedProfiles(prev => ({
+            ...prev,
+            [activeChatId]: {
+              name: data.name || 'Hotel Host',
+              avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+              phone: data.phone || '+1 (555) 000-1122',
+              email: data.email || 'manager@luxestay.com',
+              status: 'Property Host • Online'
             }
-          })
-          .catch(() => {});
-      }
-    });
-  }, [messages, user?.id]);
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [activeChatId, fetchedProfiles]);
 
   // Group messages for the customer
   const chatGroups = {

@@ -13,20 +13,26 @@ export const MessageProvider = ({ children }) => {
   const isFirstLoadRef = useRef(true);
   const navigate = useNavigate();
 
+  const [messages, setMessages] = useState([]);
+
   const fetchMessages = async () => {
     if (!user) return;
+    if (typeof document !== 'undefined' && document.hidden) return;
+
     try {
-      const res = await fetch('/api/messages');
+      const myId = user.id || user.email || 'user';
+      const myRole = user.role || 'customer';
+
+      const res = await fetch(`/api/messages?userId=${encodeURIComponent(myId)}&role=${encodeURIComponent(myRole)}&limit=50`);
       const data = await res.json();
       if (!Array.isArray(data)) return;
 
-      const myId = user.id || 'alice';
-      const myRole = user.role || 'customer';
+      setMessages(data);
 
       // Find new messages sent to me
       const incomingMessages = data.filter(msg => {
         if (myRole === 'manager') {
-          return msg.recipientId === myId || msg.recipientId === 'partner1';
+          return msg.recipientId === myId || msg.recipientId === 'partner1' || msg.recipientRole === 'manager';
         }
         return msg.recipientId === myId;
       });
@@ -83,8 +89,18 @@ export const MessageProvider = ({ children }) => {
     
     if (user) {
       fetchMessages();
-      const interval = setInterval(fetchMessages, 3000);
-      return () => clearInterval(interval);
+      // Reasonable 30-second polling (reduced from aggressive 3s to stop bandwidth drain)
+      const interval = setInterval(fetchMessages, 30000);
+      
+      const handleVisibilityChange = () => {
+        if (!document.hidden) fetchMessages();
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, [user]);
 
@@ -101,7 +117,7 @@ export const MessageProvider = ({ children }) => {
   const closeToast = () => setToast(null);
 
   return (
-    <MessageContext.Provider value={{ toast, closeToast, unreadCount, fetchMessages }}>
+    <MessageContext.Provider value={{ toast, closeToast, unreadCount, fetchMessages, messages }}>
       {children}
       
       {/* Side-Sliding Message Toast Component */}

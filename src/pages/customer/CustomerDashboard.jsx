@@ -20,17 +20,14 @@ export const CustomerDashboard = () => {
   const [showAllVouchers, setShowAllVouchers] = useState(false);
 
   useEffect(() => {
-    fetch('/api/bookings')
+    if (!user) return;
+    const myId = user.id || user.email || '';
+    fetch(`/api/bookings?userId=${encodeURIComponent(myId)}&role=customer`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          let myData = data.filter(b => 
-            (user?.email && b.guestEmail && b.guestEmail.toLowerCase() === user.email.toLowerCase()) ||
-            (user?.id && b.userId === user.id)
-          );
-          if (myData.length === 0) myData = data;
-          setBookings(myData);
-          try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(myData)); } catch (e) {}
+          setBookings(data);
+          try { localStorage.setItem('luxestay_cache_customer_bookings', JSON.stringify(data)); } catch (e) {}
         }
       })
       .catch(() => {});

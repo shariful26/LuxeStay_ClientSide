@@ -48,9 +48,10 @@ export const ManagerWallet = () => {
 
   const fetchData = async () => {
     try {
+      const partnerQuery = user?.id ? `?partnerId=${encodeURIComponent(user.id)}${user?.email ? `&partnerEmail=${encodeURIComponent(user.email)}` : ''}` : '';
       const [hotelsRes, bookingsRes, payoutsRes, transfersRes] = await Promise.all([
-        fetch('/api/hotels'),
-        fetch('/api/bookings'),
+        fetch(`/api/hotels${partnerQuery}`),
+        fetch('/api/bookings?role=manager'),
         fetch('/api/payouts'),
         fetch('/api/transfers')
       ]);

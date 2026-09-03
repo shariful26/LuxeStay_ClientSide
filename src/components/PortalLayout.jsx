@@ -45,13 +45,13 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
   // Real-Time Notifications State
   const [notifications, setNotifications] = useState([]);
 
-  // Fetch live notifications from real server database
+  // Fetch live notifications from real server database (with small limit to minimize bandwidth)
   useEffect(() => {
     const fetchLiveNotifications = async () => {
       try {
         const [bkRes, revRes] = await Promise.all([
-          fetch('/api/bookings'),
-          fetch('/api/reviews?role=admin&scope=all')
+          fetch(`/api/bookings?limit=3${role === 'customer' && user?.id ? `&userId=${encodeURIComponent(user.id)}` : ''}`),
+          fetch('/api/reviews?limit=2&scope=all')
         ]);
         const bks = await bkRes.json();
         const revs = await revRes.json();
@@ -89,7 +89,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
       } catch (e) {}
     };
     fetchLiveNotifications();
-  }, [role]);
+  }, [role, user?.id]);
 
   // Hotel Search Preview Results
   const [matchingHotels, setMatchingHotels] = useState([]);
@@ -115,25 +115,28 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch hotels for live search bar
+  // Fetch hotels for live search bar (Debounced 300ms + server-side search query + limit 5)
   useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      fetch('/api/hotels')
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setMatchingHotels([]);
+      setIsSearchDropdownOpen(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetch(`/api/hotels?search=${encodeURIComponent(trimmed)}&limit=5&fields=compact`)
         .then(res => res.json())
         .then(data => {
-          const q = searchQuery.toLowerCase();
-          const matches = Array.isArray(data) ? data.filter(h => 
-            h.name?.toLowerCase().includes(q) || 
-            h.destination?.toLowerCase().includes(q) ||
-            h.category?.toLowerCase().includes(q)
-          ) : [];
-          setMatchingHotels(matches.slice(0, 5));
-          setIsSearchDropdownOpen(true);
+          if (Array.isArray(data)) {
+            setMatchingHotels(data.slice(0, 5));
+            setIsSearchDropdownOpen(true);
+          }
         })
         .catch(() => setMatchingHotels([]));
-    } else {
-      setIsSearchDropdownOpen(false);
-    }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const handleSearchSubmit = (e) => {
