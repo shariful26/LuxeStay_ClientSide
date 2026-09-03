@@ -151,18 +151,6 @@ export const AdminLogin = () => {
           </div>
         </form>
 
-        {/* Real Admin Credentials Helper */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-          <span className="text-slate-400 text-[11px]">🔐 Real Admin Session</span>
-          <button
-            type="button"
-            onClick={() => { setEmail('sharif@gmail.com'); setPassword('123456'); }}
-            className="text-amber-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer"
-          >
-            <KeyRound className="w-3.5 h-3.5" /> Fill Real Admin Credentials
-          </button>
-        </div>
-
         {/* Back Link */}
         <div className="text-center pt-2">
           <Link to="/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1.5">

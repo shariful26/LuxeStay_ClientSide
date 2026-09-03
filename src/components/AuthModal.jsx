@@ -277,51 +277,6 @@ export const AuthModal = () => {
             </div>
           </div>
 
-          {/* Quick Demo Credentials Fill (Envato Reviewers & Buyers) */}
-          {!isRegister && (
-            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-400 pt-1">
-              <span className="font-semibold text-slate-300">Quick Demo Fill:</span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRole('customer');
-                    setFormData(prev => ({ ...prev, email: 'customer@luxestay.com', password: '123456' }));
-                    setErrorMsg('');
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-600 hover:text-white transition-colors cursor-pointer font-bold text-xs"
-                  title="Fill Real Customer Account"
-                >
-                  Customer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRole('manager');
-                    setFormData(prev => ({ ...prev, email: 'manager@luxestay.com', password: '123456' }));
-                    setErrorMsg('');
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer font-bold text-xs"
-                  title="Fill Real Hotel Manager Account"
-                >
-                  Manager
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRole('admin');
-                    setFormData(prev => ({ ...prev, email: 'admin@luxestay.com', password: '123456' }));
-                    setErrorMsg('');
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer font-bold text-xs"
-                  title="Fill Real Super Admin Account"
-                >
-                  Admin
-                </button>
-              </div>
-            </div>
-          )}
-
           <button type="submit" disabled={loading} className="w-full btn btn-primary py-3 text-xs shadow-lg shadow-amber-500/30 cursor-pointer font-extrabold uppercase tracking-wider">
             <span>{loading ? 'Processing...' : isRegister ? `Register ${role.toUpperCase()} Account` : `Sign In as ${role === 'manager' ? 'HOTEL MANAGER' : role.toUpperCase()}`}</span>
             <ArrowRight className="w-4 h-4" />

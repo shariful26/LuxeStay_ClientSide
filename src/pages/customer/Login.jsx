@@ -41,13 +41,6 @@ export const Login = () => {
     else navigate('/customer/dashboard');
   };
 
-  const handleQuickDemoFill = (demoRole, demoEmail, demoPassword) => {
-    setRole(demoRole);
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setErrorMsg('');
-  };
-
   const handleGoogleAuth = async () => {
     setLoading(true);
     setErrorMsg('');
@@ -181,37 +174,6 @@ export const Login = () => {
                 title={showPassword ? "Hide Password" : "Show Password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Realtime Demo Role Credentials (For Envato Reviewers & Buyers) */}
-          <div className="pt-1 flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-slate-400">
-            <span className="font-semibold text-slate-300">Quick Demo Fill:</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoFill('customer', 'customer@luxestay.com', '123456')}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-600 hover:text-white transition-colors cursor-pointer font-bold"
-                title="Fill Real Customer Account"
-              >
-                Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoFill('manager', 'manager@luxestay.com', '123456')}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer font-bold"
-                title="Fill Real Hotel Manager Account"
-              >
-                Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoFill('admin', 'admin@luxestay.com', '123456')}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer font-bold"
-                title="Fill Real Super Admin Account"
-              >
-                Admin
               </button>
             </div>
           </div>
