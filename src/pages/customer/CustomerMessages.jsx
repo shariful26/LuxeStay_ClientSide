@@ -67,8 +67,8 @@ export const CustomerMessages = () => {
   const [managerProfile, setManagerProfile] = useState(() => ({
     id: 'manager',
     name: 'Shariful Islam (Hotel Manager)',
-    avatar: '',
-    phone: '',
+    avatar: 'https://ui-avatars.com/api/?name=Shariful+Islam&background=0284c7&color=fff&bold=true',
+    phone: '+1 (555) 234-5678',
     email: 'manager@luxestay.com',
     status: 'Property Host • Online'
   }));
@@ -81,10 +81,10 @@ export const CustomerMessages = () => {
         if (data && data.name) {
           const profile = {
             id: data.id || 'manager',
-            name: data.name === 'manager' ? 'Shariful Islam (Hotel Manager)' : data.name,
-            avatar: data.avatar || '',
-            phone: data.phone || '',
-            email: data.email || 'manager@luxestay.com',
+            name: (data.name && data.name !== 'manager') ? data.name : 'Shariful Islam (Hotel Manager)',
+            avatar: data.avatar || 'https://ui-avatars.com/api/?name=Shariful+Islam&background=0284c7&color=fff&bold=true',
+            phone: (data.phone && String(data.phone).trim()) ? data.phone : '+1 (555) 234-5678',
+            email: (data.email && String(data.email).trim()) ? data.email : 'manager@luxestay.com',
             status: data.status || 'Property Host • Online'
           };
           setManagerProfile(profile);
@@ -197,11 +197,14 @@ export const CustomerMessages = () => {
   const currentHost = (activeChatId && fetchedProfiles[activeChatId]) || managerProfile;
 
   const displayHost = {
-    name: currentHost.name || (chatGroups[activeChatId]?.name),
-    avatar: currentHost.avatar || (chatGroups[activeChatId]?.avatar),
-    phone: currentHost.phone || (chatGroups[activeChatId]?.phone),
-    email: currentHost.email || (chatGroups[activeChatId]?.email),
-    status: currentHost.status || (chatGroups[activeChatId]?.status)
+    name: activeChatId === 'admin' ? 'LuxeStay Super Admin' : (currentHost?.name || activeChatData?.name || 'Shariful Islam (Hotel Manager)'),
+    avatar: activeChatId === 'admin'
+      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+      : (currentHost?.avatar || activeChatData?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentHost?.name || activeChatData?.name || 'Manager')}&background=0284c7&color=fff&bold=true`),
+    phone: (currentHost?.phone && String(currentHost.phone).trim()) ? currentHost.phone : (activeChatId === 'admin' ? '+1 (800) 555-LUXE' : '+1 (555) 234-5678'),
+    email: (currentHost?.email && String(currentHost.email).trim()) ? currentHost.email : (activeChatId === 'admin' ? 'admin@luxestay.com' : 'manager@luxestay.com'),
+    status: currentHost?.status || (activeChatId === 'admin' ? 'Super Admin • Online' : 'Property Host • Online'),
+    role: activeChatId === 'admin' ? 'Official Platform Support' : 'Property Representative'
   };
 
   const handleSelectQuickQuestion = (question) => {
@@ -867,12 +870,12 @@ export const CustomerMessages = () => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <img 
-                      src={activeChatData.avatar} 
-                      alt="" 
+                      src={displayHost.avatar} 
+                      alt={displayHost.name} 
                       className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-amber-500 shadow-lg" 
                     />
-                    <h4 className="text-xs font-black text-[var(--text-primary)] mt-3">{activeChatData.name}</h4>
-                    <span className="text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wide mt-1 block">Property Representative</span>
+                    <h4 className="text-xs font-black text-[var(--text-primary)] mt-3">{displayHost.name}</h4>
+                    <span className="text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wide mt-1 block">{displayHost.role}</span>
                   </div>
 
                   <div className="border-t border-[var(--border-light)] pt-4 space-y-3.5 text-xs">
@@ -880,7 +883,7 @@ export const CustomerMessages = () => {
                       <Phone className="w-4 h-4 text-amber-500 flex-shrink-0" />
                       <div className="min-w-0">
                         <span className="text-[10px] text-[var(--text-muted)] font-bold block leading-none">Phone</span>
-                        <span className="font-extrabold text-[var(--text-primary)] text-[11px] truncate block">{activeChatData.phone}</span>
+                        <span className="font-extrabold text-[var(--text-primary)] text-[11px] truncate block">{displayHost.phone}</span>
                       </div>
                     </div>
                     
@@ -888,7 +891,7 @@ export const CustomerMessages = () => {
                       <Mail className="w-4 h-4 text-amber-500 flex-shrink-0" />
                       <div className="min-w-0">
                         <span className="text-[10px] text-[var(--text-muted)] font-bold block leading-none">Email</span>
-                        <span className="font-extrabold text-[var(--text-primary)] text-[11px] truncate block">{activeChatData.email}</span>
+                        <span className="font-extrabold text-[var(--text-primary)] text-[11px] truncate block">{displayHost.email}</span>
                       </div>
                     </div>
 
