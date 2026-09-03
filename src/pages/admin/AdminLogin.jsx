@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, KeyRound, Building2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -9,8 +9,15 @@ export const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { login } = useAuth();
+  const { user, login, authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // If already logged in as admin, redirect to admin dashboard immediately
+  useEffect(() => {
+    if (!authLoading && user?.role === 'admin') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const formatErr = (err) => {
     if (!err) return '';

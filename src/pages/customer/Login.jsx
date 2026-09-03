@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Building2, User, Briefcase, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -10,10 +10,20 @@ export const Login = () => {
   const [role, setRole] = useState('customer');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { login, loginWithGoogle } = useAuth();
+  const { user, login, loginWithGoogle, authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from;
+
+  // If already logged in on this device, redirect to respective dashboard immediately
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (from) navigate(from, { replace: true });
+      else if (user.role === 'admin') navigate('/admin/dashboard', { replace: true });
+      else if (user.role === 'manager') navigate('/manager/dashboard', { replace: true });
+      else navigate('/customer/dashboard', { replace: true });
+    }
+  }, [user, authLoading, from, navigate]);
 
   const formatErr = (err) => {
     if (!err) return '';

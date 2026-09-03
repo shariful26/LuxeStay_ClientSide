@@ -2,58 +2,95 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-// Safe storage helper with quota management and cache garbage collection
-const safeSetUserStorage = (userObj) => {
-  if (!userObj) {
-    try { localStorage.removeItem('luxestay_user'); } catch (e) {}
-    return;
-  }
+// Robust storage reader for instant session retention on page refresh
+const getStoredUser = () => {
   try {
-    localStorage.setItem('luxestay_user', JSON.stringify(userObj));
+    const saved = localStorage.getItem('luxestay_user') || sessionStorage.getItem('luxestay_user');
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    if (!parsed || !parsed.email) return null;
+    if (parsed.name === 'Alice Johnson' || parsed.id === 'u_customer_demo') {
+      localStorage.removeItem('luxestay_user');
+      sessionStorage.removeItem('luxestay_user');
+      return null;
+    }
+    if (parsed.avatar && parsed.avatar.includes('photo-1534528741775')) {
+      parsed.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(parsed.name || 'User')}&background=0284c7&color=fff&bold=true`;
+    }
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Safe persistent storage helper across localStorage & sessionStorage
+const safeSetUserStorage = (userObj) => {
+  if (!userObj) return; // NEVER wipe storage on passive re-renders!
+  try {
+    const userStr = JSON.stringify(userObj);
+    localStorage.setItem('luxestay_user', userStr);
+    sessionStorage.setItem('luxestay_user', userStr);
   } catch (err) {
-    // If QuotaExceededError, clean stale caches
     try {
       Object.keys(localStorage).forEach(k => {
         if (k.startsWith('luxestay_cache_') || k.startsWith('luxestay_read_')) {
           localStorage.removeItem(k);
         }
       });
-      // Retry with optimized lightweight user
-      const lightUser = { ...userObj };
-      if (lightUser.avatar && lightUser.avatar.startsWith('data:') && lightUser.avatar.length > 25000) {
-        lightUser.avatar = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
-      }
-      localStorage.setItem('luxestay_user', JSON.stringify(lightUser));
+      const userStr = JSON.stringify(userObj);
+      localStorage.setItem('luxestay_user', userStr);
+      sessionStorage.setItem('luxestay_user', userStr);
     } catch (e) {
-      console.warn('Storage quota full, retaining in memory state.');
+      console.warn('Storage quota exceeded, retaining in memory.');
     }
   }
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('luxestay_user');
-      if (!saved) return null;
-      const parsed = JSON.parse(saved);
-      if (parsed?.name === 'Alice Johnson' || parsed?.id === 'u_customer_demo') {
-        localStorage.removeItem('luxestay_user');
-        return null;
-      }
-      if (parsed?.avatar && parsed.avatar.includes('photo-1534528741775')) {
-        parsed.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(parsed.name || 'User')}&background=0284c7&color=fff&bold=true`;
-      }
-      return parsed;
-    } catch (e) {
-      return null;
-    }
-  });
-  
+  const [user, setUser] = useState(getStoredUser);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  // Sync user state changes to storage
   useEffect(() => {
-    safeSetUserStorage(user);
+    if (user) {
+      safeSetUserStorage(user);
+    }
   }, [user]);
+
+  // On initial mount / refresh: verify and refresh session from server in background
+  useEffect(() => {
+    let isMounted = true;
+    const verifySession = async () => {
+      const currentStored = getStoredUser();
+      if (currentStored?.email) {
+        try {
+          const token = localStorage.getItem('luxestay_token') || `jwt-token-${currentStored.id}`;
+          const res = await fetch(`/api/auth/me?email=${encodeURIComponent(currentStored.email)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (isMounted && data?.user) {
+              setUser(data.user);
+              safeSetUserStorage(data.user);
+            }
+          }
+        } catch (e) {
+          // Keep stored offline/cached user active
+        }
+      }
+      if (isMounted) {
+        setAuthLoading(false);
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Helper to guarantee errors are always formatted as human-readable strings (never unrendered objects)
   const extractErrorMessage = (err) => {
@@ -104,6 +141,9 @@ export const AuthProvider = ({ children }) => {
     if (data?.user) {
       setUser(data.user);
       safeSetUserStorage(data.user);
+      if (data.token) {
+        try { localStorage.setItem('luxestay_token', data.token); } catch (e) {}
+      }
       return data;
     }
 
@@ -129,6 +169,9 @@ export const AuthProvider = ({ children }) => {
     if (data?.user) {
       setUser(data.user);
       safeSetUserStorage(data.user);
+      if (data.token) {
+        try { localStorage.setItem('luxestay_token', data.token); } catch (e) {}
+      }
       return data;
     }
 
@@ -208,13 +251,16 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('luxestay_user');
+    try {
+      localStorage.removeItem('luxestay_user');
+      localStorage.removeItem('luxestay_token');
+      sessionStorage.removeItem('luxestay_user');
+    } catch (e) {}
   };
 
   const switchRole = async (role) => {
     if (role === 'guest') {
-      setUser(null);
-      localStorage.removeItem('luxestay_user');
+      logout();
       return;
     }
     const effectiveRole = role === 'manager' ? 'manager' : role;
@@ -235,6 +281,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user,
+      authLoading,
       login,
       register,
       loginWithGoogle,

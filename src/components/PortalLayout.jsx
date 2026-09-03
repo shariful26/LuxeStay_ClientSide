@@ -12,12 +12,13 @@ import { useWishlist } from '../context/WishlistContext';
 
 export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) => {
   const navigate = useNavigate();
-  const { user, logout, switchRole } = useAuth();
+  const { user, logout, switchRole, authLoading } = useAuth();
   const { wishlist } = useWishlist();
   const safeWishlist = Array.isArray(wishlist) ? wishlist : [];
 
-  // Strict Auth & Role Guard Protection
+  // Strict Auth & Role Guard Protection (Waits for session check on refresh)
   useEffect(() => {
+    if (authLoading) return; // Wait until initial stored auth is read!
     if (!user) {
       if (role === 'admin') navigate('/admin/login', { replace: true });
       else navigate('/login', { replace: true });
@@ -30,7 +31,7 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
     } else if (user?.role === 'admin' && role === 'customer') {
       navigate('/admin/dashboard', { replace: true });
     }
-  }, [user, role, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   // Sidebar Controls
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -181,6 +182,17 @@ export const PortalLayout = ({ role = 'customer', title = 'Portal', children }) 
   };
 
   const unreadNotifCount = notifications.filter(n => !n.read).length;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin" />
+          <span className="text-[11px] font-black text-[var(--text-muted)] tracking-widest uppercase">Loading Session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex animate-fade-in relative overflow-x-hidden">
