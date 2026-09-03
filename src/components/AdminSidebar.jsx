@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useMessages } from '../context/MessageContext';
 
 export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
@@ -13,10 +14,11 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
   const { theme, toggleTheme } = useTheme();
   const [dashboardOpen, setDashboardOpen] = useState(true);
   const [isSidebarSettingsOpen, setIsSidebarSettingsOpen] = useState(false);
+  const { unreadCount } = useMessages();
 
   const navItems = [
     { label: 'Dashboard Main', path: '/admin/dashboard' },
-    { label: 'Live Messages', path: '/admin/messages' },
+    { label: 'Live Messages', path: '/admin/messages', badge: unreadCount > 0 ? String(unreadCount) : null },
     { label: 'Guest & Roles', path: '/admin/users' },
     { label: 'Room Catalog', path: '/admin/rooms' },
     { label: 'Hotels Directory', path: '/admin/hotels' },
@@ -110,14 +112,21 @@ export const AdminSidebar = ({ isOpen, onClose, isCollapsed }) => {
                         key={idx}
                         to={item.path}
                         onClick={() => onClose && onClose()}
-                        className={`flex items-center py-2 px-3 rounded-lg transition-colors font-semibold ${
+                        className={`flex items-center justify-between py-2 px-3 rounded-lg transition-colors font-semibold ${
                           isActive 
                             ? 'bg-amber-500/10 text-amber-500 font-extrabold' 
                             : 'text-[var(--text-secondary)] hover:text-amber-500 hover:bg-[var(--bg-tertiary)]'
                         }`}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 flex-shrink-0"></span>
-                        <span>{item.label}</span>
+                        <span className="flex items-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 flex-shrink-0"></span>
+                          <span>{item.label}</span>
+                        </span>
+                        {item.badge && (
+                          <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

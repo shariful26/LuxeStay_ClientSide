@@ -114,10 +114,34 @@ export const MessageProvider = ({ children }) => {
     }
   }, [toast]);
 
+  const markChatAsRead = (partnerId) => {
+    if (!partnerId) return;
+    const pId = String(partnerId).trim();
+
+    setMessages(prev => prev.map(m => {
+      const match = String(m.senderId) === pId || m.senderRole === pId;
+      if (match && !m.read) return { ...m, read: true };
+      return m;
+    }));
+
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
+    // Call backend
+    fetch('/api/messages/read', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        senderId: pId,
+        recipientId: user?.id || user?.role || 'manager',
+        role: user?.role
+      })
+    }).catch(() => {});
+  };
+
   const closeToast = () => setToast(null);
 
   return (
-    <MessageContext.Provider value={{ toast, closeToast, unreadCount, fetchMessages, messages }}>
+    <MessageContext.Provider value={{ toast, closeToast, unreadCount, setUnreadCount, fetchMessages, messages, setMessages, markChatAsRead }}>
       {children}
       
       {/* Side-Sliding Message Toast Component */}

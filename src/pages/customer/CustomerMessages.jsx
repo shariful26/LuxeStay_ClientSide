@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft, ThumbsUp, Heart, Sparkles, Star, Check } from 'lucide-react';
+import { Search, Send, User, Bell, Phone, Mail, Building2, Globe, MessageSquare, ShieldAlert, Smile, Paperclip, Download, Eye, X, ArrowLeft, ThumbsUp, Heart, Sparkles, Star, Check, MoreHorizontal, Edit2, Trash2, Trash } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useMessages } from '../../context/MessageContext';
@@ -20,7 +20,10 @@ export const CustomerMessages = () => {
   const [activeLightboxImage, setActiveLightboxImage] = useState(null);
   const [fetchedProfiles, setFetchedProfiles] = useState({});
 
-  const { fetchMessages: contextFetchMessages, messages: contextMessages } = useMessages();
+  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount } = useMessages();
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editMessageText, setEditMessageText] = useState('');
+  const [isThreadMenuOpen, setIsThreadMenuOpen] = useState(false);
 
   // Sync with centralized messages when updated
   useEffect(() => {
@@ -218,13 +221,28 @@ export const CustomerMessages = () => {
 
   // Mark active chat messages as read
   const markMessagesAsRead = (partnerId) => {
-    if (!user || !partnerId) return;
+    if (!partnerId) return;
+    const pId = String(partnerId).trim();
+
+    // 1. Optimistic UI update for instant decrement
+    setMessages(prev => prev.map(m => {
+      const match = String(m.senderId) === pId || m.senderRole === pId;
+      if (match && !m.read) return { ...m, read: true };
+      return m;
+    }));
+
+    if (markChatAsRead) {
+      markChatAsRead(pId);
+    }
+
+    // 2. Persist to MongoDB Atlas
     fetch('/api/messages/read', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        senderId: partnerId,
-        recipientId: user?.id || 'customer'
+        senderId: pId,
+        recipientId: user?.id || 'customer',
+        role: 'customer'
       })
     }).catch(() => {});
   };
@@ -233,7 +251,90 @@ export const CustomerMessages = () => {
     if (activeChatId) {
       markMessagesAsRead(activeChatId);
     }
-  }, [activeChatId, messages]);
+  }, [activeChatId]);
+
+  // Individual message Edit Handler
+  const handleSaveEdit = async (msgId) => {
+    if (!editMessageText.trim()) return;
+    const cleanText = editMessageText.trim();
+
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+    setEditingMessageId(null);
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText })
+      });
+    } catch (e) {
+      console.error('Failed to edit message:', e);
+    }
+  };
+
+  // Individual message Delete Handler
+  const handleDeleteMessage = async (msgId) => {
+    if (!window.confirm('Delete this message?')) return;
+
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      console.error('Failed to delete message:', e);
+    }
+  };
+
+  // Clear Conversation Handler (3-dot menu)
+  const handleClearConversation = async () => {
+    if (!window.confirm(`Delete all messages with ${activeChatData?.name || 'this contact'}?`)) return;
+
+    const partnerId = activeChatId;
+    setIsThreadMenuOpen(false);
+
+    setMessages(prev => prev.filter(m => {
+      const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
+                    (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
+      return !match;
+    }));
+
+    try {
+      await fetch('/api/messages/clear-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user1: user?.id || 'customer',
+          user2: partnerId
+        })
+      });
+    } catch (e) {
+      console.error('Failed to clear conversation:', e);
+    }
+  };
+
+  // Mark all messages in active thread as read
+  const handleMarkAllAsRead = () => {
+    markMessagesAsRead(activeChatId);
+    setIsThreadMenuOpen(false);
+  };
+
+  // Export Chat transcript to text file
+  const handleExportChat = () => {
+    setIsThreadMenuOpen(false);
+    const msgs = activeChatData?.messages || [];
+    if (msgs.length === 0) return alert('No messages to export.');
+
+    const content = msgs.map(m => `[${m.time}] ${m.senderName || m.sender}: ${m.text}`).join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Chat_${activeChatData?.name || 'Conversation'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Scroll to bottom on chat switch or actual new messages
   useEffect(() => {
@@ -401,11 +502,15 @@ export const CustomerMessages = () => {
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-black truncate block text-[var(--text-primary)] flex items-center gap-1.5">
                               {chat.name}
-                              {hasUnread && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-ping-once" title="Unread Message" />
-                              )}
                             </span>
-                            <span className={`text-[9px] font-bold shrink-0 ml-1 ${hasUnread ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{lastMsg?.time || ''}</span>
+                            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                              {hasUnread && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 text-[9px] font-black shrink-0 animate-pulse shadow-xs" title="Unread Messages">
+                                  {unreadMsgs.length}
+                                </span>
+                              )}
+                              <span className={`text-[9px] font-bold ${hasUnread ? 'text-amber-500 font-black' : 'text-[var(--text-muted)]'}`}>{lastMsg?.time || ''}</span>
+                            </div>
                           </div>
                           <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-muted)]'}`}>{lastMsg?.text || 'No messages yet'}</p>
                         </div>
@@ -450,6 +555,44 @@ export const CustomerMessages = () => {
                       <span className="text-[9px] text-emerald-500 font-bold block mt-0.5">{activeChatData.status}</span>
                     </div>
                   </div>
+
+                  {/* 3-Dot Thread Action Menu */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsThreadMenuOpen(prev => !prev)}
+                      className="p-1.5 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+
+                    {isThreadMenuOpen && (
+                      <div className="absolute right-0 top-9 w-48 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in text-xs font-bold space-y-1">
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-all cursor-pointer text-left"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Mark as Read</span>
+                        </button>
+                        <button
+                          onClick={handleExportChat}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-all cursor-pointer text-left"
+                        >
+                          <Download className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Export Transcript</span>
+                        </button>
+                        <div className="border-t border-[var(--border-light)] my-1" />
+                        <button
+                          onClick={handleClearConversation}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-500/10 text-rose-500 transition-all cursor-pointer text-left font-black"
+                        >
+                          <Trash className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Clear All Messages</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Conversation Messages */}
@@ -470,8 +613,8 @@ export const CustomerMessages = () => {
 
                       return (
                         <div 
-                          key={index}
-                          className={`flex items-end gap-2.5 ${isMe ? 'justify-end' : 'justify-start'} group/msg transition-all`}
+                          key={msg.id || index}
+                          className={`flex items-end gap-2.5 group/msg transition-all relative ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
                           {/* Received Message: Host Avatar on the LEFT (Facebook Messenger Style) */}
                           {!isMe && (
@@ -482,6 +625,29 @@ export const CustomerMessages = () => {
                               title={msg.senderName || 'Host'}
                             />
                           )}
+
+                          {/* Hover Action Bar for Message Edit & Delete */}
+                          <div className={`opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 mb-1 self-center ${isMe ? 'order-first' : 'order-last'}`}>
+                            {isMe && !msg.text?.startsWith('data:image/') && (
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(msg.id);
+                                  setEditMessageText(msg.text);
+                                }}
+                                className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteMessage(msg.id)}
+                              className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-rose-500 hover:text-white text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
+                              title="Delete message"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                           
                           <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[78%] sm:max-w-[70%]`}>
                             <div className={msg.text.startsWith('data:image/') ? "w-fit" : `rounded-2xl px-3.5 py-2.5 text-xs font-medium shadow-xs leading-relaxed ${
@@ -489,7 +655,37 @@ export const CustomerMessages = () => {
                                 ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white rounded-br-xs' 
                                 : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-bl-xs'
                             }`}>
-                              {msg.text.startsWith('data:image/') ? (
+                              {editingMessageId === msg.id ? (
+                                <div className="space-y-1.5 min-w-[200px]">
+                                  <input
+                                    type="text"
+                                    value={editMessageText}
+                                    onChange={(e) => setEditMessageText(e.target.value)}
+                                    className="w-full p-2 text-xs rounded-xl bg-slate-900 text-white outline-none border border-amber-500 font-medium"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                      if (e.key === 'Escape') setEditingMessageId(null);
+                                    }}
+                                  />
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button
+                                      onClick={() => setEditingMessageId(null)}
+                                      className="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-[10px] cursor-pointer"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleSaveEdit(msg.id)}
+                                      className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
+                                      title="Save edit"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : msg.text.startsWith('data:image/') ? (
                                 <div className="relative group/image overflow-hidden rounded-2xl">
                                   <img 
                                     src={msg.text} 
@@ -520,7 +716,10 @@ export const CustomerMessages = () => {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="break-words">{msg.text}</span>
+                                <span className="break-words">
+                                  {msg.text}
+                                  {msg.edited && <span className="text-[9px] opacity-70 italic ml-1">(edited)</span>}
+                                </span>
                               )}
                             </div>
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Send, User, Phone, Mail, Building2, Globe, MessageSquare, 
   Smile, Paperclip, Download, Eye, X, ArrowLeft, ThumbsUp, Heart, 
-  Sparkles, Star, Check, Users, Shield, ShieldCheck, RefreshCw, Filter, ExternalLink
+  Sparkles, Star, Check, Users, Shield, ShieldCheck, RefreshCw, Filter, ExternalLink,
+  MoreHorizontal, Edit2, Trash2, Trash
 } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -101,6 +102,127 @@ export const AdminMessages = () => {
     
     return isSentToContact || isSentByContact || (activeContact.role === 'manager' && isManagerAlias && (m.senderId === cId || m.recipientId === cId));
   });
+
+  const { markChatAsRead, setUnreadCount } = useMessages();
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editMessageText, setEditMessageText] = useState('');
+  const [isThreadMenuOpen, setIsThreadMenuOpen] = useState(false);
+
+  // Mark active chat messages as read
+  const markMessagesAsRead = (contactId) => {
+    if (!contactId) return;
+    const cId = String(contactId).trim();
+
+    // 1. Optimistic UI update
+    setMessages(prev => prev.map(m => {
+      const match = String(m.senderId) === cId || m.senderRole === cId;
+      if (match && !m.read) return { ...m, read: true };
+      return m;
+    }));
+
+    if (markChatAsRead) {
+      markChatAsRead(cId);
+    }
+
+    // 2. Persist to MongoDB Atlas
+    fetch('/api/messages/read', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        senderId: cId,
+        recipientId: user?.id || 'admin',
+        role: 'admin'
+      })
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (activeContactId) {
+      markMessagesAsRead(activeContactId);
+    }
+  }, [activeContactId]);
+
+  // Individual message Edit Handler
+  const handleSaveEdit = async (msgId) => {
+    if (!editMessageText.trim()) return;
+    const cleanText = editMessageText.trim();
+
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+    setEditingMessageId(null);
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText })
+      });
+    } catch (e) {
+      console.error('Failed to edit message:', e);
+    }
+  };
+
+  // Individual message Delete Handler
+  const handleDeleteMessage = async (msgId) => {
+    if (!window.confirm('Delete this message?')) return;
+
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      console.error('Failed to delete message:', e);
+    }
+  };
+
+  // Clear Conversation Handler (3-dot menu)
+  const handleClearConversation = async () => {
+    if (!window.confirm(`Delete all messages with ${activeContact?.name || 'this user'}?`)) return;
+
+    const contactId = activeContactId;
+    setIsThreadMenuOpen(false);
+
+    setMessages(prev => prev.filter(m => {
+      const match = (String(m.senderId) === String(contactId) || m.senderRole === contactId) ||
+                    (String(m.recipientId) === String(contactId) || m.recipientRole === contactId);
+      return !match;
+    }));
+
+    try {
+      await fetch('/api/messages/clear-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user1: user?.id || 'admin',
+          user2: contactId
+        })
+      });
+    } catch (e) {
+      console.error('Failed to clear conversation:', e);
+    }
+  };
+
+  // Mark all messages in active thread as read
+  const handleMarkAllAsRead = () => {
+    markMessagesAsRead(activeContactId);
+    setIsThreadMenuOpen(false);
+  };
+
+  // Export Chat transcript to text file
+  const handleExportChat = () => {
+    setIsThreadMenuOpen(false);
+    if (activeContactMessages.length === 0) return alert('No messages to export.');
+
+    const content = activeContactMessages.map(m => `[${m.time}] ${m.senderName || m.senderRole}: ${m.text}`).join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AdminChat_${activeContact?.name || 'User'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Calculate unread count per user
   const getUnreadCount = (contactId) => {
@@ -413,6 +535,44 @@ export const AdminMessages = () => {
                     >
                       <User className="w-3.5 h-3.5" />
                     </button>
+
+                    {/* 3-Dot Thread Action Menu */}
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsThreadMenuOpen(prev => !prev)}
+                        className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
+                        title="More options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+
+                      {isThreadMenuOpen && (
+                        <div className="absolute right-0 top-9 w-48 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in text-xs font-bold space-y-1">
+                          <button
+                            onClick={handleMarkAllAsRead}
+                            className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-all cursor-pointer text-left"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            <span>Mark as Read</span>
+                          </button>
+                          <button
+                            onClick={handleExportChat}
+                            className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-all cursor-pointer text-left"
+                          >
+                            <Download className="w-3.5 h-3.5 text-blue-500" />
+                            <span>Export Transcript</span>
+                          </button>
+                          <div className="border-t border-[var(--border-light)] my-1" />
+                          <button
+                            onClick={handleClearConversation}
+                            className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-500/10 text-rose-500 transition-all cursor-pointer text-left font-black"
+                          >
+                            <Trash className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Clear All Messages</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -435,7 +595,7 @@ export const AdminMessages = () => {
                       return (
                         <div
                           key={msg.id || index}
-                          className={`flex items-end gap-2.5 ${isAdminMe ? 'justify-end' : 'justify-start'} group/msg transition-all`}
+                          className={`flex items-end gap-2.5 group/msg transition-all relative ${isAdminMe ? 'justify-end' : 'justify-start'}`}
                         >
                           {/* Received Message: Contact Avatar on the LEFT (Facebook Messenger Style) */}
                           {!isAdminMe && (
@@ -447,13 +607,66 @@ export const AdminMessages = () => {
                             />
                           )}
 
+                          {/* Hover Action Bar for Message Edit & Delete */}
+                          <div className={`opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 mb-1 self-center ${isAdminMe ? 'order-first' : 'order-last'}`}>
+                            {isAdminMe && !msg.text?.startsWith('data:image/') && (
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(msg.id);
+                                  setEditMessageText(msg.text);
+                                }}
+                                className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteMessage(msg.id)}
+                              className="p-1 rounded-lg bg-[var(--bg-tertiary)] hover:bg-rose-500 hover:text-white text-[var(--text-muted)] transition-all cursor-pointer shadow-xs"
+                              title="Delete message"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+
                           <div className={`flex flex-col ${isAdminMe ? 'items-end' : 'items-start'} max-w-[80%] sm:max-w-[72%]`}>
                             <div className={msg.text?.startsWith('data:image/') ? "w-fit" : `rounded-2xl px-3.5 py-2.5 text-xs font-medium shadow-xs leading-relaxed ${
                               isAdminMe 
                                 ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold rounded-br-xs' 
                                 : 'bg-[var(--bg-card)] border border-[var(--border-light)] text-[var(--text-primary)] rounded-bl-xs'
                             }`}>
-                              {msg.text?.startsWith('data:image/') ? (
+                              {editingMessageId === msg.id ? (
+                                <div className="space-y-1.5 min-w-[200px]">
+                                  <input
+                                    type="text"
+                                    value={editMessageText}
+                                    onChange={(e) => setEditMessageText(e.target.value)}
+                                    className="w-full p-2 text-xs rounded-xl bg-slate-900 text-white outline-none border border-amber-500 font-medium"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                      if (e.key === 'Escape') setEditingMessageId(null);
+                                    }}
+                                  />
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button
+                                      onClick={() => setEditingMessageId(null)}
+                                      className="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-[10px] cursor-pointer"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleSaveEdit(msg.id)}
+                                      className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
+                                      title="Save edit"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : msg.text?.startsWith('data:image/') ? (
                                 <div className="relative group/image overflow-hidden rounded-2xl">
                                   <img
                                     src={msg.text}
@@ -479,7 +692,10 @@ export const AdminMessages = () => {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="break-words">{msg.text}</span>
+                                <span className="break-words">
+                                  {msg.text}
+                                  {msg.edited && <span className="text-[9px] opacity-70 italic ml-1">(edited)</span>}
+                                </span>
                               )}
                             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft, ThumbsUp, Heart, Star } from 'lucide-react';
+import { Search, Send, Settings, User, Bell, Phone, Mail, MoreHorizontal, Globe, Trash, Info, Sparkles, Smile, Paperclip, ChevronDown, Check, X, ShieldAlert, Download, Eye, MessageSquare, ArrowLeft, ThumbsUp, Heart, Star, Edit2, Trash2 } from 'lucide-react';
 import { PortalLayout } from '../../components/PortalLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useMessages } from '../../context/MessageContext';
@@ -20,7 +20,10 @@ export const ManagerMessages = () => {
   const prevMessagesLengthRef = React.useRef(0);
   const prevActiveChatIdRef = React.useRef('');
 
-  const { fetchMessages: contextFetchMessages, messages: contextMessages } = useMessages();
+  const { fetchMessages: contextFetchMessages, messages: contextMessages, markChatAsRead, setUnreadCount } = useMessages();
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editMessageText, setEditMessageText] = useState('');
+  const [isThreadMenuOpen, setIsThreadMenuOpen] = useState(false);
 
   // Sync with centralized messages when updated
   useEffect(() => {
@@ -63,7 +66,7 @@ export const ManagerMessages = () => {
 
   // Fetch real profile details dynamically ONLY for the active chat guest (lazy-load instead of bulk loop)
   useEffect(() => {
-    if (!activeChatId || activeChatId === 'customer' || activeChatId === 'manager') return;
+    if (!activeChatId || activeChatId === 'customer' || activeChatId === 'manager' || activeChatId === 'admin') return;
     if (fetchedProfiles[activeChatId]) return;
 
     setFetchedProfiles(prev => ({ ...prev, [activeChatId]: { loading: true } }));
@@ -108,12 +111,14 @@ export const ManagerMessages = () => {
     const isAdminMsg = msg.senderRole === 'admin' || msg.recipientRole === 'admin' || msg.recipientId === 'admin';
     if (isAdminMsg) {
       chatGroups.admin.messages.push({
+        id: msg.id,
         sender: msg.senderRole === 'admin' ? 'admin' : 'manager',
         senderRole: msg.senderRole,
         senderName: msg.senderName,
         text: msg.text,
         time: msg.time,
         read: msg.read,
+        edited: msg.edited,
         senderAvatar: msg.senderAvatar
       });
       return;
@@ -152,12 +157,14 @@ export const ManagerMessages = () => {
     const isCustomer = msg.senderRole === 'customer' || msg.senderId === customerId;
 
     chatGroups[customerId].messages.push({
+      id: msg.id,
       sender: isCustomer ? customerId : 'manager',
       senderRole: msg.senderRole,
       senderName: msg.senderName,
       text: msg.text,
       time: msg.time,
       read: msg.read,
+      edited: msg.edited,
       senderAvatar: msg.senderAvatar
     });
   });
@@ -170,14 +177,29 @@ export const ManagerMessages = () => {
   }, [chatGroups, activeChatId]);
 
   // Mark active chat messages as read
-  const markMessagesAsRead = (customerId) => {
-    if (!user || !customerId) return;
+  const markMessagesAsRead = (partnerId) => {
+    if (!partnerId) return;
+    const pId = String(partnerId).trim();
+
+    // 1. Optimistic UI update for instant decrement
+    setMessages(prev => prev.map(m => {
+      const match = String(m.senderId) === pId || m.senderRole === pId;
+      if (match && !m.read) return { ...m, read: true };
+      return m;
+    }));
+
+    if (markChatAsRead) {
+      markChatAsRead(pId);
+    }
+
+    // 2. Persist to MongoDB Atlas
     fetch('/api/messages/read', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        senderId: customerId,
-        recipientId: user.id || 'manager'
+        senderId: pId,
+        recipientId: user?.id || 'manager',
+        role: 'manager'
       })
     }).catch(() => {});
   };
@@ -186,7 +208,90 @@ export const ManagerMessages = () => {
     if (activeChatId) {
       markMessagesAsRead(activeChatId);
     }
-  }, [activeChatId, messages]);
+  }, [activeChatId]);
+
+  // Individual message Edit Handler
+  const handleSaveEdit = async (msgId) => {
+    if (!editMessageText.trim()) return;
+    const cleanText = editMessageText.trim();
+
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: cleanText, edited: true } : m));
+    setEditingMessageId(null);
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText })
+      });
+    } catch (e) {
+      console.error('Failed to edit message:', e);
+    }
+  };
+
+  // Individual message Delete Handler
+  const handleDeleteMessage = async (msgId) => {
+    if (!window.confirm('Delete this message?')) return;
+
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+
+    try {
+      await fetch(`/api/messages/${encodeURIComponent(msgId)}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      console.error('Failed to delete message:', e);
+    }
+  };
+
+  // Clear Conversation Handler (3-dot menu)
+  const handleClearConversation = async () => {
+    if (!window.confirm(`Delete all messages with ${activeChatData?.name || 'this contact'}?`)) return;
+
+    const partnerId = activeChatId;
+    setIsThreadMenuOpen(false);
+
+    setMessages(prev => prev.filter(m => {
+      const match = (String(m.senderId) === partnerId || m.senderRole === partnerId) ||
+                    (String(m.recipientId) === partnerId || m.recipientRole === partnerId);
+      return !match;
+    }));
+
+    try {
+      await fetch('/api/messages/clear-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user1: user?.id || 'manager',
+          user2: partnerId
+        })
+      });
+    } catch (e) {
+      console.error('Failed to clear conversation:', e);
+    }
+  };
+
+  // Mark all messages in active thread as read
+  const handleMarkAllAsRead = () => {
+    markMessagesAsRead(activeChatId);
+    setIsThreadMenuOpen(false);
+  };
+
+  // Export Chat transcript to text file
+  const handleExportChat = () => {
+    setIsThreadMenuOpen(false);
+    const msgs = activeChatData?.messages || [];
+    if (msgs.length === 0) return alert('No messages to export.');
+
+    const content = msgs.map(m => `[${m.time}] ${m.senderName || m.sender}: ${m.text}`).join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Chat_${activeChatData?.name || 'Conversation'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const activeChatData = chatGroups[activeChatId] || Object.values(chatGroups)[0] || null;
 
@@ -352,11 +457,15 @@ export const ManagerMessages = () => {
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-black truncate block flex items-center gap-1.5">
                               {chat.name}
-                              {hasUnread && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" title="Unread Message" />
-                              )}
                             </span>
-                            <span className={`text-[9px] font-bold shrink-0 ml-1 ${hasUnread ? 'text-rose-500 font-black' : 'text-slate-400'}`}>{lastMsg?.time || '10:00 AM'}</span>
+                            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                              {hasUnread && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black shrink-0 animate-pulse shadow-xs" title="Unread Messages">
+                                  {unreadMsgs.length}
+                                </span>
+                              )}
+                              <span className={`text-[9px] font-bold ${hasUnread ? 'text-rose-500 font-black' : 'text-slate-400'}`}>{lastMsg?.time || '10:00 AM'}</span>
+                            </div>
                           </div>
                           <p className={`text-[11px] font-medium truncate mt-0.5 ${hasUnread ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{lastMsg?.text || 'No messages yet'}</p>
                         </div>
@@ -401,9 +510,44 @@ export const ManagerMessages = () => {
                       <p className="text-[10px] text-emerald-600 font-bold mt-0.5">{activeChatData.status}</p>
                     </div>
                   </div>
-                  <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
+
+                  {/* 3-Dot Thread Action Menu */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsThreadMenuOpen(prev => !prev)}
+                      className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-all cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+
+                    {isThreadMenuOpen && (
+                      <div className="absolute right-0 top-9 w-48 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in text-xs font-bold space-y-1">
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all cursor-pointer text-left"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Mark as Read</span>
+                        </button>
+                        <button
+                          onClick={handleExportChat}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 text-slate-700 transition-all cursor-pointer text-left"
+                        >
+                          <Download className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Export Transcript</span>
+                        </button>
+                        <div className="border-t border-slate-100 my-1" />
+                        <button
+                          onClick={handleClearConversation}
+                          className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-all cursor-pointer text-left font-black"
+                        >
+                          <Trash className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Clear All Messages</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Message History */}
@@ -412,7 +556,7 @@ export const ManagerMessages = () => {
                     const isGuest = msg.sender === activeChatData.id || msg.sender === 'customer';
                     const isImage = msg.text && msg.text.startsWith('data:image/');
                     return (
-                      <div key={idx} className={`flex items-end gap-2 ${isGuest ? 'justify-start' : 'justify-end'}`}>
+                      <div key={msg.id || idx} className={`flex items-end gap-2 group/msg relative ${isGuest ? 'justify-start' : 'justify-end'}`}>
                         {isGuest && (
                           <img 
                             src={msg.senderAvatar || activeChatData.avatar} 
@@ -420,13 +564,66 @@ export const ManagerMessages = () => {
                             alt="" 
                           />
                         )}
+
+                        {/* Hover Action Bar for Message Edit & Delete */}
+                        <div className={`opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 mb-1 self-center ${isGuest ? 'order-last' : 'order-first'}`}>
+                          {!isGuest && !isImage && (
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(msg.id);
+                                setEditMessageText(msg.text);
+                              }}
+                              className="p-1 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-500 transition-all cursor-pointer shadow-xs"
+                              title="Edit message"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-1 rounded-lg bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 transition-all cursor-pointer shadow-xs"
+                            title="Delete message"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                         
                         <div className={isImage ? "max-w-[78%]" : `max-w-[78%] sm:max-w-[70%] p-3 sm:p-3.5 rounded-3xl text-xs ${
                           isGuest 
                             ? 'bg-[#e2f896] text-slate-950 font-bold rounded-tl-none shadow-2xs' 
                             : 'bg-slate-900 text-white font-medium rounded-tr-none'
                         }`}>
-                          {isImage ? (
+                          {editingMessageId === msg.id ? (
+                            <div className="space-y-1.5 min-w-[200px]">
+                              <input
+                                type="text"
+                                value={editMessageText}
+                                onChange={(e) => setEditMessageText(e.target.value)}
+                                className="w-full p-2 text-xs rounded-xl bg-slate-800 text-white outline-none border border-amber-500 font-medium"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                  if (e.key === 'Escape') setEditingMessageId(null);
+                                }}
+                              />
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={() => setEditingMessageId(null)}
+                                  className="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-[10px] cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleSaveEdit(msg.id)}
+                                  className="p-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] cursor-pointer"
+                                  title="Save edit"
+                                >
+                                  <Check className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : isImage ? (
                             <div className="relative group/image overflow-hidden rounded-2xl">
                               <img 
                                 src={msg.text} 
@@ -457,7 +654,10 @@ export const ManagerMessages = () => {
                               </div>
                             </div>
                           ) : (
-                            <p className="leading-relaxed break-words">{msg.text}</p>
+                            <p className="leading-relaxed break-words">
+                              {msg.text}
+                              {msg.edited && <span className="text-[9px] opacity-60 italic ml-1">(edited)</span>}
+                            </p>
                           )}
                           <span className={`text-[8px] mt-1 block text-right font-bold ${isGuest ? 'text-slate-500' : 'text-slate-400'}`}>
                             {msg.time}
