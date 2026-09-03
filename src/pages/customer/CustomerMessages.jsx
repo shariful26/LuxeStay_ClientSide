@@ -62,20 +62,14 @@ export const CustomerMessages = () => {
   }, [user]);
 
   // Dynamic Manager Profile fetched directly from MongoDB Atlas
-  const [managerProfile, setManagerProfile] = useState(() => {
-    try {
-      const cached = localStorage.getItem('luxestay_manager_profile');
-      if (cached) return JSON.parse(cached);
-    } catch (e) {}
-    return {
-      id: 'manager',
-      name: 'Shariful Islam (Verified Manager)',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-      phone: '+880 1871-126026',
-      email: 'sharifulalam@gmail.com',
-      status: 'Property Host • Online'
-    };
-  });
+  const [managerProfile, setManagerProfile] = useState(() => ({
+    id: 'manager',
+    name: 'Shariful Islam (Hotel Manager)',
+    avatar: '',
+    phone: '',
+    email: 'manager@luxestay.com',
+    status: 'Property Host • Online'
+  }));
 
   // Fetch real manager profile details dynamically from MongoDB Atlas
   useEffect(() => {
@@ -85,19 +79,44 @@ export const CustomerMessages = () => {
         if (data && data.name) {
           const profile = {
             id: data.id || 'manager',
-            name: data.name || 'Shariful Islam (Verified Manager)',
-            avatar: data.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-            phone: data.phone || '+880 1871-126026',
-            email: data.email || 'sharifulalam@gmail.com',
+            name: data.name === 'manager' ? 'Shariful Islam (Hotel Manager)' : data.name,
+            avatar: data.avatar || '',
+            phone: data.phone || '',
+            email: data.email || 'manager@luxestay.com',
             status: data.status || 'Property Host • Online'
           };
           setManagerProfile(profile);
           setFetchedProfiles(prev => ({ ...prev, [profile.id]: profile, manager: profile }));
-          try { localStorage.setItem('luxestay_manager_profile', JSON.stringify(profile)); } catch (e) {}
         }
       })
       .catch(() => {});
   }, []);
+
+  // Also query specific manager sender if message has specific manager senderId
+  useEffect(() => {
+    if (Array.isArray(messages) && messages.length > 0) {
+      const managerMsg = messages.find(m => m.senderRole === 'manager' && m.senderId && m.senderId !== 'manager');
+      if (managerMsg && managerMsg.senderId && !fetchedProfiles[managerMsg.senderId]) {
+        fetch(`/api/users/${encodeURIComponent(managerMsg.senderId)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.name) {
+              const profile = {
+                id: data.id,
+                name: data.name === 'manager' ? 'Shariful Islam (Hotel Manager)' : data.name,
+                avatar: data.avatar || managerMsg.senderAvatar || '',
+                phone: data.phone || '',
+                email: data.email || 'manager@luxestay.com',
+                status: data.status || 'Property Host • Online'
+              };
+              setManagerProfile(profile);
+              setFetchedProfiles(prev => ({ ...prev, [data.id]: profile, manager: profile }));
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [messages, fetchedProfiles]);
 
   // Fetch real profile details dynamically for any other specific partner host
   useEffect(() => {
